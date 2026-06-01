@@ -1,16 +1,25 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Lock, Shield } from 'lucide-react';
 
 export default function SetupPage() {
-  const router = useRouter();
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm,  setConfirm]  = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
-  const [done,     setDone]     = useState(false);
+  const router  = useRouter();
+  const [email,     setEmail]    = useState('');
+  const [password,  setPassword] = useState('');
+  const [confirm,   setConfirm]  = useState('');
+  const [loading,   setLoading]  = useState(false);
+  const [checking,  setChecking] = useState(true);
+  const [error,     setError]    = useState('');
+  const [done,      setDone]     = useState(false);
+
+  // すでにユーザーが存在する場合はログイン画面へ
+  useEffect(() => {
+    fetch('/api/setup')
+      .then(r => r.json())
+      .then(d => { if (d.hasUsers) router.replace('/login'); else setChecking(false); })
+      .catch(() => setChecking(false));
+  }, [router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +45,15 @@ export default function SetupPage() {
     setDone(true);
     setTimeout(() => router.push('/login'), 2000);
   };
+
+  if (checking) return (
+    <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundColor: '#080e20' }}>
+      <svg className="animate-spin h-8 w-8 text-emerald-400" viewBox="0 0 24 24" fill="none">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 overflow-y-auto" style={{ backgroundColor: '#080e20' }}>

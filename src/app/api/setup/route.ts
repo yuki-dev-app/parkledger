@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { sql } from '@/lib/db';
 
+// ユーザーが0人かどうかを返す（ログイン画面の「初めての方」リンク表示判定に使用）
+export async function GET() {
+  const existing = await sql`SELECT COUNT(*) AS n FROM users`;
+  const hasUsers = Number((existing[0] as { n: string }).n) > 0;
+  return NextResponse.json({ hasUsers });
+}
+
 // ─── セットアップAPIは「ユーザーが0人のとき」だけ動作 ───
 // 一度アカウントが作られると、このエンドポイントは何もしない。
 

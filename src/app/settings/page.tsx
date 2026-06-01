@@ -28,14 +28,27 @@ export default function SettingsPage() {
   const [toast,     setToast]     = useState<ToastType | null>(null);
   const [newPerson, setNewPerson] = useState('');
 
-  // ユーザー管理
-  const [currentUserId, setCurrentUserId] = useState(0);
+  // アカウント設定
+  const [currentUserId,    setCurrentUserId]    = useState(0);
+  const [currentUserEmail, setCurrentUserEmail] = useState('');
   const [users,           setUsers]           = useState<UserRow[]>([]);
   const [newEmail,        setNewEmail]        = useState('');
   const [newPassword,     setNewPassword]     = useState('');
   const [showPass,        setShowPass]        = useState(false);
-  const [addingUser,      setAddingUser]      = useState(false);
+  const [addingUser,       setAddingUser]       = useState(false);
   const [deleteUserTarget, setDeleteUserTarget] = useState<UserRow | null>(null);
+
+  // メール変更
+  const [myNewEmail,     setMyNewEmail]     = useState('');
+  const [savingEmail,    setSavingEmail]    = useState(false);
+
+  // パスワード変更
+  const [currentPass,    setCurrentPass]    = useState('');
+  const [newPass,        setNewPass]        = useState('');
+  const [confirmPass,    setConfirmPass]    = useState('');
+  const [showCurrent,    setShowCurrent]    = useState(false);
+  const [showNew,        setShowNew]        = useState(false);
+  const [savingPass,     setSavingPass]     = useState(false);
 
   const load = useCallback(async () => {
     const [sRes, uRes, meRes] = await Promise.all([
@@ -46,7 +59,10 @@ export default function SettingsPage() {
     setForm(await sRes.json());
     setUsers(await uRes.json());
     const me = await meRes.json().catch(() => null);
-    if (me?.id) setCurrentUserId(me.id);
+    if (me?.id) {
+      setCurrentUserId(me.id);
+      setCurrentUserEmail(me.email ?? '');
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -78,6 +94,50 @@ export default function SettingsPage() {
       body: JSON.stringify({ cleaning_persons: updated }),
     });
     setToast({ message: `${name} を追加しました`, kind: 'success' });
+  };
+
+  const changeEmail = async () => {
+    if (!myNewEmail) return;
+    setSavingEmail(true);
+    const res = await fetch('/api/me/email', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: myNewEmail }),
+    });
+    setSavingEmail(false);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setToast({ message: d.error ?? 'メールアドレスの変更に失敗しました', kind: 'error' });
+      return;
+    }
+    setCurrentUserEmail(myNewEmail);
+    setMyNewEmail('');
+    setToast({ message: 'メールアドレスを変更しました', kind: 'success' });
+    load();
+  };
+
+  const changePassword = async () => {
+    if (!currentPass || !newPass || !confirmPass) return;
+    if (newPass !== confirmPass) {
+      setToast({ message: '新しいパスワードが一致しません', kind: 'error' });
+      return;
+    }
+    setSavingPass(true);
+    const res = await fetch('/api/me/password', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current_password: currentPass, new_password: newPass }),
+    });
+    setSavingPass(false);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setToast({ message: d.error ?? 'パスワードの変更に失敗しました', kind: 'error' });
+      return;
+    }
+    setCurrentPass('');
+    setNewPass('');
+    setConfirmPass('');
+    setToast({ message: 'パスワードを変更しました', kind: 'success' });
   };
 
   const addUser = async () => {
@@ -243,6 +303,99 @@ export default function SettingsPage() {
               className="flex items-center gap-1 bg-slate-800 text-white px-3.5 py-2 rounded-xl font-medium text-sm hover:bg-slate-700 disabled:opacity-40 shrink-0"
             >
               <Plus size={14} /> 追加
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── アカウント設定 ── */}
+      <section className="mb-4">
+        <div className="flex items-center gap-2 mb-2 px-1">
+          <Users size={16} className="text-slate-600" />
+          <h2 className="text-base font-bold text-slate-700">アカウント設定</h2>
+        </div>
+
+        {/* メールアドレス変更 */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
+          <div className="px-4 py-3.5 border-b border-slate-100">
+            <p className="text-xs text-slate-400 font-medium mb-0.5">現在のメールアドレス</p>
+            <p className="text-base font-bold text-slate-800">{currentUserEmail || '—'}</p>
+          </div>
+          <div className="px-4 py-3.5">
+            <label className="text-sm font-medium text-slate-600 block mb-1.5">新しいメールアドレス</label>
+            <input
+              type="email"
+              className={inputCls}
+              value={myNewEmail}
+              onChange={e => setMyNewEmail(e.target.value)}
+              placeholder="new@example.com"
+            />
+            <button
+              onClick={changeEmail}
+              disabled={savingEmail || !myNewEmail || !myNewEmail.includes('@')}
+              className="mt-2.5 w-full flex items-center justify-center gap-2 bg-slate-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 active:bg-slate-900 disabled:opacity-40"
+            >
+              <Check size={15} /> {savingEmail ? '変更中...' : 'メールアドレスを変更する'}
+            </button>
+          </div>
+        </div>
+
+        {/* パスワード変更 */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <div className="px-4 py-3.5 flex flex-col gap-3">
+            <label className="text-sm font-medium text-slate-600">パスワードを変更する</label>
+
+            <div className="relative">
+              <input
+                type={showCurrent ? 'text' : 'password'}
+                className={inputCls + ' pr-12'}
+                value={currentPass}
+                onChange={e => setCurrentPass(e.target.value)}
+                placeholder="現在のパスワード"
+                autoComplete="current-password"
+              />
+              <button type="button" onClick={() => setShowCurrent(p => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <Eye size={16} />
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                type={showNew ? 'text' : 'password'}
+                className={inputCls + ' pr-12'}
+                value={newPass}
+                onChange={e => setNewPass(e.target.value)}
+                placeholder="新しいパスワード（8文字以上）"
+                autoComplete="new-password"
+              />
+              <button type="button" onClick={() => setShowNew(p => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <Eye size={16} />
+              </button>
+            </div>
+
+            <input
+              type={showNew ? 'text' : 'password'}
+              className={inputCls}
+              value={confirmPass}
+              onChange={e => setConfirmPass(e.target.value)}
+              placeholder="新しいパスワード（確認）"
+              autoComplete="new-password"
+            />
+            {newPass && confirmPass && newPass !== confirmPass && (
+              <p className="text-xs text-red-500">パスワードが一致しません</p>
+            )}
+            {newPass.length > 0 && newPass.length < 8 && (
+              <p className="text-xs text-red-500">パスワードは8文字以上にしてください（今 {newPass.length} 文字）</p>
+            )}
+
+            <button
+              onClick={changePassword}
+              disabled={savingPass || !currentPass || newPass.length < 8 || newPass !== confirmPass}
+              className="w-full flex items-center justify-center gap-2 bg-slate-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 active:bg-slate-900 disabled:opacity-40"
+            >
+              <Check size={15} /> {savingPass ? '変更中...' : 'パスワードを変更する'}
             </button>
           </div>
         </div>

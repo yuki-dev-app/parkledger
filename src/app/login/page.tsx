@@ -1,15 +1,24 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { Lock, Shield } from 'lucide-react';
 
 export default function LoginPage() {
   const router  = useRouter();
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [error,    setError]    = useState('');
-  const [loading,  setLoading]  = useState(false);
+  const [email,      setEmail]      = useState('');
+  const [password,   setPassword]   = useState('');
+  const [error,      setError]      = useState('');
+  const [loading,    setLoading]    = useState(false);
+  const [isFirstTime, setIsFirstTime] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/setup')
+      .then(r => r.json())
+      .then(d => { if (!d.hasUsers) setIsFirstTime(true); })
+      .catch(() => {});
+  }, []);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,6 +151,21 @@ export default function LoginPage() {
               </button>
             </form>
           </div>
+
+          {/* 初めての方リンク */}
+          {isFirstTime && (
+            <div className="mt-4 rounded-2xl p-4 text-center"
+              style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}>
+              <p className="text-emerald-400 text-sm font-medium mb-2">初めてご利用の方</p>
+              <Link
+                href="/setup"
+                className="inline-block w-full text-white font-bold py-3 rounded-xl text-sm"
+                style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.25)' }}
+              >
+                アカウントを作成する →
+              </Link>
+            </div>
+          )}
 
           <div className="flex items-center justify-center gap-1.5 mt-5">
             <Shield size={11} className="text-slate-600" />
