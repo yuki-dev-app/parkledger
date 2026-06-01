@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Check, Settings as SettingsIcon, Plus, X, Users, Building2, FileText, Car } from 'lucide-react';
+import { Check, Settings as SettingsIcon, Plus, X, Users, Building2, FileText, Car, UserPlus, Trash2, Eye, EyeOff } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
+
+type UserRow = { id: number; email: string; created_at: string; is_active: boolean };
 
 type Settings = {
   business_name: string;
@@ -21,13 +23,24 @@ export default function SettingsPage() {
     parking_name: '', parking_address: '', receipt_no_prefix: 'R',
     cleaning_persons: '',
   });
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<ToastType | null>(null);
+  const [loading,   setLoading]   = useState(false);
+  const [toast,     setToast]     = useState<ToastType | null>(null);
   const [newPerson, setNewPerson] = useState('');
 
+  // ユーザー管理
+  const [users,       setUsers]       = useState<UserRow[]>([]);
+  const [newEmail,    setNewEmail]    = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [showPass,    setShowPass]    = useState(false);
+  const [addingUser,  setAddingUser]  = useState(false);
+
   const load = useCallback(async () => {
-    const res = await fetch('/api/settings');
-    setForm(await res.json());
+    const [sRes, uRes] = await Promise.all([
+      fetch('/api/settings'),
+      fetch('/api/users'),
+    ]);
+    setForm(await sRes.json());
+    setUsers(await uRes.json());
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -59,6 +72,38 @@ export default function SettingsPage() {
       body: JSON.stringify({ cleaning_persons: updated }),
     });
     setToast({ message: `${name} を追加しました`, kind: 'success' });
+  };
+
+  const addUser = async () => {
+    if (!newEmail || !newPassword) return;
+    setAddingUser(true);
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: newEmail, password: newPassword }),
+    });
+    setAddingUser(false);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setToast({ message: d.error ?? 'ユーザーの追加に失敗しました', kind: 'error' });
+      return;
+    }
+    setNewEmail('');
+    setNewPassword('');
+    setToast({ message: `${newEmail} を追加しました`, kind: 'success' });
+    load();
+  };
+
+  const removeUser = async (user: UserRow) => {
+    if (!confirm(`${user.email} を削除しますか？\nこのユーザーのデータは残ります。`)) return;
+    const res = await fetch(`/api/users/${user.id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setToast({ message: d.error ?? '削除に失敗しました', kind: 'error' });
+      return;
+    }
+    setToast({ message: `${user.email} を削除しました`, kind: 'success' });
+    load();
   };
 
   const removePerson = async (name: string) => {
@@ -192,6 +237,84 @@ export default function SettingsPage() {
             >
               <Plus size={14} /> 追加
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── ユーザー管理 ── */}
+      <section className="mb-4">
+        <div className="flex items-center gap-2 mb-2 px-1">
+          <UserPlus size={16} className="text-slate-600" />
+          <h2 className="text-base font-bold text-slate-700">ユーザー管理</h2>
+        </div>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+          <p className="text-xs text-slate-400 mb-3">
+            駐車場オーナーごとにアカウントを作成できます。<br />
+            それぞれのデータは完全に分離されます。
+          </p>
+
+          {/* 現在のユーザー一覧 */}
+          <div className="flex flex-col gap-2 mb-4">
+            {users.map(u => (
+              <div key={u.id} className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-800 truncate">{u.email}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    登録日: {u.created_at?.slice(0, 10) ?? ''}
+                  </p>
+                </div>
+                <button
+                  onClick={() => removeUser(u)}
+                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50 shrink-0"
+                >
+                  <Trash2 size={13} /> 削除
+                </button>
+              </div>
+            ))}
+            {users.length === 0 && (
+              <p className="text-xs text-slate-400">ユーザーが登録されていません</p>
+            )}
+          </div>
+
+          {/* 新規ユーザー追加フォーム */}
+          <div className="border-t border-slate-100 pt-4">
+            <p className="text-sm font-medium text-slate-700 mb-3">新しいユーザーを追加</p>
+            <div className="flex flex-col gap-2">
+              <input
+                type="email"
+                className={inputCls}
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                placeholder="メールアドレス（例: tanaka@example.com）"
+              />
+              <div className="relative">
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  className={inputCls + ' pr-12'}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="パスワード（8文字以上）"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(p => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <button
+                onClick={addUser}
+                disabled={addingUser || !newEmail || newPassword.length < 8}
+                className="flex items-center justify-center gap-2 bg-slate-800 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-700 active:bg-slate-900 disabled:opacity-40"
+              >
+                <UserPlus size={16} />
+                {addingUser ? '追加中...' : 'ユーザーを追加する'}
+              </button>
+              {newPassword.length > 0 && newPassword.length < 8 && (
+                <p className="text-xs text-red-500">パスワードは8文字以上にしてください（今 {newPassword.length} 文字）</p>
+              )}
+            </div>
           </div>
         </div>
       </section>
