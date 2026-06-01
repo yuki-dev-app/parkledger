@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(git --version)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack)",
+      "Bash(npm install *)",
+      "Bash(mkdir \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\デスクトップ\\\\garage-app\\\\src\\\\app\\\\api\\\\garages\" \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\デスクトップ\\\\garage-app\\\\src\\\\app\\\\api\\\\garages\\\\[id]\" \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\デスクトップ\\\\garage-app\\\\src\\\\app\\\\api\\\\contractors\" \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\デスクトップ\\\\garage-app\\\\src\\\\app\\\\api\\\\contractors\\\\[id]\" \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\デスクトップ\\\\garage-app\\\\src\\\\app\\\\api\\\\payments\" \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\デスクトップ\\\\garage-app\\\\src\\\\app\\\\api\\\\payments\\\\[id]\" \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\デスクトップ\\\\garage-app\\\\src\\\\app\\\\api\\\\inquiries\" \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\デスクトップ\\\\garage-app\\\\src\\\\app\\\\api\\\\inquiries\\\\[id]\" 2>&1)",
+      "Bash(npm run *)",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\�f�X�N�g�b�v\\\\garage-app\\\\src\\\\app\\\\api\\\\auth\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\yuyuk\\\\OneDrive\\\\�f�X�N�g�b�v\\\\garage-app\\\\src\\\\app\\\\login\")",
+      "Read(//tmp/**)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(node _test.mjs)",
+      "Bash(echo \"EXIT:$?\")"
+    ]
+  }
+}

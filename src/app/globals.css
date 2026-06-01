@@ -1,0 +1,439 @@
+@import "tailwindcss";
+
+/* ════════════════════════════════
+   ParkLedger – グローバルスタイル
+   ════════════════════════════════ */
+
+body {
+  font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Meiryo', system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+input, select, textarea, button { font-family: inherit; }
+
+/* ══ 印刷共通 ══════════════════════════════════════════════════ */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; font-size: 11pt; }
+  @page { size: A4 portrait; margin: 20mm 18mm 22mm 22mm; }
+  .receipt-page { margin: 0; background: white; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   保管場所使用承諾証明書スタイル
+   ══════════════════════════════════════════════════════════════ */
+.cert-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #1a1a1a;
+}
+
+.cert-title-block {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.cert-main-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  border-bottom: 3px double #1a1a1a;
+  padding-bottom: 6px;
+  display: inline-block;
+}
+
+.cert-subtitle {
+  font-size: 11px;
+  color: #555;
+  margin-top: 4px;
+}
+
+.cert-intro {
+  font-size: 13px;
+  margin-bottom: 20px;
+  padding-left: 4px;
+}
+
+/* ── テーブル ── */
+.cert-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 28px;
+  font-size: 13px;
+}
+
+.cert-table th,
+.cert-table td {
+  border: 1.5px solid #1a1a1a;
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+
+.cert-th-section {
+  background-color: #f0f0f0;
+  font-weight: 700;
+  font-size: 12px;
+  text-align: center;
+  white-space: nowrap;
+  width: 90px;
+  writing-mode: horizontal-tb;
+}
+
+.cert-th-label {
+  background-color: #f8f8f8;
+  font-weight: 500;
+  font-size: 12px;
+  white-space: nowrap;
+  width: 90px;
+  text-align: center;
+}
+
+.cert-td {
+  font-size: 13px;
+  min-height: 28px;
+  color: #1a1a1a;
+}
+
+.cert-td-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cert-blank-line {
+  color: #aaa;
+  letter-spacing: 0.1em;
+  font-size: 12px;
+}
+
+/* ── 承諾日 ── */
+.cert-date-block {
+  text-align: right;
+  margin-bottom: 20px;
+}
+.cert-date-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ── 所有者 ── */
+.cert-owner-block {
+  border: 1.5px solid #1a1a1a;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.cert-owner-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #ccc;
+}
+
+.cert-owner-inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.cert-owner-info { flex: 1; }
+
+.cert-owner-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.cert-owner-label {
+  color: #555;
+  white-space: nowrap;
+  min-width: 50px;
+}
+
+.cert-owner-value { flex: 1; }
+.cert-owner-name { font-size: 15px; font-weight: 600; }
+
+/* ── 印鑑欄 ── */
+.cert-stamp-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.cert-stamp-circle {
+  width: 68px;
+  height: 68px;
+  border: 2px solid #1a1a1a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cert-stamp-text { font-size: 20px; color: #ccc; }
+.cert-stamp-label { font-size: 9px; color: #888; text-align: center; white-space: nowrap; }
+
+/* ── 注意書き・フッター ── */
+.cert-notes {
+  background: #fff8e1;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.cert-notes-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 6px;
+}
+
+.cert-notes-list {
+  font-size: 11px;
+  color: #78350f;
+  padding-left: 16px;
+  line-height: 1.8;
+}
+
+.cert-print-footer {
+  text-align: right;
+  font-size: 10px;
+  color: #888;
+  margin-top: 8px;
+}
+
+/* 印刷時のみ表示 */
+@media screen { .cert-print-footer { display: none; } }
+
+/* ══════════════════════════════════════════════════════════════
+   領収書スタイル
+   ══════════════════════════════════════════════════════════════ */
+.rcpt-wrapper {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 36px 28px 44px;
+  color: #1a1a1a;
+}
+
+/* ── ヘッダー ── */
+.rcpt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 28px;
+  padding-bottom: 12px;
+  border-bottom: 3px double #1a1a1a;
+}
+
+.rcpt-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+}
+
+.rcpt-no {
+  font-size: 12px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.rcpt-date {
+  font-size: 13px;
+  color: #333;
+}
+
+/* ── 宛名 ── */
+.rcpt-recipient {
+  margin-bottom: 24px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid #1a1a1a;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.rcpt-recipient-name {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.rcpt-recipient-suffix {
+  font-size: 16px;
+}
+
+/* ── 金額 ── */
+.rcpt-amount-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: #f8f8f8;
+  border: 1.5px solid #ddd;
+  border-radius: 4px;
+}
+
+.rcpt-amount-label {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #333;
+}
+
+.rcpt-amount-box {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex: 1;
+}
+
+.rcpt-currency {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.rcpt-amount-num {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.rcpt-dash {
+  font-size: 22px;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* ── 但し書き ── */
+.rcpt-purpose-block {
+  margin-bottom: 14px;
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.rcpt-purpose-text { padding-left: 4px; }
+
+/* ── 税表示 ── */
+.rcpt-tax-block {
+  margin-bottom: 28px;
+  padding: 6px 10px;
+  background: #f0f4f8;
+  border-left: 3px solid #94a3b8;
+}
+
+.rcpt-tax-text {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ── フッター ── */
+.rcpt-footer-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #ccc;
+}
+
+/* ── 収入印紙欄 ── */
+.rcpt-stamp-box {
+  border: 1.5px solid #ccc;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+
+.rcpt-stamp-required {
+  border-color: #1a1a1a;
+  border-width: 2px;
+  background: #fff;
+}
+
+.rcpt-stamp-box-title {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rcpt-stamp-box-note {
+  font-size: 11px;
+  color: #777;
+}
+
+.rcpt-stamp-box-sub {
+  font-size: 9px;
+  color: #aaa;
+}
+
+/* ── 発行者 ── */
+.rcpt-issuer {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.rcpt-issuer-info {
+  text-align: right;
+  line-height: 1.8;
+}
+
+.rcpt-issuer-row {
+  font-size: 12px;
+  color: #555;
+}
+
+.rcpt-issuer-name {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 4px 0;
+}
+
+/* ── 印鑑欄 ── */
+.rcpt-hanko-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.rcpt-hanko-circle {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #1a1a1a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rcpt-hanko-text { font-size: 18px; color: #ccc; }
+
+/* ── 警告 ── */
+.rcpt-warn {
+  margin-top: 20px;
+  padding: 10px 14px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #92400e;
+}
