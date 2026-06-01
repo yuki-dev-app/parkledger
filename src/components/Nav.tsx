@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Car, Users, CreditCard, MessageSquare, LogOut, Settings } from 'lucide-react';
+import { Home, Car, Users, CreditCard, MessageSquare, LogOut, Settings, Sparkles } from 'lucide-react';
 
 const links = [
   { href: '/', label: 'ホーム', icon: Home },
@@ -9,6 +9,7 @@ const links = [
   { href: '/contractors', label: '契約者', icon: Users },
   { href: '/payments', label: '入金', icon: CreditCard },
   { href: '/inquiries', label: '問い合わせ', icon: MessageSquare },
+  { href: '/cleaning', label: '清掃記録', icon: Sparkles },
 ];
 
 export default function Nav() {
