@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Check, Car } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, Car, Wrench } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
 import Modal from '@/components/Modal';
-import { SkeletonGrid } from '@/components/Skeleton';
+import { SkeletonList } from '@/components/Skeleton';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 type Garage = {
@@ -15,14 +15,26 @@ type Garage = {
   contractor_name?: string;
 };
 
-const STATUS_LABEL = { vacant: '空き', occupied: '使用中', maintenance: '整備中' };
-const STATUS_COLOR = {
-  vacant: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
-  occupied: 'bg-slate-100 text-slate-600 border border-slate-200',
-  maintenance: 'bg-amber-100 text-amber-700 border border-amber-200',
+// ステータスをカード全体で色分け（高齢者でも一目でわかるように）
+const STATUS_CONFIG = {
+  vacant: {
+    label: '空き',
+    cardClass: 'border-emerald-400 bg-emerald-50',
+    badgeClass: 'bg-emerald-500 text-white',
+  },
+  occupied: {
+    label: '使用中',
+    cardClass: 'border-slate-300 bg-white',
+    badgeClass: 'bg-slate-500 text-white',
+  },
+  maintenance: {
+    label: '整備中',
+    cardClass: 'border-amber-400 bg-amber-50',
+    badgeClass: 'bg-amber-500 text-white',
+  },
 };
 
-const inputCls = 'border border-slate-300 rounded-xl px-3 py-3 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white';
+const inputCls = 'border border-slate-300 rounded-xl px-4 py-3.5 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white text-base';
 
 export default function GaragesPage() {
   const [garages, setGarages] = useState<Garage[]>([]);
@@ -31,7 +43,7 @@ export default function GaragesPage() {
   const [form, setForm] = useState({ number: '', status: 'vacant', monthly_fee: '', notes: '' });
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number; number: string; status: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; number: string } | null>(null);
   const [toast, setToast] = useState<ToastType | null>(null);
 
   const load = useCallback(async () => {
@@ -72,13 +84,13 @@ export default function GaragesPage() {
       return;
     }
     setShowForm(false);
-    setToast({ message: editTarget ? '更新しました' : '追加しました', kind: 'success' });
+    setToast({ message: editTarget ? '更新しました' : '区画を追加しました', kind: 'success' });
     load();
   };
 
-  const remove = async (id: number) => {
+  const remove = (id: number) => {
     const target = garages.find(g => g.id === id);
-    if (target) setDeleteTarget({ id, number: target.number, status: target.status });
+    if (target) setDeleteTarget({ id, number: target.number });
   };
 
   const confirmRemove = async () => {
@@ -94,36 +106,34 @@ export default function GaragesPage() {
     load();
   };
 
-  const vacantCount = garages.filter(g => g.status === 'vacant').length;
-  const occupiedCount = garages.filter(g => g.status === 'occupied').length;
+  const vacant = garages.filter(g => g.status === 'vacant').length;
+  const occupied = garages.filter(g => g.status === 'occupied').length;
 
   return (
     <div>
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      <div className="flex items-center justify-between mb-3">
+      {/* ページヘッダー */}
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-lg font-bold text-slate-900">空き状況</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            空き <span className="font-semibold text-emerald-600">{vacantCount}</span>
-            <span className="mx-1">·</span>
-            使用中 <span className="font-semibold text-slate-600">{occupiedCount}</span>
-            <span className="mx-1">·</span>
-            全 {garages.length} 区画
+          <h1 className="text-xl font-bold text-slate-900">駐車区画</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            空き <span className="font-bold text-emerald-600">{vacant}</span> 区画　／
+            使用中 <span className="font-bold text-slate-700">{occupied}</span> 区画
           </p>
         </div>
         <button
           onClick={openNew}
-          className="flex items-center gap-1.5 bg-slate-800 text-white px-3.5 py-2 rounded-xl font-medium hover:bg-slate-700 active:bg-slate-900 shadow-sm text-sm"
+          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-slate-700 shadow-sm text-base"
         >
-          <Plus size={15} /> 区画追加
+          <Plus size={18} /> 区画を追加
         </button>
       </div>
 
       {deleteTarget && (
         <ConfirmDialog
-          title={`区画 #${deleteTarget.number} を削除`}
-          message="この区画を削除すると元に戻せません。"
+          title={`${deleteTarget.number}番区画を削除`}
+          message="削除すると元に戻せません。"
           confirmLabel="削除する"
           onConfirm={confirmRemove}
           onCancel={() => setDeleteTarget(null)}
@@ -131,64 +141,94 @@ export default function GaragesPage() {
       )}
 
       {dataLoading ? (
-        <SkeletonGrid count={6} />
+        <SkeletonList count={4} />
       ) : garages.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
-          <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Car size={28} className="text-slate-400" />
+          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Car size={30} className="text-slate-400" />
           </div>
-          <p className="font-semibold text-slate-700 mb-1">区画が登録されていません</p>
-          <p className="text-sm text-slate-400 mb-5">「区画追加」から駐車区画を登録してください</p>
+          <p className="font-bold text-slate-700 text-lg mb-2">区画が登録されていません</p>
+          <p className="text-sm text-slate-400 mb-6">まず「区画を追加」から<br />駐車スペースを登録してください</p>
           <button
             onClick={openNew}
-            className="inline-flex items-center gap-1.5 bg-slate-800 text-white px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-700"
+            className="inline-flex items-center gap-2 bg-slate-800 text-white px-6 py-3.5 rounded-xl font-bold text-base hover:bg-slate-700"
           >
-            <Plus size={15} /> 最初の区画を追加
+            <Plus size={18} /> 区画を追加する
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {garages.map(g => (
-            <div
-              key={g.id}
-              className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 flex flex-col gap-1.5"
-              style={{ minHeight: '110px' }}
-            >
-              <div className="flex items-center justify-between gap-1">
-                <span className="font-bold text-slate-900 text-base">#{g.number}</span>
-                <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOR[g.status]}`}>
-                  {STATUS_LABEL[g.status]}
-                </span>
+        /* 1列リスト — 1枚ずつ大きく、見やすく */
+        <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
+          {garages.map(g => {
+            const cfg = STATUS_CONFIG[g.status];
+            return (
+              <div
+                key={g.id}
+                className={`rounded-2xl border-2 shadow-sm overflow-hidden ${cfg.cardClass}`}
+              >
+                {/* カード上部：番号とステータス */}
+                <div className="flex items-center justify-between px-4 pt-4 pb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl font-black text-slate-900 leading-none tabular-nums">
+                      {g.number}
+                    </span>
+                    <span className="text-sm text-slate-500 font-medium mt-1">番区画</span>
+                  </div>
+                  <span className={`text-sm px-4 py-1.5 rounded-full font-bold ${cfg.badgeClass}`}>
+                    {cfg.label}
+                  </span>
+                </div>
+
+                {/* 契約者名 */}
+                <div className="px-4 pb-3">
+                  {g.contractor_name ? (
+                    <p className="text-lg font-bold text-slate-800">{g.contractor_name} さん</p>
+                  ) : (
+                    g.status === 'vacant'
+                      ? <p className="text-base text-emerald-600 font-medium">入居者募集中</p>
+                      : g.status === 'maintenance'
+                      ? <p className="text-base text-amber-600 font-medium flex items-center gap-1"><Wrench size={15} /> 整備・点検中</p>
+                      : null
+                  )}
+                  {g.monthly_fee > 0 && (
+                    <p className="text-base text-slate-600 mt-1">
+                      月額 <span className="font-bold text-slate-900">¥{g.monthly_fee.toLocaleString()}</span>
+                    </p>
+                  )}
+                  {g.notes && (
+                    <p className="text-sm text-slate-500 mt-1">{g.notes}</p>
+                  )}
+                </div>
+
+                {/* アクションボタン */}
+                <div className="flex border-t border-slate-100 divide-x divide-slate-100 bg-white/60">
+                  <button
+                    onClick={() => openEdit(g)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 text-slate-600 font-medium text-sm hover:bg-slate-100 active:bg-slate-200"
+                  >
+                    <Pencil size={15} /> 編集する
+                  </button>
+                  <button
+                    onClick={() => remove(g.id)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 text-red-500 font-medium text-sm hover:bg-red-50 active:bg-red-100"
+                  >
+                    <Trash2 size={15} /> 削除する
+                  </button>
+                </div>
               </div>
-              {g.contractor_name
-                ? <p className="text-sm text-slate-700 font-medium truncate flex-1">{g.contractor_name}</p>
-                : <p className="text-xs text-slate-300 flex-1">—</p>
-              }
-              <p className="text-xs text-slate-400">¥{g.monthly_fee.toLocaleString()}/月</p>
-              {g.notes && <p className="text-[11px] text-slate-400 line-clamp-1">{g.notes}</p>}
-              <div className="flex gap-1 pt-1 border-t border-slate-100 mt-auto">
-                <button
-                  onClick={() => openEdit(g)}
-                  className="flex-1 flex items-center justify-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 py-1.5 rounded-lg hover:bg-slate-100"
-                >
-                  <Pencil size={12} /> 編集
-                </button>
-                <button
-                  onClick={() => remove(g.id)}
-                  className="flex-1 flex items-center justify-center gap-1 text-[11px] text-slate-400 hover:text-red-500 py-1.5 rounded-lg hover:bg-red-50"
-                >
-                  <Trash2 size={12} /> 削除
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
+      {/* 区画追加・編集モーダル */}
       {showForm && (
-        <Modal title={editTarget ? '区画を編集' : '区画を追加'} onClose={() => setShowForm(false)}>
+        <Modal title={editTarget ? `${editTarget.number}番区画を編集` : '新しい区画を追加'} onClose={() => setShowForm(false)}>
+          {/* 区画番号 */}
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-1.5 block">区画番号 *</label>
+            <label className="text-base font-bold text-slate-700 mb-2 block">
+              区画番号 <span className="text-red-500">*</span>
+            </label>
             <input
               className={inputCls}
               value={form.number}
@@ -197,49 +237,66 @@ export default function GaragesPage() {
               disabled={!!editTarget}
             />
           </div>
+
+          {/* ステータス */}
           {editTarget?.contractor_name ? (
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">ステータス</label>
-              <div className={`${inputCls} bg-slate-50 text-slate-500`}>
-                使用中（契約者がいるため変更不可）
+              <label className="text-base font-bold text-slate-700 mb-2 block">ステータス</label>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-500 text-base">
+                使用中（契約者がいるため変更できません）
               </div>
             </div>
           ) : (
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">ステータス</label>
-              <select className={inputCls} value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
-                <option value="vacant">空き</option>
-                <option value="maintenance">整備中</option>
+              <label className="text-base font-bold text-slate-700 mb-2 block">ステータス</label>
+              <select
+                className={inputCls}
+                value={form.status}
+                onChange={e => setForm({ ...form, status: e.target.value })}
+              >
+                <option value="vacant">空き（使用可能）</option>
+                <option value="maintenance">整備中（使用不可）</option>
               </select>
             </div>
           )}
+
+          {/* 月額料金 */}
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-1.5 block">月額料金（円）</label>
+            <label className="text-base font-bold text-slate-700 mb-2 block">月額料金（円）</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">¥</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-base font-medium">¥</span>
               <input
-                className={`${inputCls} pl-7`}
+                className={`${inputCls} pl-8`}
                 type="number"
                 inputMode="numeric"
                 value={form.monthly_fee}
                 onChange={e => setForm({ ...form, monthly_fee: e.target.value })}
                 placeholder="例: 10000"
                 min="0"
-                step="500"
               />
             </div>
           </div>
+
+          {/* 備考 */}
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-1.5 block">備考</label>
-            <input className={inputCls} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="例: 角地、屋根あり" />
+            <label className="text-base font-bold text-slate-700 mb-2 block">
+              メモ（任意）
+            </label>
+            <input
+              className={inputCls}
+              value={form.notes}
+              onChange={e => setForm({ ...form, notes: e.target.value })}
+              placeholder="例: 角地・屋根あり"
+            />
           </div>
+
           <button
             onClick={save}
             disabled={loading || !form.number}
             className="w-full bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 active:bg-slate-900 disabled:opacity-50 flex items-center justify-center gap-2"
-            style={{ minHeight: '48px', fontSize: '16px' }}
+            style={{ minHeight: '56px', fontSize: '16px' }}
           >
-            <Check size={17} /> {editTarget ? '保存する' : '追加する'}
+            <Check size={20} /> {editTarget ? '保存する' : '追加する'}
           </button>
         </Modal>
       )}

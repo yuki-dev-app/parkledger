@@ -90,29 +90,29 @@ export default function InquiriesPage() {
         />
       )}
 
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-lg font-bold text-slate-900">問い合わせ</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {newCount > 0 && <span className="text-amber-600 font-medium">新着 {newCount} 件 · </span>}
+          <h1 className="text-xl font-bold text-slate-900">問い合わせ</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {newCount > 0 && <span className="text-amber-600 font-bold">新着 {newCount} 件　</span>}
             全 {inquiries.length} 件
           </p>
         </div>
         <button
           onClick={() => { setShowForm(true); setForm(emptyForm); }}
-          className="flex items-center gap-1.5 bg-slate-800 text-white px-3.5 py-2 rounded-xl font-medium hover:bg-slate-700 shadow-sm text-sm"
+          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-slate-700 shadow-sm text-base"
         >
-          <Plus size={15} /> 追加
+          <Plus size={18} /> 追加
         </button>
       </div>
 
       {/* フィルターチップ */}
-      <div className="flex gap-1.5 mb-3 overflow-x-auto pb-0.5">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-0.5">
         {(['all', 'new', 'in_progress', 'resolved'] as const).map(s => (
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={`shrink-0 text-xs px-3.5 py-1.5 rounded-full font-medium transition-colors ${
+            className={`shrink-0 text-sm px-4 py-2 rounded-full font-medium transition-colors ${
               filter === s ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 border border-slate-200'
             }`}
           >
@@ -159,14 +159,14 @@ export default function InquiriesPage() {
                 onClick={() => setExpanded(isOpen ? null : inq.id)}
               >
                 <div className="flex-1 min-w-0 pr-2">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOR[inq.status]}`}>
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-bold shrink-0 ${STATUS_COLOR[inq.status]}`}>
                       {STATUS_LABEL[inq.status]}
                     </span>
-                    <span className="font-bold text-slate-900 text-sm truncate">{inq.name}</span>
+                    <span className="font-bold text-slate-900 text-base">{inq.name} さん</span>
                   </div>
-                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{inq.message}</p>
-                  <p className="text-[11px] text-slate-400 mt-1">{inq.created_at.slice(0, 10)}</p>
+                  <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">{inq.message}</p>
+                  <p className="text-xs text-slate-400 mt-1">{inq.created_at.slice(0, 10)}</p>
                 </div>
                 <div className="text-slate-400 shrink-0">
                   {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}

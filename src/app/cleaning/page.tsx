@@ -113,16 +113,16 @@ export default function CleaningPage() {
         />
       )}
 
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-lg font-bold text-slate-900">清掃記録</h1>
-          <p className="text-xs text-slate-400 mt-0.5">全 {logs.length} 件</p>
+          <h1 className="text-xl font-bold text-slate-900">清掃記録</h1>
+          <p className="text-sm text-slate-500 mt-0.5">全 {logs.length} 件</p>
         </div>
         <button
           onClick={openNew}
-          className="flex items-center gap-1.5 bg-slate-800 text-white px-3.5 py-2 rounded-xl font-medium hover:bg-slate-700 shadow-sm text-sm"
+          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-slate-700 shadow-sm text-base"
         >
-          <Plus size={15} /> 記録を追加
+          <Plus size={18} /> 記録を追加
         </button>
       </div>
 
@@ -148,14 +148,14 @@ export default function CleaningPage() {
           <div key={log.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
-                  <span className="font-bold text-slate-900 text-sm whitespace-nowrap">{formatDate(log.cleaned_date)}</span>
-                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">{log.person}</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1.5">
+                  <span className="font-bold text-slate-900 text-base whitespace-nowrap">{formatDate(log.cleaned_date)}</span>
+                  <span className="text-sm text-slate-600 bg-slate-100 px-3 py-1 rounded-full font-medium shrink-0">{log.person}</span>
                 </div>
                 {log.notes && (
-                  <p className="text-xs text-slate-500 leading-relaxed mt-1 bg-slate-50 rounded-lg px-2.5 py-1.5">{log.notes}</p>
+                  <p className="text-sm text-slate-500 leading-relaxed mt-1 bg-slate-50 rounded-lg px-3 py-2">{log.notes}</p>
                 )}
-                <p className="text-[11px] text-slate-400 mt-1.5">登録: {log.created_at.slice(0, 10)}</p>
+                <p className="text-xs text-slate-400 mt-1.5">登録: {log.created_at.slice(0, 10)}</p>
               </div>
               <div className="flex gap-1 shrink-0">
                 <button
