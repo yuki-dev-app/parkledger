@@ -218,12 +218,20 @@ export default function GaragesPage() {
             </div>
           )}
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-1.5 block">月額料金</label>
-            <select className={inputCls} value={form.monthly_fee} onChange={e => setForm({ ...form, monthly_fee: e.target.value })}>
-              <option value="">選択してください</option>
-              <option value="9000">¥9,000</option>
-              <option value="10000">¥10,000</option>
-            </select>
+            <label className="text-sm font-medium text-slate-700 mb-1.5 block">月額料金（円）</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">¥</span>
+              <input
+                className={`${inputCls} pl-7`}
+                type="number"
+                inputMode="numeric"
+                value={form.monthly_fee}
+                onChange={e => setForm({ ...form, monthly_fee: e.target.value })}
+                placeholder="例: 10000"
+                min="0"
+                step="500"
+              />
+            </div>
           </div>
           <div>
             <label className="text-sm font-medium text-slate-700 mb-1.5 block">備考</label>

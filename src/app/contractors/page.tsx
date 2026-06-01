@@ -304,6 +304,8 @@ export default function ContractorsPage() {
               <div className="border-t border-slate-100 px-3 py-2 flex gap-1.5 bg-slate-50/60">
                 <Link
                   href={`/print/parking/${c.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-1.5 bg-slate-800 text-white py-2 rounded-lg font-medium text-xs hover:bg-slate-700"
                 >
                   <FileText size={13} /> 車庫証明

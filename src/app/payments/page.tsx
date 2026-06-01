@@ -230,6 +230,8 @@ TEL: ${settings.business_phone}` : ''}` : '';
                     {row.payment_id && (
                       <Link
                         href={`/print/receipt/${row.payment_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex items-center justify-center gap-1.5 flex-1 bg-slate-800 text-white py-2 rounded-xl font-medium text-xs hover:bg-slate-700"
                       >
                         <FileText size={13} /> 領収書を発行

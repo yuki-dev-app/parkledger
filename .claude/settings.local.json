@@ -20,7 +20,8 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(vercel env *)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(git push *)"
     ]
   }
 }
