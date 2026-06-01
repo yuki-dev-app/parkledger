@@ -5,7 +5,7 @@ export async function GET() {
   const garages = await sql`
     SELECT g.*, c.name AS contractor_name
     FROM garages g
-    LEFT JOIN contractors c ON c.garage_id = g.id
+    LEFT JOIN contractors c ON c.garage_id = g.id AND c.archived_at = ''
     ORDER BY LENGTH(g.number), g.number
   `;
   return NextResponse.json(garages);

@@ -4,7 +4,15 @@ import { sql } from '@/lib/db';
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json();
-  const { status, monthly_fee, notes } = body;
+  const { monthly_fee, notes } = body;
+  let { status } = body;
+
+  const contractor = await sql`SELECT id FROM contractors WHERE garage_id = ${id} AND archived_at = ''`;
+  if (contractor.length > 0) {
+    status = 'occupied';
+  } else if (status === 'occupied') {
+    return NextResponse.json({ error: '契約者がいないため使用中にできません' }, { status: 400 });
+  }
 
   await sql`UPDATE garages SET status=${status}, monthly_fee=${monthly_fee}, notes=${notes} WHERE id=${id}`;
   return NextResponse.json({ ok: true });

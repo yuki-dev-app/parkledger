@@ -51,7 +51,11 @@ export default function GaragesPage() {
 
   const save = async () => {
     setLoading(true);
-    const body = { ...form, monthly_fee: Number(form.monthly_fee) || 0 };
+    const body = {
+      ...form,
+      monthly_fee: Number(form.monthly_fee) || 0,
+      status: editTarget?.contractor_name ? 'occupied' : form.status,
+    };
     const res = editTarget
       ? await fetch(`/api/garages/${editTarget.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       : await fetch('/api/garages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -149,14 +153,22 @@ export default function GaragesPage() {
               disabled={!!editTarget}
             />
           </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700 mb-1.5 block">ステータス</label>
-            <select className={inputCls} style={{ fontSize: '16px' }} value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
-              <option value="vacant">空き</option>
-              <option value="occupied">使用中</option>
-              <option value="maintenance">整備中</option>
-            </select>
-          </div>
+          {editTarget?.contractor_name ? (
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-1.5 block">ステータス</label>
+              <div className={`${inputCls} bg-slate-50 text-slate-500`} style={{ fontSize: '16px' }}>
+                使用中（契約者がいるため変更不可）
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-1.5 block">ステータス</label>
+              <select className={inputCls} style={{ fontSize: '16px' }} value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                <option value="vacant">空き</option>
+                <option value="maintenance">整備中</option>
+              </select>
+            </div>
+          )}
           <div>
             <label className="text-sm font-medium text-slate-700 mb-1.5 block">月額料金</label>
             <select className={inputCls} style={{ fontSize: '16px' }} value={form.monthly_fee} onChange={e => setForm({ ...form, monthly_fee: e.target.value })}>
