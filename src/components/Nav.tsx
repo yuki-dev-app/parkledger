@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, Car, Users, CreditCard, MessageSquare, LogOut, Settings, Sparkles } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 const links = [
@@ -27,7 +28,7 @@ export default function Nav() {
   if (pathname === '/login' || pathname.startsWith('/print')) return null;
 
   const logout = async () => {
-    await fetch('/api/auth', { method: 'DELETE' });
+    await signOut({ redirect: false });
     router.push('/login');
     router.refresh();
   };

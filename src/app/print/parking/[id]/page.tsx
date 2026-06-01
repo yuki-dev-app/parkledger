@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import { getSettings } from '@/lib/settings';
 import PrintButton from '@/components/PrintButton';
@@ -14,6 +16,10 @@ function toWareki(iso: string): string {
 function todayWareki() { return toWareki(new Date().toISOString().slice(0, 10)); }
 
 export default async function ParkingCertPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session?.user?.id) redirect('/login');
+  const ownerId = Number(session.user.id);
+
   const { id } = await params;
 
   const rows = await sql`
@@ -21,7 +27,7 @@ export default async function ParkingCertPage({ params }: { params: Promise<{ id
            c.contract_start, c.contract_end, g.number AS garage_number
     FROM contractors c
     JOIN garages g ON g.id = c.garage_id
-    WHERE c.id = ${id}
+    WHERE c.id = ${id} AND c.owner_id = ${ownerId}
   `;
 
   if (rows.length === 0) {
@@ -38,7 +44,7 @@ export default async function ParkingCertPage({ params }: { params: Promise<{ id
     vehicle_number: string; vehicle_chassis: string;
     contract_start: string; contract_end: string; garage_number: string;
   };
-  const s = await getSettings();
+  const s = await getSettings(ownerId);
   const locationStr = [s.parking_address, `${c.garage_number}番区画`].filter(Boolean).join('　');
   const endStr = c.contract_end ? toWareki(c.contract_end) : '期間の定めなし';
 

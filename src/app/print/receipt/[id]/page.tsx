@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import { getSettings } from '@/lib/settings';
 import PrintButton from '@/components/PrintButton';
@@ -52,6 +54,10 @@ function toDaiji(num: number): string {
 }
 
 export default async function ReceiptPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session?.user?.id) redirect('/login');
+  const ownerId = Number(session.user.id);
+
   const { id } = await params;
 
   const rows = await sql`
@@ -61,7 +67,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
     FROM payments p
     JOIN contractors c ON c.id = p.contractor_id
     JOIN garages g ON g.id = c.garage_id
-    WHERE p.id = ${id}
+    WHERE p.id = ${id} AND p.owner_id = ${ownerId}
   `;
 
   if (rows.length === 0) {
@@ -77,7 +83,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
     id: number; amount: number; year_month: string; paid_date: string;
     contractor_name: string; contractor_address: string; garage_number: string;
   };
-  const s = await getSettings();
+  const s = await getSettings(ownerId);
   const [y, m] = p.year_month.split('-');
   const issueDate = p.paid_date || new Date().toISOString().slice(0, 10);
   const no = issueNo(p.id, s.receipt_no_prefix || 'R');
