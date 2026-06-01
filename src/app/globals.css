@@ -30,6 +30,11 @@ button, a, input, select, textarea {
   touch-action: manipulation;
 }
 
+/* 高齢ユーザー向け：インタラクティブ要素の最低タップ領域 */
+button, a[href] {
+  min-height: 44px;
+}
+
 /* iOS Safariで16px未満のフォントはズームが起きるため16px以上に統一 */
 input, select, textarea {
   font-size: 16px !important;

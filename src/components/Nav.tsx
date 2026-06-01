@@ -85,7 +85,7 @@ export default function Nav() {
         className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-50"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <ul className="flex h-14">
+        <ul className="flex h-16">
           {links.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== '/' && pathname.startsWith(href));
             return (
@@ -98,8 +98,8 @@ export default function Nav() {
                   {active && (
                     <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-emerald-500" />
                   )}
-                  <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
-                  <span className="text-[10.5px] font-medium leading-none">{label}</span>
+                  <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                  <span className="text-[11.5px] font-medium leading-none">{label}</span>
                 </Link>
               </li>
             );
@@ -109,7 +109,7 @@ export default function Nav() {
 
       <div
         className="md:hidden"
-        style={{ height: 'calc(56px + env(safe-area-inset-bottom))' }}
+        style={{ height: 'calc(64px + env(safe-area-inset-bottom))' }}
       />
 
       {showLogout && (
