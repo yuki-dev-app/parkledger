@@ -120,12 +120,18 @@ export default async function ParkingCertPage({ params }: { params: Promise<{ id
           </div>
 
           <div className="cert-notes no-print">
-            <p className="cert-notes-title">⚠️ 警察署提出前にご確認ください</p>
+            <p className="cert-notes-title">📋 警察署提出前のチェックリスト</p>
             <ul className="cert-notes-list">
-              <li>車台番号が未入力の場合は手書きで追記してください（車検証に記載されています）</li>
-              <li>型式・原動機の型式が必要な場合は余白に追記してください</li>
-              <li>管轄の警察署によって様式が異なる場合があります。公式様式と併用されることをお勧めします</li>
+              <li>□　車台番号を確認（車検証の右上に記載）。空欄の場合は手書きで追記</li>
+              <li>□　型式・原動機の型式が必要な場合は余白に手書きで追記</li>
+              <li>□　自動車の大きさ（長さ・幅・高さ）が必要な場合は車検証を参照して追記</li>
+              <li>□　発行者欄（保管場所の所有者）に実印または認印を押す</li>
+              <li>□　管轄警察署の公式様式と併せて提出（この書類は承諾証明書として使用）</li>
+              <li>□　申請者（使用者）の住所・氏名が正確かを申請者に確認</li>
             </ul>
+            <p style={{ fontSize: '9px', color: '#999', marginTop: '6px' }}>
+              ※ 都道府県によって様式や必要書類が異なります。事前に管轄の警察署にご確認ください。
+            </p>
           </div>
 
           <div className="cert-print-footer">
@@ -133,8 +139,8 @@ export default async function ParkingCertPage({ params }: { params: Promise<{ id
           </div>
         </div>
       </div>
-      <PrintButton />
-      <div className="no-print h-28" />
+      <PrintButton hint="印刷後、発行者欄に実印または認印を押してから申請者にお渡しください" />
+      <div className="no-print h-36" />
     </>
   );
 }
