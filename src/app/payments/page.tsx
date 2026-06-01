@@ -1,6 +1,9 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Check, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Download, FileText, Undo2, Bell, Copy, X, Phone, Mail, CreditCard } from 'lucide-react';
+import {
+  Check, ChevronLeft, ChevronRight, Download, FileText,
+  Undo2, Bell, Copy, X, Phone, Mail, CreditCard, Printer,
+} from 'lucide-react';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 
@@ -28,6 +31,8 @@ type Settings = {
   parking_name: string;
 };
 
+type FilterType = 'unpaid' | 'paid' | 'all';
+
 export default function PaymentsPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -35,7 +40,7 @@ export default function PaymentsPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toast, setToast] = useState<ToastType | null>(null);
-  const [showPaid, setShowPaid] = useState(false);
+  const [filter, setFilter] = useState<FilterType>('unpaid');
   const [reminder, setReminder] = useState<{ row: Row; info: ReminderData } | null>(null);
   const [settings, setSettings] = useState<Settings>({ business_name: '', business_phone: '', parking_name: '' });
   const [copied, setCopied] = useState(false);
@@ -82,13 +87,7 @@ export default function PaymentsPage() {
     const c = cs.find((x: { id: number; phone?: string; email?: string }) => x.id === row.contractor_id);
     setReminder({
       row,
-      info: {
-        name: row.contractor_name,
-        phone: c?.phone || '',
-        email: c?.email || '',
-        amount: row.amount,
-        garage_number: row.garage_number,
-      },
+      info: { name: row.contractor_name, phone: c?.phone || '', email: c?.email || '', amount: row.amount, garage_number: row.garage_number },
     });
     setCopied(false);
   };
@@ -113,9 +112,20 @@ TEL: ${settings.business_phone}` : ''}` : '';
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const paidCount = rows.filter(r => r.status === 'paid').length;
+  const paidCount   = rows.filter(r => r.status === 'paid').length;
   const unpaidCount = rows.length - paidCount;
-  const total = rows.filter(r => r.status === 'paid').reduce((s, r) => s + r.amount, 0);
+  const total       = rows.filter(r => r.status === 'paid').reduce((s, r) => s + r.amount, 0);
+
+  const displayRows =
+    filter === 'all'    ? rows :
+    filter === 'unpaid' ? rows.filter(r => r.status !== 'paid') :
+                          rows.filter(r => r.status === 'paid');
+
+  const TABS: { key: FilterType; label: string; count: number; color: string }[] = [
+    { key: 'unpaid', label: '未入金', count: unpaidCount, color: unpaidCount > 0 ? 'text-red-600' : 'text-slate-500' },
+    { key: 'paid',   label: '入金済み', count: paidCount,   color: 'text-emerald-600' },
+    { key: 'all',    label: '全て見る', count: rows.length,  color: 'text-slate-600' },
+  ];
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -124,29 +134,22 @@ TEL: ${settings.business_phone}` : ''}` : '';
       {/* ページヘッダー */}
       <div className="mb-3">
         <h1 className="text-xl font-bold text-slate-900">入金チェック</h1>
-        <p className="text-sm text-slate-500 mt-0.5">入金できた方のボタンを押してください</p>
       </div>
 
-      {/* 月ナビ — 大きめに */}
-      <div className="flex items-center justify-between mb-3 bg-white rounded-2xl border border-slate-200 shadow-sm px-2 py-2">
-        <button
-          onClick={prevMonth}
-          aria-label="前の月"
-          className="flex items-center justify-center w-12 h-12 text-slate-600 hover:bg-slate-100 rounded-xl active:bg-slate-200"
-        >
+      {/* 月ナビ */}
+      <div className="flex items-center justify-between mb-3 bg-white rounded-2xl border border-slate-200 shadow-sm px-2 py-1.5">
+        <button onClick={prevMonth} aria-label="前の月"
+          className="flex items-center justify-center w-12 h-12 text-slate-600 hover:bg-slate-100 rounded-xl active:bg-slate-200">
           <ChevronLeft size={26} />
         </button>
         <span className="font-bold text-slate-900 text-xl">{year}年 {month}月</span>
-        <button
-          onClick={nextMonth}
-          aria-label="次の月"
-          className="flex items-center justify-center w-12 h-12 text-slate-600 hover:bg-slate-100 rounded-xl active:bg-slate-200"
-        >
+        <button onClick={nextMonth} aria-label="次の月"
+          className="flex items-center justify-center w-12 h-12 text-slate-600 hover:bg-slate-100 rounded-xl active:bg-slate-200">
           <ChevronRight size={26} />
         </button>
       </div>
 
-      {/* サマリー */}
+      {/* サマリー3枚 */}
       <div className="grid grid-cols-3 gap-2 mb-3">
         <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-center">
           <p className="text-2xl font-bold text-emerald-600 tabular-nums">{paidCount}</p>
@@ -155,26 +158,52 @@ TEL: ${settings.business_phone}` : ''}` : '';
         <div className={`rounded-2xl p-3 text-center border ${unpaidCount > 0 ? 'bg-red-50 border-red-300' : 'bg-slate-50 border-slate-200'}`}>
           <p className={`text-2xl font-bold tabular-nums ${unpaidCount > 0 ? 'text-red-600' : 'text-slate-400'}`}>{unpaidCount}</p>
           <p className={`text-xs font-medium mt-0.5 ${unpaidCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>
-            {unpaidCount > 0 ? 'まだです' : '全員済み'}
+            {unpaidCount > 0 ? '未入金' : '全員済み'}
           </p>
         </div>
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-center">
-          <p className="text-base font-bold text-slate-700 leading-tight pt-1.5 tabular-nums">¥{total.toLocaleString()}</p>
+          <p className="text-sm font-bold text-slate-700 leading-tight pt-1.5 tabular-nums">¥{total.toLocaleString()}</p>
           <p className="text-xs text-slate-500 font-medium mt-0.5">入金合計</p>
         </div>
       </div>
 
-      {/* CSV */}
+      {/* ── 月次レポート（CSV）── 実務用に目立たせる */}
       {rows.length > 0 && (
         <a
           href={`/api/payments/export?year_month=${ym}`}
-          className="flex items-center justify-center gap-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl py-2.5 mb-3 font-medium hover:bg-slate-50 text-sm shadow-sm"
+          className="flex items-center gap-3 bg-white border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-3 hover:border-slate-400 hover:bg-slate-50 shadow-sm transition-colors"
         >
-          <Download size={15} /> {year}年{month}月の一覧をダウンロード（CSV）
+          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
+            <Download size={20} className="text-slate-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-bold text-slate-800 text-base">{year}年{month}月　月次レポート</p>
+            <p className="text-xs text-slate-500 mt-0.5">CSV形式 · Excelで開けます · 経理・確定申告に利用可</p>
+          </div>
         </a>
       )}
 
-      {/* 一覧 */}
+      {/* ── フィルタータブ ── */}
+      <div className="flex gap-1.5 mb-3 bg-slate-100 rounded-2xl p-1.5">
+        {TABS.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
+            className={`flex-1 flex flex-col items-center py-2 rounded-xl font-medium transition-all ${
+              filter === tab.key
+                ? 'bg-white shadow-sm text-slate-900'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <span className={`text-lg font-black tabular-nums leading-none ${filter === tab.key ? tab.color : ''}`}>
+              {tab.count}
+            </span>
+            <span className="text-xs mt-0.5">{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── カード一覧 ── */}
       <div className="flex flex-col gap-3">
         {rows.length === 0 && (
           <div className="text-center py-14 bg-white rounded-2xl border border-slate-200 shadow-sm">
@@ -186,19 +215,24 @@ TEL: ${settings.business_phone}` : ''}` : '';
           </div>
         )}
 
-        {/* 未入金を先に表示 */}
-        {rows.filter(r => r.status !== 'paid').map(row => {
-          const paid = false;
+        {displayRows.length === 0 && rows.length > 0 && (
+          <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 text-slate-400 text-sm">
+            {filter === 'unpaid' ? '未入金の方はいません ✓' : '入金済みの方はいません'}
+          </div>
+        )}
+
+        {displayRows.map(row => {
+          const paid = row.status === 'paid';
           const busy = busyId === row.contractor_id;
           return (
             <div
               key={row.contractor_id}
-              className={`bg-white rounded-2xl border-2 shadow-sm overflow-hidden transition-colors ${
+              className={`bg-white rounded-2xl border-2 shadow-sm overflow-hidden ${
                 paid ? 'border-emerald-300' : 'border-slate-200'
               }`}
             >
-              {/* 上部：名前と金額 */}
-              <div className={`px-4 pt-4 pb-3 ${paid ? 'bg-emerald-50/60' : ''}`}>
+              {/* 名前・金額エリア */}
+              <div className={`px-4 pt-3.5 pb-3 ${paid ? 'bg-emerald-50/50' : ''}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -210,22 +244,22 @@ TEL: ${settings.business_phone}` : ''}` : '';
                     <p className="text-base text-slate-600 mt-1 font-medium">
                       ¥{row.amount.toLocaleString()}
                       {paid && row.paid_date && (
-                        <span className="text-sm text-emerald-600 ml-2 font-normal">{row.paid_date} に入金</span>
+                        <span className="text-sm text-emerald-600 ml-2 font-normal">{row.paid_date} 入金</span>
                       )}
                     </p>
                   </div>
                   {paid && (
                     <span className="flex items-center gap-1 text-emerald-600 font-bold text-sm bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 shrink-0">
-                      <Check size={16} strokeWidth={3} /> 済み
+                      <Check size={15} strokeWidth={3} /> 済み
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* 下部：アクション */}
+              {/* アクションエリア */}
               <div className="px-3 pb-3">
                 {!paid ? (
-                  /* 未入金 → 大きなメインボタン + 小さな督促 */
+                  /* 未入金：入金ボタン（大） + 連絡ボタン */
                   <div className="flex flex-col gap-2">
                     <button
                       onClick={() => toggle(row, 'paid')}
@@ -233,42 +267,59 @@ TEL: ${settings.business_phone}` : ''}` : '';
                       className="w-full bg-emerald-600 text-white rounded-xl font-bold text-base hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 flex items-center justify-center gap-2"
                       style={{ minHeight: '54px' }}
                     >
-                      {busy ? (
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                      ) : (
-                        <Check size={20} strokeWidth={3} />
-                      )}
+                      {busy
+                        ? <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        : <Check size={20} strokeWidth={3} />
+                      }
                       入金済みにする
                     </button>
                     <button
                       onClick={() => openReminder(row)}
                       className="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-600 py-3 rounded-xl text-sm font-medium hover:bg-slate-50"
                     >
-                      <Bell size={15} /> 連絡する（督促）
+                      <Bell size={15} /> 連絡する・督促文を送る
                     </button>
                   </div>
                 ) : (
-                  /* 入金済み → 小さな補助操作 */
-                  <div className="flex gap-2">
+                  /* 入金済み：領収書（大）+ 車庫証明 + 取消 */
+                  <div className="flex flex-col gap-2">
+                    {/* 領収書 — 実務で最も使うので大きく */}
                     {row.payment_id && (
                       <Link
                         href={`/print/receipt/${row.payment_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1.5 flex-1 border border-slate-200 text-slate-600 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-50"
+                        className="w-full flex items-center gap-3 bg-slate-800 text-white py-3.5 px-4 rounded-xl font-bold text-base hover:bg-slate-700 active:bg-slate-900"
                       >
-                        <FileText size={14} /> 領収書
+                        <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
+                          <Printer size={18} />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-base font-bold leading-tight">領収書を発行・印刷</p>
+                          <p className="text-xs text-white/70 mt-0.5">印鑑を押してお渡しください</p>
+                        </div>
                       </Link>
                     )}
+                    {/* 車庫証明 */}
+                    <Link
+                      href={`/print/parking/${row.contractor_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center gap-3 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl font-medium text-sm hover:bg-slate-50"
+                    >
+                      <FileText size={16} className="text-slate-500 shrink-0" />
+                      <div className="text-left">
+                        <p className="text-sm font-bold">車庫証明（保管場所使用承諾証明書）</p>
+                        <p className="text-xs text-slate-400 mt-0.5">陸運局・警察署への申請に使用</p>
+                      </div>
+                    </Link>
+                    {/* 取消 */}
                     <button
                       onClick={() => toggle(row, 'unpaid')}
                       disabled={busy}
-                      className="flex items-center justify-center gap-1 text-slate-500 border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-500 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
                     >
-                      <Undo2 size={14} /> 取消
+                      <Undo2 size={14} /> 未入金に戻す
                     </button>
                   </div>
                 )}
@@ -276,56 +327,6 @@ TEL: ${settings.business_phone}` : ''}` : '';
             </div>
           );
         })}
-
-        {/* 入金済みをまとめて折りたたむ */}
-        {rows.filter(r => r.status === 'paid').length > 0 && (
-          <div className="mt-1">
-            <button
-              onClick={() => setShowPaid(p => !p)}
-              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-emerald-200 rounded-2xl text-emerald-700 font-bold text-base hover:bg-emerald-50 shadow-sm"
-            >
-              <span className="flex items-center gap-2">
-                <Check size={18} strokeWidth={3} />
-                入金済み　{rows.filter(r => r.status === 'paid').length} 名
-              </span>
-              {showPaid ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            </button>
-
-            {showPaid && (
-              <div className="flex flex-col gap-2 mt-2">
-                {rows.filter(r => r.status === 'paid').map(row => {
-                  const busy = busyId === row.contractor_id;
-                  return (
-                    <div key={row.contractor_id} className="bg-emerald-50 rounded-2xl border border-emerald-200 px-4 py-3 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs bg-white text-slate-500 px-2 py-0.5 rounded-md font-bold border border-slate-200">{row.garage_number}番</span>
-                          <span className="font-bold text-slate-800 text-base">{row.contractor_name} さん</span>
-                        </div>
-                        <p className="text-sm text-slate-500 mt-0.5">
-                          ¥{row.amount.toLocaleString()}
-                          {row.paid_date && <span className="ml-2 text-emerald-600">{row.paid_date} 入金</span>}
-                        </p>
-                      </div>
-                      <div className="flex gap-1.5 shrink-0">
-                        {row.payment_id && (
-                          <Link href={`/print/receipt/${row.payment_id}`} target="_blank" rel="noopener noreferrer"
-                            className="text-xs border border-slate-200 bg-white text-slate-600 px-2.5 py-2 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-1">
-                            <FileText size={13} /> 領収書
-                          </Link>
-                        )}
-                        <button onClick={() => toggle(row, 'unpaid')} disabled={busy}
-                          className="text-xs border border-slate-200 bg-white text-slate-500 px-2.5 py-2 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-1 disabled:opacity-50">
-                          <Undo2 size={13} /> 取消
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* 督促モーダル */}
@@ -334,29 +335,22 @@ TEL: ${settings.business_phone}` : ''}` : '';
           <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-5 max-h-[90dvh] overflow-y-auto modal-scroll">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-slate-900 text-lg">{reminder.info.name} さんへ連絡</h3>
-              <button
-                onClick={() => setReminder(null)}
-                className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 w-11 h-11"
-              >
+              <button onClick={() => setReminder(null)}
+                className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 w-11 h-11">
                 <X size={20} />
               </button>
             </div>
 
-            {/* 連絡先ボタン */}
             <div className="flex flex-col gap-2 mb-4">
               {reminder.info.phone && (
-                <a
-                  href={`tel:${reminder.info.phone}`}
-                  className="flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-xl font-bold text-base hover:bg-emerald-700"
-                >
+                <a href={`tel:${reminder.info.phone}`}
+                  className="flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-xl font-bold text-base hover:bg-emerald-700">
                   <Phone size={20} /> 電話する　{reminder.info.phone}
                 </a>
               )}
               {reminder.info.email && (
-                <a
-                  href={`mailto:${reminder.info.email}?subject=${encodeURIComponent(`【${year}年${month}月分】駐車場使用料のご確認`)}&body=${encodeURIComponent(reminderText)}`}
-                  className="flex items-center justify-center gap-2 bg-slate-700 text-white py-4 rounded-xl font-bold text-base hover:bg-slate-800"
-                >
+                <a href={`mailto:${reminder.info.email}?subject=${encodeURIComponent(`【${year}年${month}月分】駐車場使用料のご確認`)}&body=${encodeURIComponent(reminderText)}`}
+                  className="flex items-center justify-center gap-2 bg-slate-700 text-white py-4 rounded-xl font-bold text-base hover:bg-slate-800">
                   <Mail size={18} /> メールを送る
                 </a>
               )}
@@ -365,14 +359,11 @@ TEL: ${settings.business_phone}` : ''}` : '';
               )}
             </div>
 
-            {/* 督促文 */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-medium text-slate-600">督促文（コピーして使用）</label>
-                <button
-                  onClick={copyText}
-                  className="flex items-center gap-1 text-sm text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50"
-                >
+                <button onClick={copyText}
+                  className="flex items-center gap-1 text-sm text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50">
                   <Copy size={13} /> {copied ? 'コピーしました' : 'コピー'}
                 </button>
               </div>
