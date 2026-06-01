@@ -101,70 +101,62 @@ export default function CleaningPage() {
     <div>
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">清掃記録</h2>
-          <p className="text-base text-slate-500">全 {logs.length} 件</p>
+          <h1 className="text-lg font-bold text-slate-900">清掃記録</h1>
+          <p className="text-xs text-slate-400 mt-0.5">全 {logs.length} 件</p>
         </div>
         <button
           onClick={openNew}
-          className="flex items-center gap-1.5 bg-slate-800 text-white px-4 py-3 rounded-xl font-medium hover:bg-slate-700 active:bg-slate-900 shadow-sm"
+          className="flex items-center gap-1.5 bg-slate-800 text-white px-3.5 py-2 rounded-xl font-medium hover:bg-slate-700 shadow-sm text-sm"
         >
-          <Plus size={18} /> 清掃記録を追加
+          <Plus size={15} /> 記録を追加
         </button>
       </div>
 
       {/* 記録一覧 */}
       <div className="flex flex-col gap-3">
         {logs.length === 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
-            <Sparkles size={32} className="text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-400 text-base">清掃記録がありません</p>
-            <p className="text-slate-400 text-sm mt-1">「清掃記録を追加」ボタンから入力してください</p>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
+            <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Sparkles size={26} className="text-slate-400" />
+            </div>
+            <p className="font-semibold text-slate-700 mb-1">清掃記録がありません</p>
+            <p className="text-sm text-slate-400 mb-5">清掃した日付と担当者を記録できます</p>
+            <button
+              onClick={openNew}
+              className="inline-flex items-center gap-1.5 bg-slate-800 text-white px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-700"
+            >
+              <Plus size={15} /> 最初の記録を追加
+            </button>
           </div>
         )}
 
         {logs.map(log => (
-          <div key={log.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-            <div className="flex items-start justify-between">
+          <div key={log.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5">
+            <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                {/* 日付 */}
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg font-bold text-slate-900">
-                    {formatDate(log.cleaned_date)}
-                  </span>
+                  <span className="font-bold text-slate-900 text-sm">{formatDate(log.cleaned_date)}</span>
+                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{log.person}</span>
                 </div>
-
-                {/* 担当者 */}
-                <p className="text-base text-slate-600">
-                  担当：<span className="font-medium">{log.person}</span>
-                </p>
-
-                {/* 特記事項 */}
                 {log.notes && (
-                  <div className="mt-2 bg-slate-50 rounded-xl px-3 py-2">
-                    <p className="text-xs text-slate-400 mb-0.5">特記事項</p>
-                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{log.notes}</p>
-                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed mt-1 bg-slate-50 rounded-lg px-2.5 py-1.5">{log.notes}</p>
                 )}
-
-                {/* 登録日時 */}
-                <p className="text-xs text-slate-400 mt-2">登録: {log.created_at.slice(0, 10)}</p>
+                <p className="text-[11px] text-slate-400 mt-1.5">登録: {log.created_at.slice(0, 10)}</p>
               </div>
-
-              {/* 操作ボタン */}
-              <div className="flex flex-col gap-1 ml-3 shrink-0">
+              <div className="flex gap-1 shrink-0">
                 <button
                   onClick={() => openEdit(log)}
-                  className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 px-2 py-1.5 rounded-lg hover:bg-slate-100"
+                  className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 px-2 py-1.5 rounded-lg hover:bg-slate-100"
                 >
-                  <Pencil size={14} /> 編集
+                  <Pencil size={12} /> 編集
                 </button>
                 <button
                   onClick={() => remove(log.id, log.cleaned_date)}
-                  className="flex items-center gap-1 text-sm text-slate-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50"
+                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50"
                 >
-                  <Trash2 size={14} /> 削除
+                  <Trash2 size={12} /> 削除
                 </button>
               </div>
             </div>

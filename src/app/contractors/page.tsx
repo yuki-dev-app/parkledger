@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Pencil, Trash2, X, Check, Phone, MapPin, Car, AlertTriangle, FileText, Archive } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, Phone, MapPin, Car, AlertTriangle, FileText, Archive, Users } from 'lucide-react';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 
@@ -46,6 +46,14 @@ function daysUntil(dateStr: string): number | null {
   const diff = new Date(dateStr).getTime() - new Date().getTime();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
+
+function formatDate(s: string) {
+  if (!s) return '未定';
+  const [y, m, d] = s.split('-');
+  return `${y}/${Number(m)}/${Number(d)}`;
+}
+
+const inputCls = 'border border-slate-300 rounded-xl px-3 py-3 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white';
 
 export default function ContractorsPage() {
   const [contractors, setContractors] = useState<Contractor[]>([]);
@@ -114,7 +122,7 @@ export default function ContractorsPage() {
   };
 
   const remove = async (id: number, name: string) => {
-    if (!confirm(`${name} さんのデータを完全に削除しますか？\n解約履歴も消えます。解約のみなら「解約」ボタンをご使用ください。`)) return;
+    if (!confirm(`${name} さんのデータを完全に削除しますか？\n解約のみなら「解約」ボタンをご使用ください。`)) return;
     const res = await fetch(`/api/contractors/${id}`, { method: 'DELETE' });
     if (!res.ok) { setToast({ message: '削除に失敗しました', kind: 'error' }); return; }
     setToast({ message: '削除しました', kind: 'success' });
@@ -130,106 +138,172 @@ export default function ContractorsPage() {
     <div>
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      <div className="flex items-center justify-between mb-4">
+      {/* ページヘッダー */}
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">契約者管理</h2>
-          <p className="text-base text-slate-500">
+          <h1 className="text-lg font-bold text-slate-900">契約者管理</h1>
+          <p className="text-xs text-slate-400 mt-0.5">
             {contractors.length} 名
-            {expiringCount > 0 && <span className="ml-2 text-amber-600 font-medium">・更新期限 {expiringCount} 名</span>}
+            {expiringCount > 0 && (
+              <span className="ml-1.5 text-amber-600 font-medium">· 期限近い {expiringCount} 名</span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/contractors/archived"
-            className="flex items-center gap-1.5 text-slate-600 border border-slate-300 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 active:bg-slate-100">
-            <Archive size={16} /> 解約履歴
+          <Link
+            href="/contractors/archived"
+            className="flex items-center gap-1 text-slate-600 border border-slate-200 bg-white px-3 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 shadow-sm"
+          >
+            <Archive size={14} /> 解約履歴
           </Link>
-          <button onClick={openNew}
-            className="flex items-center gap-1.5 bg-slate-800 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-slate-700 active:bg-slate-900 shadow-sm">
-            <Plus size={18} /> 追加
+          <button
+            onClick={openNew}
+            className="flex items-center gap-1.5 bg-slate-800 text-white px-3.5 py-2 rounded-xl font-medium hover:bg-slate-700 shadow-sm text-sm"
+          >
+            <Plus size={15} /> 追加
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      {/* 一覧 */}
+      <div className="flex flex-col gap-2.5">
         {contractors.length === 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
-            <p className="text-slate-400 text-base">契約者がいません</p>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
+            <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Users size={28} className="text-slate-400" />
+            </div>
+            <p className="font-semibold text-slate-700 mb-1">契約者がいません</p>
+            <p className="text-sm text-slate-400 mb-5">「追加」から契約者を登録してください</p>
+            <button
+              onClick={openNew}
+              className="inline-flex items-center gap-1.5 bg-slate-800 text-white px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-700"
+            >
+              <Plus size={15} /> 最初の契約者を追加
+            </button>
           </div>
         )}
+
         {contractors.map(c => {
           const days = daysUntil(c.contract_end);
           const expiringSoon = days !== null && days >= 0 && days <= 30;
           const expired = days !== null && days < 0;
+          const alertState = expiringSoon || expired;
 
           return (
-            <div key={c.id} className={`bg-white rounded-2xl border shadow-sm p-4 ${expiringSoon ? 'border-l-4 border-l-amber-400 border-r-slate-200 border-t-slate-200 border-b-slate-200' : expired ? 'border-l-4 border-l-red-400 border-r-slate-200 border-t-slate-200 border-b-slate-200' : 'border-slate-200'}`}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <span className="text-sm bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold shrink-0">#{c.garage_number}</span>
-                    <span className="font-bold text-slate-900 text-lg">{c.name}</span>
+            <div
+              key={c.id}
+              className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${
+                expiringSoon ? 'border-amber-300' : expired ? 'border-red-300' : 'border-slate-200'
+              }`}
+            >
+              {/* ── 上段：名前・区画・ステータス ── */}
+              <div className="px-4 pt-3.5 pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                    <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold shrink-0 border border-slate-200">
+                      #{c.garage_number}
+                    </span>
+                    <span className="font-bold text-slate-900 text-base truncate">{c.name}</span>
                     {expiringSoon && (
-                      <span className="flex items-center gap-0.5 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                        <AlertTriangle size={11} /> あと{days}日
+                      <span className="flex items-center gap-0.5 text-[11px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-medium shrink-0">
+                        <AlertTriangle size={10} /> あと{days}日
                       </span>
                     )}
                     {expired && (
-                      <span className="flex items-center gap-0.5 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
-                        <AlertTriangle size={11} /> 期限切れ
+                      <span className="flex items-center gap-0.5 text-[11px] bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full font-medium shrink-0">
+                        <AlertTriangle size={10} /> 期限切れ
                       </span>
                     )}
                   </div>
-
-                  <div className="text-sm text-slate-500 space-y-0.5">
-                    <p>¥{c.monthly_fee?.toLocaleString()}/月　　契約: {c.contract_start} 〜 {c.contract_end || '未定'}</p>
-                    {(c.vehicle_type || c.vehicle_number) && (
-                      <p className="flex items-center gap-1"><Car size={13} className="text-slate-400 shrink-0" />{c.vehicle_type}{c.vehicle_number ? `　${c.vehicle_number}` : ''}</p>
-                    )}
-                    {c.address && (
-                      <p className="flex items-center gap-1"><MapPin size={13} className="text-slate-400 shrink-0" />{c.address}</p>
-                    )}
-                    {c.phone && (
-                      <a href={`tel:${c.phone}`} className="flex items-center gap-1 text-blue-700 font-medium text-base">
-                        <Phone size={14} />{c.phone}
-                      </a>
-                    )}
-                    {c.emergency_contact && <p className="text-xs text-slate-400">緊急: {c.emergency_contact}</p>}
-                    {c.notes && <p className="text-xs text-slate-400">{c.notes}</p>}
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => openEdit(c)}
+                      className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 font-medium"
+                    >
+                      <Pencil size={12} /> 編集
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1 ml-3 shrink-0">
-                  <button onClick={() => openEdit(c)} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 px-2 py-1.5 rounded-lg hover:bg-slate-100">
-                    <Pencil size={14} /> 編集
-                  </button>
-                  <button onClick={() => { setShowArchiveModal({ id: c.id, name: c.name }); setArchiveReason(''); }}
-                    className="flex items-center gap-1 text-sm text-amber-600 hover:text-amber-700 px-2 py-1.5 rounded-lg hover:bg-amber-50">
-                    <Archive size={14} /> 解約
-                  </button>
-                  <button onClick={() => remove(c.id, c.name)} className="flex items-center gap-1 text-sm text-slate-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50">
-                    <Trash2 size={14} /> 削除
-                  </button>
+                {/* ── 契約情報 ── */}
+                <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1">
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-medium mb-0.5">月額</p>
+                    <p className="text-sm font-bold text-slate-800">¥{c.monthly_fee?.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-medium mb-0.5">契約期間</p>
+                    <p className={`text-xs font-medium ${alertState ? 'text-amber-700' : 'text-slate-600'}`}>
+                      {formatDate(c.contract_start)} 〜 {formatDate(c.contract_end)}
+                    </p>
+                  </div>
                 </div>
+
+                {/* ── 車情報 ── */}
+                {(c.vehicle_type || c.vehicle_number) && (
+                  <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-600">
+                    <Car size={13} className="text-slate-400 shrink-0" />
+                    <span>{[c.vehicle_type, c.vehicle_number].filter(Boolean).join('　')}</span>
+                  </div>
+                )}
+
+                {/* ── 住所 ── */}
+                {c.address && (
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                    <MapPin size={12} className="text-slate-400 shrink-0" />
+                    <span className="truncate">{c.address}</span>
+                  </div>
+                )}
+
+                {/* ── 電話（タップ可） ── */}
+                {c.phone && (
+                  <a
+                    href={`tel:${c.phone}`}
+                    className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700"
+                  >
+                    <Phone size={13} />
+                    {c.phone}
+                  </a>
+                )}
+
+                {c.notes && (
+                  <p className="mt-1.5 text-xs text-slate-400 bg-slate-50 rounded-lg px-2.5 py-1.5">{c.notes}</p>
+                )}
               </div>
 
-              <div className="mt-3 pt-3 border-t border-slate-100 flex gap-2">
-                <Link href={`/print/parking/${c.id}`}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-slate-800 text-white py-2.5 rounded-xl font-medium text-sm hover:bg-slate-700 active:bg-slate-900">
-                  <FileText size={15} /> 車庫証明（保管場所使用承諾証明書）
+              {/* ── アクションバー ── */}
+              <div className="border-t border-slate-100 px-3 py-2 flex gap-1.5 bg-slate-50/60">
+                <Link
+                  href={`/print/parking/${c.id}`}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-slate-800 text-white py-2 rounded-lg font-medium text-xs hover:bg-slate-700"
+                >
+                  <FileText size={13} /> 車庫証明
                 </Link>
+                <button
+                  onClick={() => { setShowArchiveModal({ id: c.id, name: c.name }); setArchiveReason(''); }}
+                  className="flex items-center justify-center gap-1 text-xs text-amber-600 border border-amber-200 bg-white px-3 py-2 rounded-lg font-medium hover:bg-amber-50"
+                >
+                  <Archive size={13} /> 解約
+                </button>
+                <button
+                  onClick={() => remove(c.id, c.name)}
+                  className="flex items-center justify-center w-9 h-9 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* ══ 解約モーダル ══ */}
+      {/* 解約モーダル */}
       {showArchiveModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900 text-lg">解約処理</h3>
-              <button onClick={() => setShowArchiveModal(null)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100" style={{ minWidth:'44px', minHeight:'44px' }}><X size={20} /></button>
+              <h3 className="font-bold text-slate-900">解約処理</h3>
+              <button onClick={() => setShowArchiveModal(null)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 w-10 h-10"><X size={19} /></button>
             </div>
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
               <p className="text-sm text-amber-800 font-medium">{showArchiveModal.name} さんを解約します</p>
@@ -237,50 +311,59 @@ export default function ContractorsPage() {
             </div>
             <div className="flex flex-col gap-3">
               <div>
-                <label className="text-base text-slate-700 mb-1.5 block font-medium">解約理由（任意）</label>
-                <input className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
-                  value={archiveReason} onChange={e => setArchiveReason(e.target.value)}
-                  placeholder="例: 引越し、車の売却、転居" />
+                <label className="text-sm text-slate-700 mb-1.5 block font-medium">解約理由（任意）</label>
+                <input
+                  className={inputCls}
+                  value={archiveReason}
+                  onChange={e => setArchiveReason(e.target.value)}
+                  placeholder="例: 引越し、車の売却"
+                />
               </div>
-              <button onClick={archive} disabled={loading}
-                className="bg-amber-600 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-amber-700 disabled:opacity-50">
-                <Archive size={18} /> 解約処理を実行する
+              <button
+                onClick={archive}
+                disabled={loading}
+                className="bg-amber-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-700 disabled:opacity-50"
+              >
+                <Archive size={16} /> 解約処理を実行する
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ══ 契約者フォームモーダル ══ */}
+      {/* 契約者追加・編集フォーム */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-4 sm:p-5 max-h-[90dvh] overflow-y-auto modal-scroll">
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50">
+          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-4 sm:p-5 max-h-[92dvh] overflow-y-auto modal-scroll">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900 text-lg">{editTarget ? '契約者を編集' : '契約者を追加'}</h3>
-              <button onClick={() => setShowForm(false)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100" style={{ minWidth:'44px', minHeight:'44px' }}><X size={20} /></button>
+              <h3 className="font-bold text-slate-900">{editTarget ? '契約者を編集' : '契約者を追加'}</h3>
+              <button onClick={() => setShowForm(false)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 w-10 h-10"><X size={19} /></button>
             </div>
             <div className="flex flex-col gap-4">
               {!editTarget ? (
                 <div>
-                  <label className="text-base text-slate-700 mb-1.5 block font-medium">区画 *</label>
-                  <select className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
-                    value={form.garage_id} onChange={e => setForm({ ...form, garage_id: e.target.value })}>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">区画 *</label>
+                  <select
+                    className={inputCls}
+                    value={form.garage_id}
+                    onChange={e => setForm({ ...form, garage_id: e.target.value })}
+                  >
                     <option value="">選択してください</option>
                     {vacantGarages.map(g => <option key={g.id} value={g.id}>#{g.number}</option>)}
                   </select>
                   {vacantGarages.length === 0 && <p className="text-xs text-amber-600 mt-1">空き区画がありません</p>}
                 </div>
               ) : (
-                <div className="bg-slate-50 rounded-xl px-3 py-2.5 text-base text-slate-600">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600">
                   区画: #{editTarget.garage_number}
                 </div>
               )}
 
               {FIELDS.map(({ label, key, placeholder, type }) => (
                 <div key={key}>
-                  <label className="text-base text-slate-700 mb-1.5 block font-medium">{label}</label>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">{label}</label>
                   <input
-                    className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
+                    className={inputCls}
                     value={form[key]}
                     onChange={e => setForm({ ...form, [key]: e.target.value })}
                     placeholder={placeholder}
@@ -293,25 +376,26 @@ export default function ContractorsPage() {
               ))}
 
               <div>
-                <label className="text-base text-slate-700 mb-1.5 block font-medium">契約開始日 *</label>
-                <input className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
-                  value={form.contract_start} onChange={e => setForm({ ...form, contract_start: e.target.value })} type="date" />
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">契約開始日 *</label>
+                <input className={inputCls} value={form.contract_start} onChange={e => setForm({ ...form, contract_start: e.target.value })} type="date" />
               </div>
               <div>
-                <label className="text-base text-slate-700 mb-1.5 block font-medium">契約終了日</label>
-                <input className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
-                  value={form.contract_end} onChange={e => setForm({ ...form, contract_end: e.target.value })} type="date" />
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">契約終了日</label>
+                <input className={inputCls} value={form.contract_end} onChange={e => setForm({ ...form, contract_end: e.target.value })} type="date" />
                 <p className="text-xs text-slate-400 mt-0.5">※ 30日前に警告が表示されます</p>
               </div>
               <div>
-                <label className="text-base text-slate-700 mb-1.5 block font-medium">備考</label>
-                <textarea className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
-                  value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} />
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">備考</label>
+                <textarea className={inputCls} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} />
               </div>
 
-              <button onClick={save} disabled={loading || !form.name || !form.contract_start || (!editTarget && !form.garage_id)}
-                className="bg-slate-800 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-slate-700 active:bg-slate-900 disabled:opacity-50">
-                <Check size={18} /> {editTarget ? '保存する' : '追加する'}
+              <button
+                onClick={save}
+                disabled={loading || !form.name || !form.contract_start || (!editTarget && !form.garage_id)}
+                className="bg-slate-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-700 disabled:opacity-50"
+                style={{ fontSize: '16px' }}
+              >
+                <Check size={17} /> {editTarget ? '保存する' : '追加する'}
               </button>
             </div>
           </div>

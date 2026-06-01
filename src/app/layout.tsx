@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja">
       <body className="bg-slate-50 min-h-dvh overflow-x-hidden">
         <Nav />
-        <main className="max-w-5xl mx-auto px-4 py-5 md:px-8 print:max-w-none print:p-0">
+        <main className="max-w-5xl mx-auto px-4 pt-3 pb-6 md:px-8 print:max-w-none print:p-0">
           {children}
         </main>
       </body>
