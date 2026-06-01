@@ -23,7 +23,15 @@ export default function LoginPage() {
     });
 
     if (result?.error || !result?.ok) {
-      setError('メールアドレスまたはパスワードが違います');
+      const code = result?.error ?? '';
+      if (code.includes('RATE_LIMIT')) {
+        setError('ログインを5回失敗しました。15分後に再試行してください。');
+      } else if (code.includes('INVALID_CREDENTIALS:')) {
+        const remaining = code.split(':')[1];
+        setError(`メールアドレスまたはパスワードが違います（あと${remaining}回失敗するとロックされます）`);
+      } else {
+        setError('メールアドレスまたはパスワードが違います');
+      }
       setLoading(false);
     } else {
       router.push('/');

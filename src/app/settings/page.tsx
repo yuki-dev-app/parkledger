@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Check, Settings as SettingsIcon, Plus, X, Users, Building2, FileText, Car, UserPlus, Trash2, Eye, EyeOff } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 type UserRow = { id: number; email: string; created_at: string; is_active: boolean };
 
@@ -28,19 +29,24 @@ export default function SettingsPage() {
   const [newPerson, setNewPerson] = useState('');
 
   // ユーザー管理
-  const [users,       setUsers]       = useState<UserRow[]>([]);
-  const [newEmail,    setNewEmail]    = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [showPass,    setShowPass]    = useState(false);
-  const [addingUser,  setAddingUser]  = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(0);
+  const [users,           setUsers]           = useState<UserRow[]>([]);
+  const [newEmail,        setNewEmail]        = useState('');
+  const [newPassword,     setNewPassword]     = useState('');
+  const [showPass,        setShowPass]        = useState(false);
+  const [addingUser,      setAddingUser]      = useState(false);
+  const [deleteUserTarget, setDeleteUserTarget] = useState<UserRow | null>(null);
 
   const load = useCallback(async () => {
-    const [sRes, uRes] = await Promise.all([
+    const [sRes, uRes, meRes] = await Promise.all([
       fetch('/api/settings'),
       fetch('/api/users'),
+      fetch('/api/me'),
     ]);
     setForm(await sRes.json());
     setUsers(await uRes.json());
+    const me = await meRes.json().catch(() => null);
+    if (me?.id) setCurrentUserId(me.id);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -94,15 +100,16 @@ export default function SettingsPage() {
     load();
   };
 
-  const removeUser = async (user: UserRow) => {
-    if (!confirm(`${user.email} を削除しますか？\nこのユーザーのデータは残ります。`)) return;
-    const res = await fetch(`/api/users/${user.id}`, { method: 'DELETE' });
+  const removeUser = async () => {
+    if (!deleteUserTarget) return;
+    const res = await fetch(`/api/users/${deleteUserTarget.id}`, { method: 'DELETE' });
+    setDeleteUserTarget(null);
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
       setToast({ message: d.error ?? '削除に失敗しました', kind: 'error' });
       return;
     }
-    setToast({ message: `${user.email} を削除しました`, kind: 'success' });
+    setToast({ message: `${deleteUserTarget.email} を削除しました`, kind: 'success' });
     load();
   };
 
@@ -242,6 +249,16 @@ export default function SettingsPage() {
       </section>
 
       {/* ── ユーザー管理 ── */}
+      {deleteUserTarget && (
+        <ConfirmDialog
+          title={`${deleteUserTarget.email} を削除`}
+          message="このアカウントを削除します。そのユーザーの駐車場データは残ります。この操作は元に戻せません。"
+          confirmLabel="削除する"
+          onConfirm={removeUser}
+          onCancel={() => setDeleteUserTarget(null)}
+        />
+      )}
+
       <section className="mb-4">
         <div className="flex items-center gap-2 mb-2 px-1">
           <UserPlus size={16} className="text-slate-600" />
@@ -249,30 +266,38 @@ export default function SettingsPage() {
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
           <p className="text-xs text-slate-400 mb-3">
-            駐車場オーナーごとにアカウントを作成できます。<br />
-            それぞれのデータは完全に分離されます。
+            駐車場オーナーごとにアカウントを作成できます。それぞれのデータは完全に分離されます。
           </p>
 
           {/* 現在のユーザー一覧 */}
           <div className="flex flex-col gap-2 mb-4">
             {users.map(u => (
-              <div key={u.id} className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{u.email}</p>
+              <div key={u.id} className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-slate-800 truncate">{u.email}</p>
+                    {u.id === currentUserId && (
+                      <span className="text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold shrink-0">
+                        あなた
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    登録日: {u.created_at?.slice(0, 10) ?? ''}
+                    登録日：{u.created_at?.slice(0, 10) ?? '—'}
                   </p>
                 </div>
-                <button
-                  onClick={() => removeUser(u)}
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50 shrink-0"
-                >
-                  <Trash2 size={13} /> 削除
-                </button>
+                {u.id !== currentUserId && (
+                  <button
+                    onClick={() => setDeleteUserTarget(u)}
+                    className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 px-3 py-2 rounded-xl hover:bg-red-50 shrink-0"
+                  >
+                    <Trash2 size={14} /> 削除
+                  </button>
+                )}
               </div>
             ))}
             {users.length === 0 && (
-              <p className="text-xs text-slate-400">ユーザーが登録されていません</p>
+              <p className="text-sm text-slate-400">ユーザーが登録されていません</p>
             )}
           </div>
 
