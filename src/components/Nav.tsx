@@ -34,8 +34,11 @@ export default function Nav() {
 
   return (
     <>
-      {/* ══ ヘッダー ══ */}
-      <header className="bg-slate-900 text-white">
+      {/* ══ ヘッダー（ノッチ・Dynamic Island対応） ══ */}
+      <header
+        className="bg-slate-900 text-white"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="max-w-5xl mx-auto px-3 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-0.5 shrink-0">
             <span className="text-base sm:text-lg font-black tracking-tighter text-white">Park</span>
@@ -111,11 +114,6 @@ export default function Nav() {
           })}
         </ul>
       </nav>
-
-      <div
-        className="md:hidden"
-        style={{ height: 'calc(64px + env(safe-area-inset-bottom))' }}
-      />
 
       {showLogout && (
         <ConfirmDialog

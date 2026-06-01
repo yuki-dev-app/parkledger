@@ -30,9 +30,21 @@ button, a, input, select, textarea {
   touch-action: manipulation;
 }
 
-/* 高齢ユーザー向け：インタラクティブ要素の最低タップ領域 */
-button, a[href] {
+/* タップ領域の最小サイズ（ボタンのみ。a[href]全体には適用しない） */
+button {
   min-height: 44px;
+}
+
+/* ══ モバイル：下部ナビ分の余白（コンテンツが隠れないよう確保） ══ */
+.page-main {
+  /* モバイル: ナビ64px + safe-area + 余裕16px */
+  padding-bottom: calc(64px + env(safe-area-inset-bottom) + 16px);
+}
+@media (min-width: 768px) {
+  /* PC: ナビなし、通常余白 */
+  .page-main {
+    padding-bottom: 2rem;
+  }
 }
 
 /* iOS Safariで16px未満のフォントはズームが起きるため16px以上に統一 */
