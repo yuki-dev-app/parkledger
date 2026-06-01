@@ -109,7 +109,8 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="divide-y divide-slate-100">
-            {d.unpaid.map((c, i) => (
+            {/* 最大2名だけ表示 */}
+            {d.unpaid.slice(0, 2).map((c, i) => (
               <div key={i} className="px-4 py-4 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-bold text-slate-900 text-lg leading-tight">{c.name} さん</p>
@@ -117,19 +118,15 @@ export default async function HomePage() {
                     {c.garage_number}番区画　¥{c.monthly_fee.toLocaleString()}
                   </p>
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="shrink-0">
                   {c.phone ? (
-                    <a
-                      href={`tel:${c.phone}`}
-                      className="flex items-center gap-1.5 bg-red-500 text-white px-4 py-3 rounded-xl font-bold text-sm active:bg-red-600"
-                    >
+                    <a href={`tel:${c.phone}`}
+                      className="flex items-center gap-1.5 bg-red-500 text-white px-4 py-3 rounded-xl font-bold text-sm active:bg-red-600">
                       <Phone size={16} /> 電話する
                     </a>
                   ) : (
-                    <Link
-                      href="/payments"
-                      className="flex items-center gap-1.5 bg-slate-700 text-white px-4 py-3 rounded-xl font-bold text-sm"
-                    >
+                    <Link href="/payments"
+                      className="flex items-center gap-1.5 bg-slate-700 text-white px-4 py-3 rounded-xl font-bold text-sm">
                       確認する
                     </Link>
                   )}
@@ -137,12 +134,14 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+          {/* 3名以上なら入金ページへ誘導 */}
           <div className="px-4 pb-4">
-            <Link
-              href="/payments"
-              className="flex items-center justify-center gap-2 w-full border border-slate-200 text-slate-600 py-3 rounded-xl text-sm font-medium hover:bg-slate-50"
-            >
-              入金チェック画面を開く <ChevronRight size={16} />
+            <Link href="/payments"
+              className="flex items-center justify-center gap-2 w-full bg-red-50 border border-red-200 text-red-700 py-3 rounded-xl text-sm font-bold hover:bg-red-100">
+              {d.unpaid.length > 2
+                ? `他 ${d.unpaid.length - 2} 名を含む — 入金チェックへ`
+                : '入金チェック画面を開く'
+              } <ChevronRight size={16} />
             </Link>
           </div>
         </div>

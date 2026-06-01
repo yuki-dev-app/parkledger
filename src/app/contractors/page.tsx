@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Pencil, Trash2, X, Check, Phone, Car, AlertTriangle, FileText, Archive, Users, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, Phone, Car, AlertTriangle, FileText, Archive, Users, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 import { SkeletonList } from '@/components/Skeleton';
@@ -49,6 +49,7 @@ const inputCls = 'border border-slate-300 rounded-xl px-4 py-3.5 w-full focus:ou
 export default function ContractorsPage() {
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [vacantGarages, setVacantGarages] = useState<Garage[]>([]);
+  const [expanded, setExpanded] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState<{ id: number; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
@@ -170,7 +171,7 @@ export default function ContractorsPage() {
         <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-slate-700 shadow-sm"
-          placeholder="名前・区画番号・電話番号で検索"
+          placeholder="名前・区画番号で検索"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -188,8 +189,8 @@ export default function ContractorsPage() {
       )}
 
       {/* 一覧 */}
-      <div className="flex flex-col gap-3">
-        {dataLoading && <SkeletonList count={3} lines={3} />}
+      <div className="flex flex-col gap-2">
+        {dataLoading && <SkeletonList count={3} lines={2} />}
 
         {!dataLoading && contractors.length === 0 && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
@@ -217,99 +218,126 @@ export default function ContractorsPage() {
           const days = daysUntil(c.contract_end);
           const expiringSoon = days !== null && days >= 0 && days <= 30;
           const expired = days !== null && days < 0;
+          const isOpen = expanded === c.id;
 
           return (
             <div
               key={c.id}
-              className={`bg-white rounded-2xl border-2 shadow-sm overflow-hidden ${
+              className={`bg-white rounded-2xl border-2 shadow-sm overflow-hidden transition-all ${
                 expiringSoon ? 'border-amber-300' : expired ? 'border-red-300' : 'border-slate-200'
               }`}
             >
-              {/* カード本体 */}
-              <div className="px-4 pt-4 pb-3">
-
-                {/* 区画バッジ + アラート + 編集ボタン */}
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg font-bold text-sm border border-slate-200">
-                      {c.garage_number}番区画
+              {/* ── 一覧行：タップで展開 ── */}
+              <button
+                className="w-full flex items-center justify-between px-4 py-4 text-left"
+                onClick={() => setExpanded(isOpen ? null : c.id)}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {/* 区画番号バッジ */}
+                  <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg font-bold text-sm border border-slate-200 shrink-0">
+                    {c.garage_number}番
+                  </span>
+                  {/* 名前 */}
+                  <span className="font-bold text-slate-900 text-lg truncate">{c.name} さん</span>
+                  {/* アラート */}
+                  {expiringSoon && (
+                    <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-bold shrink-0">
+                      <AlertTriangle size={11} /> {days}日
                     </span>
-                    {expiringSoon && (
-                      <span className="flex items-center gap-1 text-sm bg-amber-100 text-amber-700 border border-amber-300 px-2.5 py-1 rounded-full font-bold">
-                        <AlertTriangle size={13} /> あと{days}日
-                      </span>
-                    )}
-                    {expired && (
-                      <span className="flex items-center gap-1 text-sm bg-red-100 text-red-600 border border-red-300 px-2.5 py-1 rounded-full font-bold">
-                        <AlertTriangle size={13} /> 期限切れ
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => openEdit(c)}
-                    className="flex items-center gap-1.5 text-sm text-slate-600 border border-slate-200 px-3 py-2 rounded-xl font-medium hover:bg-slate-50 shrink-0"
-                  >
-                    <Pencil size={14} /> 編集
-                  </button>
-                </div>
-
-                {/* 名前（大きく） */}
-                <p className="text-2xl font-bold text-slate-900 mb-3">{c.name} さん</p>
-
-                {/* 詳細情報 */}
-                <div className="space-y-1.5">
-                  <div className="flex items-baseline gap-3 flex-wrap">
-                    <span className="text-sm text-slate-500">月額</span>
-                    <span className="text-lg font-bold text-slate-800">¥{c.monthly_fee?.toLocaleString()}</span>
-                  </div>
-                  <p className="text-sm text-slate-600">
-                    契約期間：{formatDate(c.contract_start)} 〜 {formatDate(c.contract_end)}
-                  </p>
-                  {(c.vehicle_type || c.vehicle_number) && (
-                    <p className="text-sm text-slate-600 flex items-center gap-1.5">
-                      <Car size={14} className="text-slate-400 shrink-0" />
-                      {[c.vehicle_type, c.vehicle_number].filter(Boolean).join('　')}
-                    </p>
                   )}
-                  {c.notes && (
-                    <p className="text-sm text-slate-500 bg-slate-50 rounded-lg px-3 py-2 mt-1">{c.notes}</p>
+                  {expired && (
+                    <span className="flex items-center gap-1 text-xs bg-red-100 text-red-600 border border-red-300 px-2 py-0.5 rounded-full font-bold shrink-0">
+                      <AlertTriangle size={11} /> 期限切れ
+                    </span>
                   )}
                 </div>
+                {/* 展開アイコン */}
+                <span className="text-slate-400 shrink-0 ml-2">
+                  {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </span>
+              </button>
 
-                {/* 電話ボタン（大きめ） */}
-                {c.phone && (
-                  <a
-                    href={`tel:${c.phone}`}
-                    className="mt-3 flex items-center gap-2 text-blue-600 font-bold text-base bg-blue-50 border border-blue-200 px-4 py-3 rounded-xl hover:bg-blue-100"
-                  >
-                    <Phone size={18} /> {c.phone}
-                  </a>
-                )}
-              </div>
+              {/* ── 詳細（展開時のみ表示） ── */}
+              {isOpen && (
+                <div className="border-t border-slate-100">
+                  {/* 詳細情報 */}
+                  <div className="px-4 py-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-slate-400 font-medium mb-0.5">月額</p>
+                        <p className="text-base font-bold text-slate-800">¥{c.monthly_fee?.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400 font-medium mb-0.5">契約期間</p>
+                        <p className={`text-sm font-medium ${expiringSoon || expired ? 'text-amber-700' : 'text-slate-700'}`}>
+                          {formatDate(c.contract_start)}<br />〜 {formatDate(c.contract_end)}
+                        </p>
+                      </div>
+                    </div>
 
-              {/* アクションバー */}
-              <div className="border-t border-slate-100 flex divide-x divide-slate-100 bg-slate-50/70">
-                <Link
-                  href={`/print/parking/${c.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-3.5 text-slate-700 font-medium text-sm hover:bg-slate-100"
-                >
-                  <FileText size={15} /> 車庫証明
-                </Link>
-                <button
-                  onClick={() => { setShowArchiveModal({ id: c.id, name: c.name }); setArchiveReason(''); }}
-                  className="flex-1 flex items-center justify-center gap-2 py-3.5 text-amber-600 font-medium text-sm hover:bg-amber-50"
-                >
-                  <Archive size={15} /> 解約する
-                </button>
-                <button
-                  onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
-                  className="flex items-center justify-center w-14 py-3.5 text-slate-400 hover:text-red-500 hover:bg-red-50"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+                    {(c.vehicle_type || c.vehicle_number) && (
+                      <div>
+                        <p className="text-xs text-slate-400 font-medium mb-0.5">お車</p>
+                        <p className="text-sm text-slate-700 flex items-center gap-1.5">
+                          <Car size={14} className="text-slate-400 shrink-0" />
+                          {[c.vehicle_type, c.vehicle_number].filter(Boolean).join('　')}
+                        </p>
+                      </div>
+                    )}
+
+                    {c.address && (
+                      <div>
+                        <p className="text-xs text-slate-400 font-medium mb-0.5">住所</p>
+                        <p className="text-sm text-slate-700">{c.address}</p>
+                      </div>
+                    )}
+
+                    {c.notes && (
+                      <p className="text-sm text-slate-500 bg-slate-50 rounded-xl px-3 py-2">{c.notes}</p>
+                    )}
+
+                    {/* 電話ボタン（詳細内に配置） */}
+                    {c.phone && (
+                      <a
+                        href={`tel:${c.phone}`}
+                        className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3.5 rounded-xl font-bold text-base hover:bg-blue-700 active:bg-blue-800"
+                      >
+                        <Phone size={18} /> {c.phone} に電話する
+                      </a>
+                    )}
+                  </div>
+
+                  {/* アクションバー */}
+                  <div className="flex divide-x divide-slate-100 border-t border-slate-100 bg-slate-50/70">
+                    <button
+                      onClick={() => openEdit(c)}
+                      className="flex-1 flex items-center justify-center gap-2 py-3.5 text-slate-700 font-medium text-sm hover:bg-slate-100"
+                    >
+                      <Pencil size={15} /> 編集する
+                    </button>
+                    <Link
+                      href={`/print/parking/${c.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 py-3.5 text-slate-600 font-medium text-sm hover:bg-slate-100"
+                    >
+                      <FileText size={15} /> 車庫証明
+                    </Link>
+                    <button
+                      onClick={() => { setShowArchiveModal({ id: c.id, name: c.name }); setArchiveReason(''); }}
+                      className="flex-1 flex items-center justify-center gap-2 py-3.5 text-amber-600 font-medium text-sm hover:bg-amber-50"
+                    >
+                      <Archive size={15} /> 解約
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
+                      className="flex items-center justify-center w-14 py-3.5 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -365,7 +393,6 @@ export default function ContractorsPage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              {/* 区画選択 */}
               {!editTarget ? (
                 <div>
                   <label className="text-base font-bold text-slate-700 mb-2 block">区画番号 <span className="text-red-500">*</span></label>
@@ -383,7 +410,6 @@ export default function ContractorsPage() {
                 </div>
               )}
 
-              {/* 基本情報 */}
               {[
                 { label: '氏名', key: 'name', placeholder: '例: 田中 太郎', required: true },
                 { label: '電話番号', key: 'phone', placeholder: '例: 090-0000-0000', type: 'tel' },
@@ -405,7 +431,6 @@ export default function ContractorsPage() {
                 </div>
               ))}
 
-              {/* 車情報 */}
               <div className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <p className="text-sm font-bold text-slate-500">お車の情報（車庫証明に使用）</p>
                 {[
@@ -425,7 +450,6 @@ export default function ContractorsPage() {
                 ))}
               </div>
 
-              {/* 契約期間 */}
               <div>
                 <label className="text-base font-bold text-slate-700 mb-2 block">契約開始日 <span className="text-red-500">*</span></label>
                 <input className={inputCls} value={form.contract_start} onChange={e => setForm({ ...form, contract_start: e.target.value })} type="date" />

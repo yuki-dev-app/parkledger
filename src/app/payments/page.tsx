@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Check, ChevronLeft, ChevronRight, Download, FileText, Undo2, Bell, Copy, X, Phone, Mail, CreditCard } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Download, FileText, Undo2, Bell, Copy, X, Phone, Mail, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 
@@ -35,6 +35,7 @@ export default function PaymentsPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toast, setToast] = useState<ToastType | null>(null);
+  const [showPaid, setShowPaid] = useState(false);
   const [reminder, setReminder] = useState<{ row: Row; info: ReminderData } | null>(null);
   const [settings, setSettings] = useState<Settings>({ business_name: '', business_phone: '', parking_name: '' });
   const [copied, setCopied] = useState(false);
@@ -185,8 +186,9 @@ TEL: ${settings.business_phone}` : ''}` : '';
           </div>
         )}
 
-        {rows.map(row => {
-          const paid = row.status === 'paid';
+        {/* 未入金を先に表示 */}
+        {rows.filter(r => r.status !== 'paid').map(row => {
+          const paid = false;
           const busy = busyId === row.contractor_id;
           return (
             <div
@@ -274,6 +276,56 @@ TEL: ${settings.business_phone}` : ''}` : '';
             </div>
           );
         })}
+
+        {/* 入金済みをまとめて折りたたむ */}
+        {rows.filter(r => r.status === 'paid').length > 0 && (
+          <div className="mt-1">
+            <button
+              onClick={() => setShowPaid(p => !p)}
+              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-emerald-200 rounded-2xl text-emerald-700 font-bold text-base hover:bg-emerald-50 shadow-sm"
+            >
+              <span className="flex items-center gap-2">
+                <Check size={18} strokeWidth={3} />
+                入金済み　{rows.filter(r => r.status === 'paid').length} 名
+              </span>
+              {showPaid ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </button>
+
+            {showPaid && (
+              <div className="flex flex-col gap-2 mt-2">
+                {rows.filter(r => r.status === 'paid').map(row => {
+                  const busy = busyId === row.contractor_id;
+                  return (
+                    <div key={row.contractor_id} className="bg-emerald-50 rounded-2xl border border-emerald-200 px-4 py-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs bg-white text-slate-500 px-2 py-0.5 rounded-md font-bold border border-slate-200">{row.garage_number}番</span>
+                          <span className="font-bold text-slate-800 text-base">{row.contractor_name} さん</span>
+                        </div>
+                        <p className="text-sm text-slate-500 mt-0.5">
+                          ¥{row.amount.toLocaleString()}
+                          {row.paid_date && <span className="ml-2 text-emerald-600">{row.paid_date} 入金</span>}
+                        </p>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        {row.payment_id && (
+                          <Link href={`/print/receipt/${row.payment_id}`} target="_blank" rel="noopener noreferrer"
+                            className="text-xs border border-slate-200 bg-white text-slate-600 px-2.5 py-2 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-1">
+                            <FileText size={13} /> 領収書
+                          </Link>
+                        )}
+                        <button onClick={() => toggle(row, 'unpaid')} disabled={busy}
+                          className="text-xs border border-slate-200 bg-white text-slate-500 px-2.5 py-2 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-1 disabled:opacity-50">
+                          <Undo2 size={13} /> 取消
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 督促モーダル */}
