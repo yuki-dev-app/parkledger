@@ -119,7 +119,7 @@ export default function GaragesPage() {
       {/* ページヘッダー */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">駐車区画</h1>
+          <h1 className="text-2xl font-bold text-slate-900">駐車区画</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             空き <span className="font-bold text-emerald-600">{vacant}</span>　使用中 <span className="font-bold text-slate-700">{occupied}</span>　全 {garages.length} 区画
           </p>

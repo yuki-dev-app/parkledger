@@ -7,8 +7,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { name, phone = '', email = '', message, notes = '' } = body;
+  const body = await req.json().catch(() => ({}));
+  const name    = (typeof body.name    === 'string' ? body.name.trim()    : '').slice(0, 100);
+  const phone   = (typeof body.phone   === 'string' ? body.phone.trim()   : '').slice(0, 20);
+  const email   = (typeof body.email   === 'string' ? body.email.trim()   : '').slice(0, 200);
+  const message = (typeof body.message === 'string' ? body.message.trim() : '').slice(0, 2000);
+  const notes   = (typeof body.notes   === 'string' ? body.notes.trim()   : '').slice(0, 1000);
 
   if (!name || !message)
     return NextResponse.json({ error: '氏名・内容は必須です' }, { status: 400 });

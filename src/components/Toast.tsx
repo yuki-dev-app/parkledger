@@ -24,9 +24,8 @@ export default function Toast({ toast, onClose }: { toast: ToastType | null; onC
 
   return (
     <div
-      className="fixed z-[100] pointer-events-none"
+      className="fixed z-[100] pointer-events-none toast-wrap"
       style={{
-        bottom: 'calc(env(safe-area-inset-bottom) + 72px)', // 下部ナビ(56px)より上
         left: 0,
         right: 0,
         display: 'flex',

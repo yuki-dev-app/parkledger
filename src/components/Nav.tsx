@@ -107,7 +107,7 @@ export default function Nav() {
                     <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-emerald-500" />
                   )}
                   <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-                  <span className="text-[11.5px] font-medium leading-none">{label}</span>
+                  <span className="text-[13px] font-medium leading-none">{label}</span>
                 </Link>
               </li>
             );

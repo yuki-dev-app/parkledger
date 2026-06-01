@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 import { SkeletonList } from '@/components/Skeleton';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 type Contractor = {
   id: number;
@@ -126,6 +127,9 @@ export default function ContractorsPage() {
     load();
   };
 
+  // モーダル表示中は背景スクロールを止める（iOS Safari 対応）
+  useScrollLock(showForm || !!showArchiveModal);
+
   const expiringCount = contractors.filter(c => {
     const d = daysUntil(c.contract_end);
     return d !== null && d >= 0 && d <= 30;
@@ -142,7 +146,7 @@ export default function ContractorsPage() {
       {/* ページヘッダー */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">契約者</h1>
+          <h1 className="text-2xl font-bold text-slate-900">契約者</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             {contractors.length} 名
             {expiringCount > 0 && (

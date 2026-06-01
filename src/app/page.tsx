@@ -83,7 +83,7 @@ export default async function HomePage() {
       {/* 日付 */}
       <div>
         <p className="text-sm text-slate-400">{d.month}月{d.day}日（{d.week}）</p>
-        <h1 className="text-xl font-bold text-slate-900 mt-0.5">今日の状況</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mt-0.5">今日の状況</h1>
       </div>
 
       {/* ── 全員OK のとき ── */}

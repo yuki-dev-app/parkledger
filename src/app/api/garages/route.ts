@@ -12,8 +12,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { number, status = 'vacant', monthly_fee = 0, notes = '' } = body;
+  const body = await req.json().catch(() => ({}));
+  const number     = (typeof body.number === 'string' ? body.number.trim() : '').slice(0, 20);
+  const status     = ['vacant', 'occupied', 'maintenance'].includes(body.status) ? body.status : 'vacant';
+  const monthly_fee = Math.max(0, Math.min(9_999_999, Number(body.monthly_fee) || 0));
+  const notes      = (typeof body.notes === 'string' ? body.notes.trim() : '').slice(0, 500);
+
   if (!number) return NextResponse.json({ error: '区画番号は必須です' }, { status: 400 });
 
   const existing = await sql`SELECT id FROM garages WHERE number = ${number}`;

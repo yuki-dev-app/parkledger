@@ -24,10 +24,18 @@ export async function getSettings(): Promise<Settings> {
   };
 }
 
+// 保存を許可するキーを明示的に列挙（任意キーの書き込みを防ぐ）
+const ALLOWED_KEYS: Set<keyof Settings> = new Set([
+  'business_name', 'business_address', 'business_phone',
+  'parking_name', 'parking_address', 'receipt_no_prefix', 'cleaning_persons',
+]);
+
 export async function saveSettings(values: Partial<Settings>) {
   for (const [k, v] of Object.entries(values)) {
+    if (!ALLOWED_KEYS.has(k as keyof Settings)) continue;
+    const safeValue = typeof v === 'string' ? v.slice(0, 1000) : '';
     await sql`
-      INSERT INTO settings (key, value) VALUES (${k}, ${v ?? ''})
+      INSERT INTO settings (key, value) VALUES (${k}, ${safeValue})
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
     `;
   }

@@ -18,7 +18,11 @@ body {
                'Meiryo', system-ui, -apple-system, sans-serif;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  /* 高齢者向け：ベースラインとして読みやすい行間を確保 */
+  font-size: 16px;
+  line-height: 1.65;
   /* iPhoneのセーフエリア対応 */
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
@@ -61,6 +65,42 @@ input, select, textarea {
 .modal-scroll {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+/* ══ 設定ページ保存ボタン：スマホでボトムナビの上に固定 ══
+   bottom-0 だとボトムナビ(64px)に隠れるため、モバイルでは上にずらす */
+.save-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+@media (max-width: 767px) {
+  .save-bar {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+@media (min-width: 768px) {
+  .save-bar {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border-top: none !important;
+    padding: 0 !important;
+  }
+}
+
+/* ══ Toast：スマホはボトムナビ上、PCは通常位置 ══ */
+.toast-wrap {
+  bottom: calc(env(safe-area-inset-bottom) + 80px);
+}
+@media (min-width: 768px) {
+  .toast-wrap {
+    bottom: 28px;
+  }
 }
 
 /* ════════════════════════════════════════════════════

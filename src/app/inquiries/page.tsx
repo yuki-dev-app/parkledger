@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Plus, X, Check, Phone, Mail, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 type Inquiry = {
   id: number;
@@ -74,6 +75,9 @@ export default function InquiriesPage() {
     load();
   };
 
+  // モーダル表示中は背景スクロールを止める（iOS Safari 対応）
+  useScrollLock(showForm);
+
   const filtered = inquiries.filter(i => filter === 'all' || i.status === filter);
   const newCount = inquiries.filter(i => i.status === 'new').length;
 
@@ -92,7 +96,7 @@ export default function InquiriesPage() {
 
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">問い合わせ</h1>
+          <h1 className="text-2xl font-bold text-slate-900">問い合わせ</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             {newCount > 0 && <span className="text-amber-600 font-bold">新着 {newCount} 件　</span>}
             全 {inquiries.length} 件
@@ -154,8 +158,9 @@ export default function InquiriesPage() {
           const notes = editNotes[inq.id] ?? inq.notes;
           return (
             <div key={inq.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div
-                className="p-3.5 flex items-start justify-between cursor-pointer"
+              <button
+                type="button"
+                className="w-full p-3.5 flex items-start justify-between text-left"
                 onClick={() => setExpanded(isOpen ? null : inq.id)}
               >
                 <div className="flex-1 min-w-0 pr-2">
@@ -171,7 +176,7 @@ export default function InquiriesPage() {
                 <div className="text-slate-400 shrink-0">
                   {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
-              </div>
+              </button>
 
               {isOpen && (
                 <div className="border-t border-slate-100 px-3.5 pb-3.5">
@@ -200,11 +205,11 @@ export default function InquiriesPage() {
                         onClick={e => e.stopPropagation()}
                       />
                     </div>
-                    <div className="flex gap-1.5 flex-wrap">
+                    <div className="flex gap-2 flex-wrap">
                       {inq.status !== 'in_progress' && (
                         <button
                           onClick={() => updateStatus(inq.id, 'in_progress', notes)}
-                          className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-2 rounded-lg font-medium hover:bg-blue-100"
+                          className="text-sm bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2.5 rounded-xl font-medium hover:bg-blue-100 active:bg-blue-200"
                         >
                           対応中にする
                         </button>
@@ -212,28 +217,28 @@ export default function InquiriesPage() {
                       {inq.status !== 'resolved' && (
                         <button
                           onClick={() => updateStatus(inq.id, 'resolved', notes)}
-                          className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-lg font-medium hover:bg-emerald-100 flex items-center gap-1"
+                          className="text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl font-medium hover:bg-emerald-100 active:bg-emerald-200 flex items-center gap-1.5"
                         >
-                          <Check size={12} /> 解決済にする
+                          <Check size={14} /> 解決済にする
                         </button>
                       )}
                       {inq.status !== 'new' && (
                         <button
                           onClick={() => updateStatus(inq.id, 'new', notes)}
-                          className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg font-medium hover:bg-amber-100"
+                          className="text-sm bg-amber-50 text-amber-700 border border-amber-200 px-4 py-2.5 rounded-xl font-medium hover:bg-amber-100 active:bg-amber-200"
                         >
                           新着に戻す
                         </button>
                       )}
                       <button
                         onClick={() => updateStatus(inq.id, inq.status, notes)}
-                        className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-3 py-2 rounded-lg font-medium hover:bg-slate-200"
+                        className="text-sm bg-slate-100 text-slate-600 border border-slate-200 px-4 py-2.5 rounded-xl font-medium hover:bg-slate-200 active:bg-slate-300"
                       >
                         メモ保存
                       </button>
                       <button
                         onClick={() => setDeleteTarget(inq.id)}
-                        className="text-xs text-red-400 hover:text-red-600 px-2 py-2 ml-auto"
+                        className="text-sm text-red-400 hover:text-red-600 px-3 py-2.5 ml-auto rounded-xl hover:bg-red-50"
                       >
                         削除
                       </button>

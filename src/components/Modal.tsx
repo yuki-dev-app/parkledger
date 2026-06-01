@@ -1,6 +1,6 @@
 'use client';
-import { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 type Props = {
   title: string;
@@ -9,11 +9,8 @@ type Props = {
 };
 
 export default function Modal({ title, onClose, children }: Props) {
-  // 背景スクロールを止める
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
+  // iOS Safari では overflow:hidden が効かないため position:fixed で対応
+  useScrollLock();
 
   return (
     // オーバーレイ

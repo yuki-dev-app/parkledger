@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 type Row = {
   contractor_id: number;
@@ -112,6 +113,9 @@ TEL: ${settings.business_phone}` : ''}` : '';
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // 督促モーダル表示中は背景スクロールを止める（iOS Safari 対応）
+  useScrollLock(!!reminder);
+
   const paidCount   = rows.filter(r => r.status === 'paid').length;
   const unpaidCount = rows.length - paidCount;
   const total       = rows.filter(r => r.status === 'paid').reduce((s, r) => s + r.amount, 0);
@@ -133,7 +137,7 @@ TEL: ${settings.business_phone}` : ''}` : '';
 
       {/* ページヘッダー */}
       <div className="mb-3">
-        <h1 className="text-xl font-bold text-slate-900">入金チェック</h1>
+        <h1 className="text-2xl font-bold text-slate-900">入金チェック</h1>
       </div>
 
       {/* 月ナビ */}

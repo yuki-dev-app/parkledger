@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Sparkles } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 type CleaningLog = {
   id: number;
@@ -92,6 +93,9 @@ export default function CleaningPage() {
     load();
   };
 
+  // モーダル表示中は背景スクロールを止める（iOS Safari 対応）
+  useScrollLock(showForm);
+
   const remove = async () => {
     if (!deleteTarget) return;
     await fetch(`/api/cleaning/${deleteTarget.id}`, { method: 'DELETE' });
@@ -115,7 +119,7 @@ export default function CleaningPage() {
 
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">清掃記録</h1>
+          <h1 className="text-2xl font-bold text-slate-900">清掃記録</h1>
           <p className="text-sm text-slate-500 mt-0.5">全 {logs.length} 件</p>
         </div>
         <button
@@ -160,15 +164,15 @@ export default function CleaningPage() {
               <div className="flex gap-1 shrink-0">
                 <button
                   onClick={() => openEdit(log)}
-                  className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 px-2 py-1.5 rounded-lg hover:bg-slate-100"
+                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 px-3 py-2 rounded-xl hover:bg-slate-100 active:bg-slate-200"
                 >
-                  <Pencil size={12} /> 編集
+                  <Pencil size={14} /> 編集
                 </button>
                 <button
                   onClick={() => setDeleteTarget({ id: log.id, date: log.cleaned_date })}
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50"
+                  className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 px-3 py-2 rounded-xl hover:bg-red-50 active:bg-red-100"
                 >
-                  <Trash2 size={12} /> 削除
+                  <Trash2 size={14} /> 削除
                 </button>
               </div>
             </div>

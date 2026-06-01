@@ -22,13 +22,31 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(rows);
 }
 
+const MAX_LEN = {
+  name: 100, phone: 20, email: 200, address: 300,
+  vehicle_type: 100, vehicle_number: 50, vehicle_chassis: 100,
+  emergency_contact: 100, notes: 1000,
+};
+
+function trimStr(v: unknown, max: number): string {
+  if (typeof v !== 'string') return '';
+  return v.trim().slice(0, max);
+}
+
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const {
-    garage_id, name, phone = '', email = '',
-    address = '', vehicle_type = '', vehicle_number = '', vehicle_chassis = '',
-    emergency_contact = '', contract_start, contract_end = '', notes = '',
-  } = body;
+  const body = await req.json().catch(() => ({}));
+  const garage_id = Number(body.garage_id) || 0;
+  const name         = trimStr(body.name,              MAX_LEN.name);
+  const phone        = trimStr(body.phone,             MAX_LEN.phone);
+  const email        = trimStr(body.email,             MAX_LEN.email);
+  const address      = trimStr(body.address,           MAX_LEN.address);
+  const vehicle_type = trimStr(body.vehicle_type,      MAX_LEN.vehicle_type);
+  const vehicle_number   = trimStr(body.vehicle_number,   MAX_LEN.vehicle_number);
+  const vehicle_chassis  = trimStr(body.vehicle_chassis,  MAX_LEN.vehicle_chassis);
+  const emergency_contact = trimStr(body.emergency_contact, MAX_LEN.emergency_contact);
+  const contract_start = trimStr(body.contract_start, 10);
+  const contract_end   = trimStr(body.contract_end,   10);
+  const notes          = trimStr(body.notes,           MAX_LEN.notes);
 
   if (!garage_id || !name || !contract_start)
     return NextResponse.json({ error: '区画・氏名・契約開始日は必須です' }, { status: 400 });
