@@ -4,7 +4,7 @@ import { Check, Settings as SettingsIcon, Plus, X, Users, Building2, FileText, C
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
-type UserRow = { id: number; email: string; created_at: string; is_active: boolean };
+type UserRow = { id: number; email: string; login_id: string | null; created_at: string; is_active: boolean };
 
 type Settings = {
   business_name: string;
@@ -29,8 +29,13 @@ export default function SettingsPage() {
   const [newPerson, setNewPerson] = useState('');
 
   // アカウント設定
-  const [currentUserId,    setCurrentUserId]    = useState(0);
-  const [currentUserEmail, setCurrentUserEmail] = useState('');
+  const [currentUserId,      setCurrentUserId]      = useState(0);
+  const [currentUserEmail,   setCurrentUserEmail]   = useState('');
+  const [currentLoginId,     setCurrentLoginId]     = useState('');
+
+  // ログインID変更
+  const [myLoginId,        setMyLoginId]        = useState('');
+  const [savingLoginId,    setSavingLoginId]    = useState(false);
   const [users,           setUsers]           = useState<UserRow[]>([]);
   const [newEmail,        setNewEmail]        = useState('');
   const [newPassword,     setNewPassword]     = useState('');
@@ -62,6 +67,7 @@ export default function SettingsPage() {
     if (me?.id) {
       setCurrentUserId(me.id);
       setCurrentUserEmail(me.email ?? '');
+      setCurrentLoginId(me.login_id ?? '');
     }
   }, []);
 
@@ -94,6 +100,25 @@ export default function SettingsPage() {
       body: JSON.stringify({ cleaning_persons: updated }),
     });
     setToast({ message: `${name} を追加しました`, kind: 'success' });
+  };
+
+  const changeLoginId = async () => {
+    setSavingLoginId(true);
+    const res = await fetch('/api/me/login-id', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login_id: myLoginId }),
+    });
+    setSavingLoginId(false);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setToast({ message: d.error ?? 'IDの変更に失敗しました', kind: 'error' });
+      return;
+    }
+    setCurrentLoginId(myLoginId);
+    setMyLoginId('');
+    setToast({ message: myLoginId ? `ログインIDを「${myLoginId}」に設定しました` : 'ログインIDを削除しました', kind: 'success' });
+    load();
   };
 
   const changeEmail = async () => {
@@ -315,6 +340,42 @@ export default function SettingsPage() {
           <h2 className="text-base font-bold text-slate-700">アカウント設定</h2>
         </div>
 
+          {/* ログインID設定 */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
+            <div className="px-4 py-3.5 border-b border-slate-100">
+              <p className="text-xs text-slate-400 font-medium mb-0.5">現在のログインID</p>
+              {currentLoginId
+                ? <p className="text-base font-bold text-slate-800">{currentLoginId}</p>
+                : <p className="text-sm text-slate-400">未設定（メールアドレスでのみログイン可）</p>
+              }
+            </div>
+            <div className="px-4 py-3.5">
+              <label className="text-sm font-medium text-slate-600 block mb-1.5">新しいログインID</label>
+              <input
+                type="text"
+                className={inputCls}
+                value={myLoginId}
+                onChange={e => setMyLoginId(e.target.value.toLowerCase())}
+                placeholder="例: tanaka-parking（英数字・-・_のみ）"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+              />
+              <p className="text-xs text-slate-400 mt-1.5">3〜30文字。設定するとIDだけでもログインできます。</p>
+              {myLoginId && !/^[a-zA-Z0-9_\-]{3,30}$/.test(myLoginId) && (
+                <p className="text-xs text-red-500 mt-1">英数字・ハイフン・アンダースコアのみ（3〜30文字）</p>
+              )}
+              <button
+                onClick={changeLoginId}
+                disabled={savingLoginId || (!!myLoginId && !/^[a-zA-Z0-9_\-]{3,30}$/.test(myLoginId))}
+                className="mt-2.5 w-full flex items-center justify-center gap-2 bg-slate-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-40"
+              >
+                <Check size={15} />
+                {savingLoginId ? '設定中...' : myLoginId ? 'IDを設定する' : 'IDを削除する'}
+              </button>
+            </div>
+          </div>
+
         {/* メールアドレス変更 */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
           <div className="px-4 py-3.5 border-b border-slate-100">
@@ -435,6 +496,11 @@ export default function SettingsPage() {
                       </span>
                     )}
                   </div>
+                  {u.login_id && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      ID: <span className="font-mono font-medium">{u.login_id}</span>
+                    </p>
+                  )}
                   <p className="text-xs text-slate-400 mt-0.5">
                     登録日：{u.created_at?.slice(0, 10) ?? '—'}
                   </p>

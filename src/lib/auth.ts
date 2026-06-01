@@ -28,43 +28,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email:    { label: 'メールアドレス', type: 'email' },
-        password: { label: 'パスワード',     type: 'password' },
+        identifier: { label: 'メールアドレスまたはID' },
+        password:   { label: 'パスワード', type: 'password' },
       },
       async authorize(credentials, request) {
-        const email    = (credentials?.email    as string | undefined)?.toLowerCase().trim() ?? '';
-        const password = (credentials?.password as string | undefined) ?? '';
-        if (!email || !password) return null;
+        const identifier = (credentials?.identifier as string | undefined)?.toLowerCase().trim() ?? '';
+        const password   = (credentials?.password   as string | undefined) ?? '';
+        if (!identifier || !password) return null;
 
         // IPアドレスを取得してレート制限チェック
         const ip = request?.headers?.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-        const { allowed, remaining } = checkRateLimit(ip);
-        if (!allowed) {
-          throw new Error('RATE_LIMIT');
-        }
+        const { allowed } = checkRateLimit(ip);
+        if (!allowed) return null; // ロック中は認証しない
 
+        // メールアドレスまたはオリジナルIDでログイン可能
         const rows = await sql`
           SELECT id, email, password_hash
           FROM users
-          WHERE email = ${email} AND is_active = true
+          WHERE (email = ${identifier} OR login_id = ${identifier})
+            AND is_active = true
         ` as { id: number; email: string; password_hash: string }[];
 
         if (rows.length === 0) {
           // ユーザーが存在しない場合もタイミング攻撃対策でbcryptを実行
-          await bcrypt.compare(password, '$2b$12$invalidhashfortimingnormalization');
-          throw new Error(remaining > 0
-            ? `INVALID_CREDENTIALS:${remaining}`
-            : 'RATE_LIMIT');
+          await bcrypt.compare(password, '$2b$12$invalidhashfortiming0000000000000000000');
+          return null;
         }
 
         const user = rows[0];
         const ok   = await bcrypt.compare(password, user.password_hash);
-
-        if (!ok) {
-          throw new Error(remaining > 0
-            ? `INVALID_CREDENTIALS:${remaining}`
-            : 'RATE_LIMIT');
-        }
+        if (!ok) return null;
 
         resetAttempts(ip);
         return { id: String(user.id), email: user.email, name: user.email };

@@ -14,8 +14,8 @@ export async function GET() {
   if (!ownerId) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
 
   const users = await sql`
-    SELECT id, email, created_at, is_active FROM users ORDER BY id
-  ` as { id: number; email: string; created_at: string; is_active: boolean }[];
+    SELECT id, email, login_id, created_at, is_active FROM users ORDER BY id
+  ` as { id: number; email: string; login_id: string | null; created_at: string; is_active: boolean }[];
 
   return NextResponse.json(users);
 }
