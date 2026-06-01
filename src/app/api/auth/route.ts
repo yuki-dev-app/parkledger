@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 const PASSWORD = process.env.ADMIN_PASSWORD;
 const SESSION_TOKEN = process.env.SESSION_TOKEN;
@@ -7,36 +9,55 @@ if (!PASSWORD || !SESSION_TOKEN) {
   console.error('⛔ ADMIN_PASSWORD と SESSION_TOKEN を環境変数に設定してください');
 }
 
-// ブルートフォース対策：IPごとに失敗回数を記録（サーバー再起動でリセット）
-const attempts = new Map<string, { count: number; until: number }>();
-const MAX_ATTEMPTS = 5;      // 5回失敗でロック
-const LOCKOUT_MS = 15 * 60 * 1000; // 15分
+// Upstash Redis が設定されていればRedisレート制限、なければメモリフォールバック
+let ratelimit: Ratelimit | null = null;
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  ratelimit = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(5, '15 m'),
+    prefix: 'parkledger:login',
+  });
+}
+
+// メモリフォールバック（Upstash未設定時）
+const memoryAttempts = new Map<string, { count: number; resetAt: number }>();
 
 function getIp(req: NextRequest): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
 }
 
-function isLocked(ip: string): boolean {
-  const entry = attempts.get(ip);
-  if (!entry) return false;
-  if (entry.until < Date.now()) { attempts.delete(ip); return false; }
-  return entry.count >= MAX_ATTEMPTS;
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number }> {
+  if (ratelimit) {
+    const result = await ratelimit.limit(ip);
+    return { allowed: result.success, remaining: result.remaining };
+  }
+
+  // メモリフォールバック
+  const now = Date.now();
+  const entry = memoryAttempts.get(ip);
+  if (!entry || entry.resetAt < now) {
+    memoryAttempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 });
+    return { allowed: true, remaining: 4 };
+  }
+  entry.count++;
+  const remaining = Math.max(0, 5 - entry.count);
+  return { allowed: entry.count <= 5, remaining };
 }
 
-function recordFail(ip: string) {
-  const now = Date.now();
-  const entry = attempts.get(ip);
-  if (!entry || entry.until < now) {
-    attempts.set(ip, { count: 1, until: now + LOCKOUT_MS });
-  } else {
-    entry.count++;
-  }
+function resetAttempts(ip: string) {
+  memoryAttempts.delete(ip);
+  // Redis側はTTLで自動リセットされるため追加操作不要
 }
 
 export async function POST(req: NextRequest) {
-  const ip = getIp(req);
+  if (!PASSWORD || !SESSION_TOKEN) {
+    return NextResponse.json({ error: 'サーバー設定エラー。管理者に連絡してください。' }, { status: 500 });
+  }
 
-  if (isLocked(ip)) {
+  const ip = getIp(req);
+  const { allowed, remaining } = await checkRateLimit(ip);
+
+  if (!allowed) {
     return NextResponse.json(
       { error: 'ログインを5回失敗しました。15分後に再試行してください。' },
       { status: 429 }
@@ -46,31 +67,23 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const { password } = body;
 
-  if (!PASSWORD || !SESSION_TOKEN) {
-    return NextResponse.json({ error: 'サーバー設定エラー。管理者に連絡してください。' }, { status: 500 });
-  }
-
   if (password !== PASSWORD) {
-    recordFail(ip);
-    const entry = attempts.get(ip);
-    const remaining = MAX_ATTEMPTS - (entry?.count ?? 0);
     const msg = remaining > 0
       ? `パスワードが違います（あと${remaining}回失敗するとロックされます）`
       : 'パスワードが違います。15分後に再試行してください。';
     return NextResponse.json({ error: msg }, { status: 401 });
   }
 
-  // ログイン成功：試行回数をリセット
-  attempts.delete(ip);
+  resetAttempts(ip);
 
   const isProduction = process.env.NODE_ENV === 'production';
   const res = NextResponse.json({ ok: true });
   res.cookies.set('auth', SESSION_TOKEN!, {
-    httpOnly: true,          // JavaScriptからアクセス不可
-    sameSite: 'lax',         // CSRF対策
-    secure: isProduction,    // 本番はHTTPS必須
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProduction,
     path: '/',
-    maxAge: 60 * 60 * 24 * 30, // 30日
+    maxAge: 60 * 60 * 24 * 30,
   });
   return res;
 }

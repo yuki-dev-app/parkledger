@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Sparkles } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 type CleaningLog = {
   id: number;
@@ -34,6 +35,7 @@ export default function CleaningPage() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<ToastType | null>(null);
   const [persons, setPersons] = useState<string[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; date: string } | null>(null);
 
   const load = useCallback(async () => {
     const [cRes, sRes] = await Promise.all([fetch('/api/cleaning'), fetch('/api/settings')]);
@@ -90,9 +92,10 @@ export default function CleaningPage() {
     load();
   };
 
-  const remove = async (id: number, date: string) => {
-    if (!confirm(`${formatDate(date)}の記録を削除しますか？`)) return;
-    await fetch(`/api/cleaning/${id}`, { method: 'DELETE' });
+  const remove = async () => {
+    if (!deleteTarget) return;
+    await fetch(`/api/cleaning/${deleteTarget.id}`, { method: 'DELETE' });
+    setDeleteTarget(null);
     setToast({ message: '削除しました', kind: 'success' });
     load();
   };
@@ -100,6 +103,15 @@ export default function CleaningPage() {
   return (
     <div>
       <Toast toast={toast} onClose={() => setToast(null)} />
+      {deleteTarget && (
+        <ConfirmDialog
+          title={`${formatDate(deleteTarget.date)}の記録を削除`}
+          message="この清掃記録を削除します。元に戻せません。"
+          confirmLabel="削除する"
+          onConfirm={remove}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
 
       <div className="flex items-center justify-between mb-3">
         <div>
@@ -153,7 +165,7 @@ export default function CleaningPage() {
                   <Pencil size={12} /> 編集
                 </button>
                 <button
-                  onClick={() => remove(log.id, log.cleaned_date)}
+                  onClick={() => setDeleteTarget({ id: log.id, date: log.cleaned_date })}
                   className="flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50"
                 >
                   <Trash2 size={12} /> 削除

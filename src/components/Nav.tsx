@@ -1,7 +1,9 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, Car, Users, CreditCard, MessageSquare, LogOut, Settings, Sparkles } from 'lucide-react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const links = [
   { href: '/', label: 'ホーム', icon: Home },
@@ -15,11 +17,11 @@ const links = [
 export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [showLogout, setShowLogout] = useState(false);
 
   if (pathname === '/login' || pathname.startsWith('/print')) return null;
 
   const logout = async () => {
-    if (!confirm('ログアウトしますか？')) return;
     await fetch('/api/auth', { method: 'DELETE' });
     router.push('/login');
     router.refresh();
@@ -45,7 +47,7 @@ export default function Nav() {
               <Settings size={16} />
             </Link>
             <button
-              onClick={logout}
+              onClick={() => setShowLogout(true)}
               className="flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
               aria-label="ログアウト"
             >
@@ -109,6 +111,17 @@ export default function Nav() {
         className="md:hidden"
         style={{ height: 'calc(56px + env(safe-area-inset-bottom))' }}
       />
+
+      {showLogout && (
+        <ConfirmDialog
+          title="ログアウト"
+          message="ログアウトしますか？"
+          confirmLabel="ログアウト"
+          danger={false}
+          onConfirm={logout}
+          onCancel={() => setShowLogout(false)}
+        />
+      )}
     </>
   );
 }

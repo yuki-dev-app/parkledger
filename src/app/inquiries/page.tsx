@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, X, Check, Phone, Mail, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 type Inquiry = {
   id: number;
@@ -32,6 +33,7 @@ export default function InquiriesPage() {
   const [editNotes, setEditNotes] = useState<{ [id: number]: string }>({});
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [filter, setFilter] = useState<'all' | 'new' | 'in_progress' | 'resolved'>('all');
   const [toast, setToast] = useState<ToastType | null>(null);
 
@@ -64,9 +66,10 @@ export default function InquiriesPage() {
     load();
   };
 
-  const remove = async (id: number) => {
-    if (!confirm('削除しますか？')) return;
-    await fetch(`/api/inquiries/${id}`, { method: 'DELETE' });
+  const remove = async () => {
+    if (deleteTarget === null) return;
+    await fetch(`/api/inquiries/${deleteTarget}`, { method: 'DELETE' });
+    setDeleteTarget(null);
     setToast({ message: '削除しました', kind: 'success' });
     load();
   };
@@ -77,6 +80,15 @@ export default function InquiriesPage() {
   return (
     <div>
       <Toast toast={toast} onClose={() => setToast(null)} />
+      {deleteTarget !== null && (
+        <ConfirmDialog
+          title="問い合わせを削除"
+          message="この問い合わせを削除します。元に戻せません。"
+          confirmLabel="削除する"
+          onConfirm={remove}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
 
       <div className="flex items-center justify-between mb-3">
         <div>
@@ -220,7 +232,7 @@ export default function InquiriesPage() {
                         メモ保存
                       </button>
                       <button
-                        onClick={() => remove(inq.id)}
+                        onClick={() => setDeleteTarget(inq.id)}
                         className="text-xs text-red-400 hover:text-red-600 px-2 py-2 ml-auto"
                       >
                         削除
