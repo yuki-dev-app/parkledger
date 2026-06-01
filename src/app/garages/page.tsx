@@ -76,12 +76,9 @@ export default function GaragesPage() {
     load();
   };
 
-  const remove = async (id: number, status: string) => {
-    if (status === 'occupied') {
-      setToast({ message: '使用中の区画は削除できません', kind: 'error' });
-      return;
-    }
-    setDeleteTarget(garages.find(g => g.id === id) ? { id, number: garages.find(g => g.id === id)!.number, status } : null);
+  const remove = async (id: number) => {
+    const target = garages.find(g => g.id === id);
+    if (target) setDeleteTarget({ id, number: target.number, status: target.status });
   };
 
   const confirmRemove = async () => {
@@ -177,9 +174,8 @@ export default function GaragesPage() {
                   <Pencil size={12} /> 編集
                 </button>
                 <button
-                  onClick={() => remove(g.id, g.status)}
+                  onClick={() => remove(g.id)}
                   className="flex-1 flex items-center justify-center gap-1 text-[11px] text-slate-400 hover:text-red-500 py-1.5 rounded-lg hover:bg-red-50"
-                  disabled={g.status === 'occupied'}
                 >
                   <Trash2 size={12} /> 削除
                 </button>
