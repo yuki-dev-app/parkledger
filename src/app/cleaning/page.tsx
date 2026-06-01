@@ -148,9 +148,9 @@ export default function CleaningPage() {
           <div key={log.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-slate-900 text-sm">{formatDate(log.cleaned_date)}</span>
-                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{log.person}</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+                  <span className="font-bold text-slate-900 text-sm whitespace-nowrap">{formatDate(log.cleaned_date)}</span>
+                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">{log.person}</span>
                 </div>
                 {log.notes && (
                   <p className="text-xs text-slate-500 leading-relaxed mt-1 bg-slate-50 rounded-lg px-2.5 py-1.5">{log.notes}</p>
