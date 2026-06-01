@@ -239,13 +239,17 @@ TEL: ${settings.business_phone}` : ''}` : '';
 
       {/* リマインダーモーダル */}
       {reminder && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-4 sm:p-5 max-h-[90dvh] overflow-y-auto modal-scroll">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900 text-lg">
+              <h3 className="font-bold text-slate-900 text-base">
                 {reminder.info.name} さんへの督促
               </h3>
-              <button onClick={() => setReminder(null)} className="p-2 text-slate-400 hover:text-slate-700"><X size={22} /></button>
+              <button
+                onClick={() => setReminder(null)}
+                className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+              ><X size={20} /></button>
             </div>
 
             {/* 連絡先ボタン */}

@@ -162,15 +162,13 @@ export default function CleaningPage() {
 
       {/* 入力フォーム（モーダル） */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-5">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-slate-900 text-lg">
                 {editTarget ? '清掃記録を編集' : '清掃記録を追加'}
               </h3>
-              <button onClick={() => setShowForm(false)} className="p-2 text-slate-400 hover:text-slate-700">
-                <X size={22} />
-              </button>
+              <button onClick={() => setShowForm(false)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100" style={{ minWidth:'44px', minHeight:'44px' }}><X size={20} /></button>
             </div>
 
             <div className="flex flex-col gap-4">
