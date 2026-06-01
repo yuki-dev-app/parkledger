@@ -11,7 +11,7 @@ type CleaningLog = {
   created_at: string;
 };
 
-const emptyForm = { cleaned_date: '', person: '', notes: '' };
+const emptyForm = { cleaned_date: '', person: '', notes: '', personSelect: '' };
 
 // 今日の日付を YYYY-MM-DD 形式で返す
 function today() {
@@ -33,10 +33,16 @@ export default function CleaningPage() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<ToastType | null>(null);
+  const [persons, setPersons] = useState<string[]>([]);
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/cleaning');
-    setLogs(await res.json());
+    const [cRes, sRes] = await Promise.all([fetch('/api/cleaning'), fetch('/api/settings')]);
+    setLogs(await cRes.json());
+    const settings = await sRes.json();
+    const list = settings.cleaning_persons
+      ? settings.cleaning_persons.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : [];
+    setPersons(list);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -48,7 +54,13 @@ export default function CleaningPage() {
   };
 
   const openEdit = (log: CleaningLog) => {
-    setForm({ cleaned_date: log.cleaned_date, person: log.person, notes: log.notes });
+    const isInList = persons.includes(log.person);
+    setForm({
+      cleaned_date: log.cleaned_date,
+      person: isInList ? log.person : log.person,
+      personSelect: isInList ? log.person : '__other__',
+      notes: log.notes,
+    });
     setEditTarget(log);
     setShowForm(true);
   };
@@ -188,13 +200,45 @@ export default function CleaningPage() {
                 <label className="text-base text-slate-700 mb-1.5 block font-medium">
                   担当者 *
                 </label>
-                <input
-                  type="text"
-                  className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
-                  value={form.person}
-                  onChange={e => setForm({ ...form, person: e.target.value })}
-                  placeholder="例: 山田、業者A、自分"
-                />
+                {persons.length > 0 ? (
+                  <>
+                    <select
+                      className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white"
+                      style={{ fontSize: '16px' }}
+                      value={form.personSelect}
+                      onChange={e => {
+                        const v = e.target.value;
+                        setForm({ ...form, personSelect: v, person: v === '__other__' ? '' : v });
+                      }}
+                    >
+                      <option value="">選択してください</option>
+                      {persons.map(name => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                      <option value="__other__">その他（直接入力）</option>
+                    </select>
+                    {form.personSelect === '__other__' && (
+                      <input
+                        type="text"
+                        className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700 mt-2"
+                        style={{ fontSize: '16px' }}
+                        value={form.person}
+                        onChange={e => setForm({ ...form, person: e.target.value })}
+                        placeholder="担当者名を入力"
+                        autoFocus
+                      />
+                    )}
+                  </>
+                ) : (
+                  <input
+                    type="text"
+                    className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
+                    style={{ fontSize: '16px' }}
+                    value={form.person}
+                    onChange={e => setForm({ ...form, person: e.target.value })}
+                    placeholder="例: 山田、業者A（設定で担当者を登録するとプルダウンになります）"
+                  />
+                )}
               </div>
 
               <div>
@@ -212,7 +256,7 @@ export default function CleaningPage() {
 
               <button
                 onClick={save}
-                disabled={loading || !form.cleaned_date || !form.person}
+                disabled={loading || !form.cleaned_date || !form.person || (persons.length > 0 && !form.personSelect)}
                 className="bg-slate-800 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-slate-700 active:bg-slate-900 disabled:opacity-50"
               >
                 <Check size={18} /> {editTarget ? '保存する' : '追加する'}

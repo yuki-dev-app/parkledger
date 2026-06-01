@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Check, Settings as SettingsIcon } from 'lucide-react';
+import { Check, Settings as SettingsIcon, Plus, X, Users } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
 
 type Settings = {
@@ -10,6 +10,7 @@ type Settings = {
   parking_name: string;
   parking_address: string;
   receipt_no_prefix: string;
+  cleaning_persons: string;
 };
 
 const FIELDS: { key: keyof Settings; label: string; placeholder: string; hint?: string }[] = [
@@ -25,14 +26,45 @@ export default function SettingsPage() {
   const [form, setForm] = useState<Settings>({
     business_name: '', business_address: '', business_phone: '',
     parking_name: '', parking_address: '', receipt_no_prefix: 'R',
+    cleaning_persons: '',
   });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<ToastType | null>(null);
+  const [newPerson, setNewPerson] = useState('');
 
   const load = useCallback(async () => {
     const res = await fetch('/api/settings');
     setForm(await res.json());
   }, []);
+
+  const persons = form.cleaning_persons
+    ? form.cleaning_persons.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  const addPerson = async () => {
+    const name = newPerson.trim();
+    if (!name || persons.includes(name)) return;
+    const updated = [...persons, name].join(',');
+    setForm(f => ({ ...f, cleaning_persons: updated }));
+    setNewPerson('');
+    await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cleaning_persons: updated }),
+    });
+    setToast({ message: `${name} を追加しました`, kind: 'success' });
+  };
+
+  const removePerson = async (name: string) => {
+    const updated = persons.filter(p => p !== name).join(',');
+    setForm(f => ({ ...f, cleaning_persons: updated }));
+    await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cleaning_persons: updated }),
+    });
+    setToast({ message: `${name} を削除しました`, kind: 'success' });
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -82,6 +114,47 @@ export default function SettingsPage() {
         >
           <Check size={18} /> {loading ? '保存中...' : '保存する'}
         </button>
+      </div>
+
+      {/* 清掃担当者リスト */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-6 mt-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Users size={20} className="text-slate-600" />
+          <h3 className="text-base font-bold text-slate-900">清掃担当者リスト</h3>
+        </div>
+        <p className="text-xs text-slate-400 mb-4">清掃記録で担当者をプルダウン選択できるようになります</p>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          {persons.length === 0 && (
+            <p className="text-sm text-slate-400">担当者が登録されていません</p>
+          )}
+          {persons.map(name => (
+            <span key={name} className="flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full text-sm font-medium">
+              {name}
+              <button onClick={() => removePerson(name)} className="text-slate-400 hover:text-red-500">
+                <X size={14} />
+              </button>
+            </span>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            className="border border-slate-300 rounded-xl px-3 py-2.5 flex-1 text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
+            style={{ fontSize: '16px' }}
+            value={newPerson}
+            onChange={e => setNewPerson(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') addPerson(); }}
+            placeholder="例: 田中、業者A"
+          />
+          <button
+            onClick={addPerson}
+            disabled={!newPerson.trim()}
+            className="flex items-center gap-1 bg-slate-800 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-slate-700 disabled:opacity-40"
+          >
+            <Plus size={16} /> 追加
+          </button>
+        </div>
       </div>
 
       {/* 不足項目の説明 */}

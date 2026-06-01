@@ -7,6 +7,7 @@ export type Settings = {
   parking_name: string;
   parking_address: string;
   receipt_no_prefix: string;
+  cleaning_persons: string;
 };
 
 export async function getSettings(): Promise<Settings> {
@@ -19,6 +20,7 @@ export async function getSettings(): Promise<Settings> {
     parking_name:      map.parking_name      ?? '',
     parking_address:   map.parking_address   ?? '',
     receipt_no_prefix: map.receipt_no_prefix ?? 'R',
+    cleaning_persons:  map.cleaning_persons  ?? '',
   };
 }
 
