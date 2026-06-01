@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Check, Car } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
 import Modal from '@/components/Modal';
+import { SkeletonGrid } from '@/components/Skeleton';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 type Garage = {
   id: number;
@@ -28,11 +30,15 @@ export default function GaragesPage() {
   const [editTarget, setEditTarget] = useState<Garage | null>(null);
   const [form, setForm] = useState({ number: '', status: 'vacant', monthly_fee: '', notes: '' });
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; number: string; status: string } | null>(null);
   const [toast, setToast] = useState<ToastType | null>(null);
 
   const load = useCallback(async () => {
+    setDataLoading(true);
     const res = await fetch('/api/garages');
     setGarages(await res.json());
+    setDataLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -75,8 +81,13 @@ export default function GaragesPage() {
       setToast({ message: '使用中の区画は削除できません', kind: 'error' });
       return;
     }
-    if (!confirm('この区画を削除しますか？')) return;
-    const res = await fetch(`/api/garages/${id}`, { method: 'DELETE' });
+    setDeleteTarget(garages.find(g => g.id === id) ? { id, number: garages.find(g => g.id === id)!.number, status } : null);
+  };
+
+  const confirmRemove = async () => {
+    if (!deleteTarget) return;
+    const res = await fetch(`/api/garages/${deleteTarget.id}`, { method: 'DELETE' });
+    setDeleteTarget(null);
     if (!res.ok) {
       const d = await res.json();
       setToast({ message: d.error ?? '削除に失敗しました', kind: 'error' });
@@ -112,7 +123,19 @@ export default function GaragesPage() {
         </button>
       </div>
 
-      {garages.length === 0 ? (
+      {deleteTarget && (
+        <ConfirmDialog
+          title={`区画 #${deleteTarget.number} を削除`}
+          message="この区画を削除すると元に戻せません。"
+          confirmLabel="削除する"
+          onConfirm={confirmRemove}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {dataLoading ? (
+        <SkeletonGrid count={6} />
+      ) : garages.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
           <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Car size={28} className="text-slate-400" />
@@ -156,6 +179,7 @@ export default function GaragesPage() {
                 <button
                   onClick={() => remove(g.id, g.status)}
                   className="flex-1 flex items-center justify-center gap-1 text-[11px] text-slate-400 hover:text-red-500 py-1.5 rounded-lg hover:bg-red-50"
+                  disabled={g.status === 'occupied'}
                 >
                   <Trash2 size={12} /> 削除
                 </button>

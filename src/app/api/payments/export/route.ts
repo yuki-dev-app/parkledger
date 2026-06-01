@@ -17,6 +17,8 @@ export async function GET(req: NextRequest) {
     JOIN  garages g  ON g.id = c.garage_id
     LEFT JOIN payments p ON p.contractor_id = c.id AND p.year_month = ${ym}
     WHERE c.archived_at = ''
+      AND LEFT(c.contract_start, 7) <= ${ym}
+      AND (c.contract_end = '' OR LEFT(c.contract_end, 7) >= ${ym})
     ORDER BY LENGTH(g.number), g.number
   ` as { garage_number: string; contractor_name: string; amount: number; status: string; paid_date: string }[];
 

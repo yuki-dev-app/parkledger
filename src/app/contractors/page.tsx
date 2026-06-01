@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Pencil, Trash2, X, Check, Phone, MapPin, Car, AlertTriangle, FileText, Archive, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, Phone, MapPin, Car, AlertTriangle, FileText, Archive, Users, Search } from 'lucide-react';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
+import { SkeletonList } from '@/components/Skeleton';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 type Contractor = {
   id: number;
@@ -60,17 +62,22 @@ export default function ContractorsPage() {
   const [vacantGarages, setVacantGarages] = useState<Garage[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState<{ id: number; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [archiveReason, setArchiveReason] = useState('');
   const [editTarget, setEditTarget] = useState<Contractor | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [toast, setToast] = useState<ToastType | null>(null);
+  const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
+    setDataLoading(true);
     const [cRes, gRes] = await Promise.all([fetch('/api/contractors'), fetch('/api/garages')]);
     setContractors(await cRes.json());
     const gs = await gRes.json();
     setVacantGarages(gs.filter((g: Garage) => g.status === 'vacant'));
+    setDataLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -121,9 +128,9 @@ export default function ContractorsPage() {
     load();
   };
 
-  const remove = async (id: number, name: string) => {
-    if (!confirm(`${name} さんのデータを完全に削除しますか？\n解約のみなら「解約」ボタンをご使用ください。`)) return;
+  const remove = async (id: number) => {
     const res = await fetch(`/api/contractors/${id}`, { method: 'DELETE' });
+    setDeleteTarget(null);
     if (!res.ok) { setToast({ message: '削除に失敗しました', kind: 'error' }); return; }
     setToast({ message: '削除しました', kind: 'success' });
     load();
@@ -133,6 +140,10 @@ export default function ContractorsPage() {
     const d = daysUntil(c.contract_end);
     return d !== null && d >= 0 && d <= 30;
   }).length;
+
+  const filtered = contractors.filter(c =>
+    !search || c.name.includes(search) || c.garage_number.includes(search) || c.phone?.includes(search)
+  );
 
   return (
     <div>
@@ -165,9 +176,21 @@ export default function ContractorsPage() {
         </div>
       </div>
 
+      {/* 検索バー */}
+      <div className="relative mb-3">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-700 shadow-sm"
+          placeholder="名前・区画番号・電話番号で検索"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
       {/* 一覧 */}
       <div className="flex flex-col gap-2.5">
-        {contractors.length === 0 && (
+        {dataLoading && <SkeletonList count={3} lines={3} />}
+        {!dataLoading && contractors.length === 0 && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
             <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Users size={28} className="text-slate-400" />
@@ -183,7 +206,13 @@ export default function ContractorsPage() {
           </div>
         )}
 
-        {contractors.map(c => {
+        {!dataLoading && search && filtered.length === 0 && (
+          <div className="text-center py-10 text-slate-400 text-sm">
+            「{search}」に一致する契約者が見つかりません
+          </div>
+        )}
+
+        {filtered.map(c => {
           const days = daysUntil(c.contract_end);
           const expiringSoon = days !== null && days >= 0 && days <= 30;
           const expired = days !== null && days < 0;
@@ -286,7 +315,7 @@ export default function ContractorsPage() {
                   <Archive size={13} /> 解約
                 </button>
                 <button
-                  onClick={() => remove(c.id, c.name)}
+                  onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
                   className="flex items-center justify-center w-9 h-9 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50"
                 >
                   <Trash2 size={14} />
@@ -296,6 +325,17 @@ export default function ContractorsPage() {
           );
         })}
       </div>
+
+      {/* 削除確認ダイアログ */}
+      {deleteTarget && (
+        <ConfirmDialog
+          title={`${deleteTarget.name} さんを削除`}
+          message="入金履歴も含め完全に削除されます。解約のみの場合は「解約」ボタンをご使用ください。この操作は取り消せません。"
+          confirmLabel="完全に削除する"
+          onConfirm={() => remove(deleteTarget.id)}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
 
       {/* 解約モーダル */}
       {showArchiveModal && (

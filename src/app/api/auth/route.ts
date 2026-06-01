@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PASSWORD = process.env.ADMIN_PASSWORD ?? 'garage2024';
-const SESSION_TOKEN = process.env.SESSION_TOKEN ?? 'garage-session-secret';
+const PASSWORD = process.env.ADMIN_PASSWORD;
+const SESSION_TOKEN = process.env.SESSION_TOKEN;
+
+if (!PASSWORD || !SESSION_TOKEN) {
+  console.error('⛔ ADMIN_PASSWORD と SESSION_TOKEN を環境変数に設定してください');
+}
 
 // ブルートフォース対策：IPごとに失敗回数を記録（サーバー再起動でリセット）
 const attempts = new Map<string, { count: number; until: number }>();
@@ -42,6 +46,10 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const { password } = body;
 
+  if (!PASSWORD || !SESSION_TOKEN) {
+    return NextResponse.json({ error: 'サーバー設定エラー。管理者に連絡してください。' }, { status: 500 });
+  }
+
   if (password !== PASSWORD) {
     recordFail(ip);
     const entry = attempts.get(ip);
@@ -57,7 +65,7 @@ export async function POST(req: NextRequest) {
 
   const isProduction = process.env.NODE_ENV === 'production';
   const res = NextResponse.json({ ok: true });
-  res.cookies.set('auth', SESSION_TOKEN, {
+  res.cookies.set('auth', SESSION_TOKEN!, {
     httpOnly: true,          // JavaScriptからアクセス不可
     sameSite: 'lax',         // CSRF対策
     secure: isProduction,    // 本番はHTTPS必須
