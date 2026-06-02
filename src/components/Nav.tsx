@@ -6,7 +6,17 @@ import { Home, Car, Users, CreditCard, MessageSquare, LogOut, Settings, Sparkles
 import { createClient } from '@/lib/supabase/client';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
-const links = [
+// ── 下部ナビ：よく使う5項目 ──────────────────────────────
+const BOTTOM_NAV = [
+  { href: '/',            label: 'ホーム',   icon: Home },
+  { href: '/garages',     label: '区画',     icon: Car },
+  { href: '/contractors', label: '契約者',   icon: Users },
+  { href: '/payments',    label: '入金',     icon: CreditCard },
+  { href: '/inquiries',   label: '問合せ',   icon: MessageSquare },
+];
+
+// ── PC上部ナビ：全項目 ────────────────────────────────────
+const TOP_NAV = [
   { href: '/',            label: 'ホーム',   icon: Home },
   { href: '/garages',     label: '空き状況', icon: Car },
   { href: '/contractors', label: '契約者',   icon: Users },
@@ -22,7 +32,7 @@ export default function Nav() {
 
   useEffect(() => { setShowLogout(false); }, [pathname]);
 
-  // ログイン・登録・印刷・セットアップは非表示
+  // 認証不要・印刷ページはナビ非表示
   if (
     pathname === '/login' ||
     pathname === '/register' ||
@@ -45,7 +55,7 @@ export default function Nav() {
         className="bg-slate-900 text-white"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <div className="max-w-5xl mx-auto px-3 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-3 sm:px-5 py-3 flex items-center justify-between">
 
           {/* ロゴ */}
           <Link href="/" className="flex items-center gap-0.5 shrink-0">
@@ -53,24 +63,25 @@ export default function Nav() {
             <span className="text-xl sm:text-2xl font-black tracking-tighter text-emerald-400">Ledger</span>
           </Link>
 
-          {/* 右側ボタン群 */}
+          {/* 右側：設定・ログアウト */}
           <div className="flex items-center gap-1">
             <Link
               href="/settings"
-              className={`flex items-center justify-center w-11 h-11 rounded-xl transition-colors
-                ${pathname === '/settings'
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-colors text-sm font-medium ${
+                pathname === '/settings'
                   ? 'bg-slate-700 text-white'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white active:bg-slate-700'}`}
-              aria-label="設定"
+                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+              }`}
             >
-              <Settings size={20} />
+              <Settings size={18} />
+              <span className="hidden sm:inline">設定</span>
             </Link>
             <button
               onClick={() => setShowLogout(true)}
-              className="flex items-center justify-center w-11 h-11 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white active:bg-slate-700 transition-colors"
-              aria-label="ログアウト"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium"
             >
-              <LogOut size={20} />
+              <LogOut size={18} />
+              <span className="hidden sm:inline">ログアウト</span>
             </button>
           </div>
         </div>
@@ -79,14 +90,15 @@ export default function Nav() {
         <nav className="hidden md:block border-t border-slate-800">
           <div className="max-w-5xl mx-auto px-5">
             <ul className="flex gap-1 py-1.5">
-              {links.map(({ href, label, icon: Icon }) => {
+              {TOP_NAV.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href || (href !== '/' && pathname.startsWith(href));
                 return (
                   <li key={href}>
                     <Link
                       href={href}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                        ${active ? 'bg-white text-slate-900' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        active ? 'bg-white text-slate-900' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                      }`}
                     >
                       <Icon size={15} />
                       {label}
@@ -101,24 +113,25 @@ export default function Nav() {
 
       {/* ══ スマホ下部ナビ ══ */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-50"
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <ul className="flex h-16">
-          {links.map(({ href, label, icon: Icon }) => {
+        <ul className="flex h-[68px]">
+          {BOTTOM_NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== '/' && pathname.startsWith(href));
             return (
               <li key={href} className="flex-1">
                 <Link
                   href={href}
-                  className={`relative flex flex-col items-center justify-center gap-[3px] w-full h-full transition-colors
-                    ${active ? 'text-slate-900' : 'text-slate-500'}`}
+                  className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${
+                    active ? 'text-emerald-700' : 'text-slate-400 hover:text-slate-600'
+                  }`}
                 >
                   {active && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-emerald-500" />
+                    <span className="absolute" style={{ top: 0, width: '40px', height: '3px', backgroundColor: '#059669', borderRadius: '0 0 3px 3px' }} />
                   )}
-                  <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-                  <span className="text-[13px] font-medium leading-none">{label}</span>
+                  <Icon size={24} strokeWidth={active ? 2.5 : 1.8} />
+                  <span className={`text-[12px] font-medium leading-none ${active ? 'font-bold' : ''}`}>{label}</span>
                 </Link>
               </li>
             );

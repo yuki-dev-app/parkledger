@@ -217,19 +217,19 @@ export default async function HomePage() {
             <Car size={20} className="text-slate-500 mx-auto mb-1.5" />
             <p className="text-2xl font-black text-slate-900 tabular-nums">{vacant}</p>
             <p className="text-xs text-slate-500 mt-0.5">空き区画</p>
-            <p className="text-[11px] text-slate-400">全{total}区画</p>
+            <p className="text-xs text-slate-400">全{total}区画</p>
           </Link>
           <Link href="/contractors" className="bg-white border border-slate-200 rounded-2xl p-4 text-center hover:bg-slate-50">
             <Users size={20} className="text-slate-500 mx-auto mb-1.5" />
             <p className="text-2xl font-black text-slate-900 tabular-nums">{contractors?.length ?? 0}</p>
             <p className="text-xs text-slate-500 mt-0.5">契約者</p>
-            <p className="text-[11px] text-slate-400">名</p>
+            <p className="text-xs text-slate-400">名</p>
           </Link>
           <Link href="/payments" className={`border rounded-2xl p-4 text-center ${allPaid ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
             <CreditCard size={20} className={`mx-auto mb-1.5 ${allPaid ? 'text-emerald-500' : 'text-red-500'}`} />
             <p className={`text-2xl font-black tabular-nums ${allPaid ? 'text-emerald-700' : 'text-red-600'}`}>{unpaid.length}</p>
             <p className={`text-xs mt-0.5 ${allPaid ? 'text-emerald-600' : 'text-red-600'}`}>未入金</p>
-            <p className="text-[11px] text-slate-400">{month}月分</p>
+            <p className="text-xs text-slate-400">{month}月分</p>
           </Link>
         </div>
       )}

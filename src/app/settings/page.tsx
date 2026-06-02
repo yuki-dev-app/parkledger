@@ -82,15 +82,28 @@ export default function SettingsPage() {
     await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cleaning_persons: updated }) });
   };
 
+  // Supabase のエラーメッセージを日本語に変換
+  const toJaError = (msg: string): string => {
+    const map: Record<string, string> = {
+      'Email rate limit exceeded': 'メール送信の上限に達しました。しばらく待ってから再試行してください。',
+      'User not found': 'ユーザーが見つかりません。',
+      'Invalid email': 'メールアドレスの形式が正しくありません。',
+      'Password should be at least 6 characters': 'パスワードは6文字以上にしてください。',
+      'New password should be different from the old password': '新しいパスワードは現在のパスワードと異なるものにしてください。',
+      'Invalid login credentials': 'パスワードが正しくありません。',
+    };
+    return map[msg] ?? 'エラーが発生しました。時間をおいて再試行してください。';
+  };
+
   const changeEmail = async () => {
     if (!newEmail || !newEmail.includes('@')) return;
     setSavingEmail(true);
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ email: newEmail });
     setSavingEmail(false);
-    if (error) { setToast({ message: error.message, kind: 'error' }); return; }
+    if (error) { setToast({ message: toJaError(error.message), kind: 'error' }); return; }
     setNewEmail('');
-    setToast({ message: '確認メールを送りました。新しいメールを確認してください。', kind: 'success' });
+    setToast({ message: '確認メールを送りました。新しいメールアドレスを確認してください。', kind: 'success' });
   };
 
   const saveLoginId = async () => {
@@ -123,7 +136,7 @@ export default function SettingsPage() {
     }
     const { error } = await supabase.auth.updateUser({ password: newPass });
     setSavingPass(false);
-    if (error) { setToast({ message: error.message, kind: 'error' }); return; }
+    if (error) { setToast({ message: toJaError(error.message), kind: 'error' }); return; }
     setCurrentPass(''); setNewPass(''); setConfirmPass('');
     setToast({ message: 'パスワードを変更しました', kind: 'success' });
   };
@@ -200,7 +213,7 @@ export default function SettingsPage() {
             {persons.map(name=>(
               <span key={name} className="flex items-center gap-1.5 bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-full text-xs font-medium">
                 {name}
-                <button onClick={()=>removePerson(name)} className="text-slate-400 hover:text-red-500 flex items-center"><X size={12}/></button>
+                <button onClick={()=>removePerson(name)} className="flex items-center justify-center w-7 h-7 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 -mr-1 ml-0.5 transition-colors"><X size={14}/></button>
               </span>
             ))}
           </div>

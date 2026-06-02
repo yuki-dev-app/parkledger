@@ -36,7 +36,8 @@
       "Bash(Remove-Item \"C:\\\\dev\\\\parkledger\\\\src\\\\app\\\\api\\\\admin\\\\invite\\\\route.ts\" -Force)",
       "Bash(Remove-Item \"C:\\\\dev\\\\parkledger\\\\src\\\\app\\\\auth\\\\set-password\\\\page.tsx\" -Force)",
       "Bash(Remove-Item \"C:\\\\dev\\\\parkledger\\\\src\\\\app\\\\auth\\\\set-password\" -Force -ErrorAction SilentlyContinue)",
-      "PowerShell(Remove-Item \"C:\\\\dev\\\\parkledger\\\\src\\\\app\\\\auth\\\\set-password\" -Force -Confirm:$false -ErrorAction SilentlyContinue)"
+      "PowerShell(Remove-Item \"C:\\\\dev\\\\parkledger\\\\src\\\\app\\\\auth\\\\set-password\" -Force -Confirm:$false -ErrorAction SilentlyContinue)",
+      "Bash(bash \"C:\\\\Users\\\\yuyuk\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\\\\87b19911-b1e2-4520-a7ed-50793d889447\\\\44f2d9ad-b852-4752-bbdb-b2f610b9e6b5\\\\skills\\\\web-artifacts-builder\\\\scripts\\\\init-artifact.sh\" kyodai-lp)"
     ]
   }
 }

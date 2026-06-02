@@ -252,7 +252,7 @@ export default function ContractorsPage() {
                   {/* アラート */}
                   {expiringSoon && (
                     <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-bold shrink-0">
-                      <AlertTriangle size={11} /> {days}日
+                      <AlertTriangle size={11} /> あと{days}日
                     </span>
                   )}
                   {expired && (
@@ -317,7 +317,7 @@ export default function ContractorsPage() {
                     )}
                   </div>
 
-                  {/* アクションバー */}
+                  {/* アクションバー（主要操作） */}
                   <div className="flex divide-x divide-slate-100 border-t border-slate-100 bg-slate-50/70">
                     <button
                       onClick={() => openEdit(c)}
@@ -337,13 +337,16 @@ export default function ContractorsPage() {
                       onClick={() => { setShowArchiveModal({ id: c.id, name: c.name }); setArchiveReason(''); }}
                       className="flex-1 flex items-center justify-center gap-2 py-3.5 text-amber-600 font-medium text-sm hover:bg-amber-50"
                     >
-                      <Archive size={15} /> 解約
+                      <Archive size={15} /> 解約する
                     </button>
+                  </div>
+                  {/* 完全削除（誤タップ防止のため分離・目立たないデザイン） */}
+                  <div className="border-t border-slate-100 px-4 py-2 flex justify-end">
                     <button
                       onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
-                      className="flex items-center justify-center min-w-[44px] w-14 py-3.5 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={13} /> 完全に削除（全履歴消去）
                     </button>
                   </div>
                 </div>
