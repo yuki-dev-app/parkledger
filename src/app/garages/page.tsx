@@ -5,6 +5,7 @@ import Toast, { ToastType } from '@/components/Toast';
 import Modal from '@/components/Modal';
 import { SkeletonList } from '@/components/Skeleton';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import { getCached, setCached } from '@/lib/page-cache';
 
 type Garage = {
   id: number;
@@ -36,10 +37,17 @@ export default function GaragesPage() {
   const [toast,       setToast]       = useState<ToastType | null>(null);
 
   const load = useCallback(async () => {
-    setDataLoading(true);
+    // キャッシュがあれば即座に表示（スケルトンなし）
+    const cached = getCached<Garage[]>('garages');
+    if (cached) { setGarages(cached); setDataLoading(false); }
+    else setDataLoading(true);
+
+    // 常にバックグラウンドで最新データを取得
     const res  = await fetch('/api/garages');
     const json = await res.json().catch(() => []);
-    setGarages(Array.isArray(json) ? json : []);
+    const data = Array.isArray(json) ? json : [];
+    setCached('garages', data);
+    setGarages(data);
     setDataLoading(false);
   }, []);
 

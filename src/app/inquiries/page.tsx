@@ -4,6 +4,7 @@ import { Plus, X, Check, Phone, Mail, ChevronDown, ChevronUp, MessageSquare } fr
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useScrollLock } from '@/lib/use-scroll-lock';
+import { getCached, setCached } from '@/lib/page-cache';
 
 type Inquiry = {
   id: number;
@@ -39,9 +40,14 @@ export default function InquiriesPage() {
   const [toast, setToast] = useState<ToastType | null>(null);
 
   const load = useCallback(async () => {
+    const cached = getCached<Inquiry[]>('inquiries');
+    if (cached) setInquiries(cached);
+
     const res  = await fetch('/api/inquiries');
     const json = await res.json().catch(() => []);
-    setInquiries(Array.isArray(json) ? json : []);
+    const data = Array.isArray(json) ? json : [];
+    setCached('inquiries', data);
+    setInquiries(data);
   }, []);
 
   useEffect(() => { load(); }, [load]);

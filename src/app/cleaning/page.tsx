@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Sparkles } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
+import { getCached, setCached } from '@/lib/page-cache';
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useScrollLock } from '@/lib/use-scroll-lock';
@@ -30,9 +31,14 @@ export default function CleaningPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; date: string } | null>(null);
 
   const load = useCallback(async () => {
+    const cachedLogs = getCached<CleaningLog[]>('cleaning');
+    if (cachedLogs) setLogs(cachedLogs);
+
     const [cRes, sRes] = await Promise.all([fetch('/api/cleaning'), fetch('/api/settings')]);
     const [cJson, settings] = await Promise.all([cRes.json().catch(() => []), sRes.json().catch(() => ({}))]);
-    setLogs(Array.isArray(cJson) ? cJson : []);
+    const logs = Array.isArray(cJson) ? cJson : [];
+    setCached('cleaning', logs);
+    setLogs(logs);
     const list = settings.cleaning_persons
       ? settings.cleaning_persons.split(',').map((s: string) => s.trim()).filter(Boolean)
       : [];

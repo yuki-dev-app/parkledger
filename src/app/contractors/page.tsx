@@ -7,6 +7,7 @@ import Toast, { ToastType } from '@/components/Toast';
 import { SkeletonList } from '@/components/Skeleton';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useScrollLock } from '@/lib/use-scroll-lock';
+import { getCached, setCached } from '@/lib/page-cache';
 
 type Contractor = {
   id: number;
@@ -57,11 +58,22 @@ export default function ContractorsPage() {
   const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
-    setDataLoading(true);
+    const cachedC = getCached<Contractor[]>('contractors');
+    const cachedG = getCached<Garage[]>('garages');
+    if (cachedC && cachedG) {
+      setContractors(cachedC);
+      setVacantGarages(cachedG.filter(g => g.status === 'vacant'));
+      setDataLoading(false);
+    } else setDataLoading(true);
+
     const [cRes, gRes] = await Promise.all([fetch('/api/contractors'), fetch('/api/garages')]);
     const [cJson, gJson] = await Promise.all([cRes.json().catch(() => []), gRes.json().catch(() => [])]);
-    setContractors(Array.isArray(cJson) ? cJson : []);
-    setVacantGarages((Array.isArray(gJson) ? gJson : []).filter((g: Garage) => g.status === 'vacant'));
+    const contractors = Array.isArray(cJson) ? cJson : [];
+    const garages     = Array.isArray(gJson) ? gJson : [];
+    setCached('contractors', contractors);
+    setCached('garages', garages);
+    setContractors(contractors);
+    setVacantGarages(garages.filter((g: Garage) => g.status === 'vacant'));
     setDataLoading(false);
   }, []);
 

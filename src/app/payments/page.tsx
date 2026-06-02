@@ -7,6 +7,7 @@ import {
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 import { useScrollLock } from '@/lib/use-scroll-lock';
+import { getCached, setCached, invalidateCache } from '@/lib/page-cache';
 
 type Row = {
   contractor_id: number;
@@ -43,12 +44,17 @@ export default function PaymentsPage() {
   const ym = `${year}-${String(month).padStart(2, '0')}`;
 
   const load = useCallback(async () => {
+    const cachedRows = getCached<Row[]>(`payments:${ym}`);
+    if (cachedRows) setRows(cachedRows);
+
     const [pRes, sRes] = await Promise.all([
       fetch(`/api/payments?year_month=${ym}`),
       fetch('/api/settings'),
     ]);
     const [pJson, sJson] = await Promise.all([pRes.json().catch(() => []), sRes.json().catch(() => ({}))]);
-    setRows(Array.isArray(pJson) ? pJson as Row[] : []);
+    const rows = Array.isArray(pJson) ? pJson as Row[] : [];
+    setCached(`payments:${ym}`, rows);
+    setRows(rows);
     if (sJson.parking_name !== undefined) setSettings(sJson);
   }, [ym]);
 
@@ -70,6 +76,7 @@ export default function PaymentsPage() {
     });
     setBusyId(null);
     if (!res.ok) { setToast({ message: '更新に失敗しました', kind: 'error' }); return; }
+    invalidateCache(`payments:${ym}`);
     setToast({
       message: next === 'paid' ? `${row.contractor_name} さんの入金を確認しました` : '未入金に戻しました',
       kind: 'success',
