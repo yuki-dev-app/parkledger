@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Phone, Car, AlertTriangle, FileText, Archive, Users, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { formatDate } from '@/lib/format-date';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 import { SkeletonList } from '@/components/Skeleton';
@@ -35,14 +36,7 @@ const emptyForm = {
 
 function daysUntil(dateStr: string): number | null {
   if (!dateStr) return null;
-  const diff = new Date(dateStr).getTime() - new Date().getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
-}
-
-function formatDate(s: string) {
-  if (!s) return '未定';
-  const [y, m, d] = s.split('-');
-  return `${y}年${Number(m)}月${Number(d)}日`;
+  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
 }
 
 const inputCls = 'border border-slate-300 rounded-xl px-4 py-3.5 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white text-base';

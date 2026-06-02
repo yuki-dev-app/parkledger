@@ -255,11 +255,11 @@ export default function SettingsPage() {
             <label className="text-sm font-medium text-slate-600">パスワードを変更する</label>
             <div className="relative">
               <input type={showCur?'text':'password'} className={inputCls+' pr-12'} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} placeholder="現在のパスワード" autoComplete="current-password"/>
-              <button type="button" onClick={()=>setShowCur(p=>!p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><Eye size={16}/></button>
+              <button type="button" onClick={()=>setShowCur(p=>!p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showCur ? <EyeOff size={16}/> : <Eye size={16}/>}</button>
             </div>
             <div className="relative">
               <input type={showNew?'text':'password'} className={inputCls+' pr-12'} value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="新しいパスワード（8文字以上）" autoComplete="new-password"/>
-              <button type="button" onClick={()=>setShowNew(p=>!p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><Eye size={16}/></button>
+              <button type="button" onClick={()=>setShowNew(p=>!p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showNew ? <EyeOff size={16}/> : <Eye size={16}/>}</button>
             </div>
             <input type={showNew?'text':'password'} className={inputCls} value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="新しいパスワード（確認）" autoComplete="new-password"/>
             {newPass&&confirmPass&&newPass!==confirmPass&&<p className="text-xs text-red-500">パスワードが一致しません</p>}

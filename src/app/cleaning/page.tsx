@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Sparkles } from 'lucide-react';
+import { formatDate } from '@/lib/format-date';
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useScrollLock } from '@/lib/use-scroll-lock';
@@ -15,18 +16,8 @@ type CleaningLog = {
 
 const emptyForm = { cleaned_date: '', person: '', notes: '', personSelect: '' };
 
-// 今日の日付を YYYY-MM-DD 形式で返す
-function today() {
-  const now = new Date();
-  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  return jst.toISOString().slice(0, 10);
-}
-
-function formatDate(iso: string) {
-  if (!iso) return '';
-  const [y, m, d] = iso.split('-');
-  return `${y}年${Number(m)}月${Number(d)}日`;
-}
+// 今日の日付を YYYY-MM-DD 形式で返す（日本時間）
+const today = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
 
 export default function CleaningPage() {
   const [logs, setLogs] = useState<CleaningLog[]>([]);

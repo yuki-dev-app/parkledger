@@ -70,8 +70,9 @@ export default function InquiriesPage() {
 
   const remove = async () => {
     if (deleteTarget === null) return;
-    await fetch(`/api/inquiries/${deleteTarget}`, { method: 'DELETE' });
+    const res = await fetch(`/api/inquiries/${deleteTarget}`, { method: 'DELETE' });
     setDeleteTarget(null);
+    if (!res.ok) { setToast({ message: '削除に失敗しました', kind: 'error' }); return; }
     setToast({ message: '削除しました', kind: 'success' });
     load();
   };

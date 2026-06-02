@@ -29,12 +29,9 @@ export async function POST(req: NextRequest) {
   if (!name || !message)
     return NextResponse.json({ error: '氏名・内容は必須です' }, { status: 400 });
 
-  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
-  const createdAt = jst.toISOString().replace('T', ' ').slice(0, 19);
-
   const { data, error } = await supabase
     .from('inquiries')
-    .insert({ name, phone, email, message, status: 'new', notes, created_at: createdAt, org_id: orgId })
+    .insert({ name, phone, email, message, status: 'new', notes, org_id: orgId })
     .select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

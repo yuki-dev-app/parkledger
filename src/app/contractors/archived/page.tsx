@@ -6,6 +6,7 @@ import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { SkeletonList } from '@/components/Skeleton';
 import { useScrollLock } from '@/lib/use-scroll-lock';
+import { formatDate } from '@/lib/format-date';
 
 type ArchivedContractor = {
   id: number;
@@ -22,11 +23,6 @@ type ArchivedContractor = {
   archive_reason: string;
 };
 
-function fmt(d: string) {
-  if (!d) return '—';
-  const [y, m, day] = d.split('-');
-  return `${y}年${Number(m)}月${Number(day)}日`;
-}
 
 export default function ArchivedContractorsPage() {
   const [list,          setList]          = useState<ArchivedContractor[]>([]);
@@ -39,8 +35,9 @@ export default function ArchivedContractorsPage() {
 
   const load = useCallback(async () => {
     setDataLoading(true);
-    const res = await fetch('/api/contractors?archived=1');
-    setList(await res.json());
+    const res  = await fetch('/api/contractors?archived=1');
+    const json = await res.json().catch(() => []);
+    setList(Array.isArray(json) ? json : []);
     setDataLoading(false);
   }, []);
 
@@ -134,7 +131,7 @@ export default function ArchivedContractorsPage() {
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
                   <p className="text-xs text-slate-400 font-medium mb-0.5">解約日</p>
-                  <p className="text-base font-bold text-slate-800">{fmt(c.archived_at)}</p>
+                  <p className="text-base font-bold text-slate-800">{formatDate(c.archived_at)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 font-medium mb-0.5">月額</p>
@@ -143,7 +140,7 @@ export default function ArchivedContractorsPage() {
               </div>
 
               <p className="text-sm text-slate-500 mb-2">
-                契約期間：{fmt(c.contract_start)} 〜 {c.contract_end ? fmt(c.contract_end) : '未定'}
+                契約期間：{formatDate(c.contract_start)} 〜 {c.contract_end ? formatDate(c.contract_end) : '未定'}
               </p>
 
               {c.archive_reason && (

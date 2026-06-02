@@ -23,12 +23,9 @@ export async function POST(req: NextRequest) {
   if (!cleaned_date || !person)
     return NextResponse.json({ error: '日付と担当者は必須です' }, { status: 400 });
 
-  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
-  const createdAt = jst.toISOString().replace('T', ' ').slice(0, 19);
-
   const { data, error } = await supabase
     .from('cleaning_logs')
-    .insert({ cleaned_date, person, notes, created_at: createdAt, org_id: orgId })
+    .insert({ cleaned_date, person, notes, org_id: orgId })
     .select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

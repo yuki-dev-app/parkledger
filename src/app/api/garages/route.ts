@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
-
-// 自然順ソート（1,2,3...10,11 の順）
-function naturalSort<T extends { number: string }>(arr: T[]): T[] {
-  return [...arr].sort((a, b) =>
-    a.number.length !== b.number.length
-      ? a.number.length - b.number.length
-      : a.number.localeCompare(b.number, 'ja-JP', { numeric: true })
-  );
-}
+import { naturalSort } from '@/lib/sort-utils';
 
 export async function GET() {
   const { supabase, user } = await requireAuth();
@@ -25,7 +17,7 @@ export async function GET() {
   );
 
   return NextResponse.json(
-    naturalSort(garages ?? []).map(g => ({
+    (garages ?? []).sort((a, b) => naturalSort(a.number, b.number)).map(g => ({
       ...g,
       contractor_name: contractorMap.get(g.id) ?? null,
     }))

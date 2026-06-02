@@ -16,14 +16,8 @@ type Row = {
   payment_id: number | null;
   status: 'paid' | 'unpaid' | 'late';
   paid_date: string;
-};
-
-type ReminderData = {
-  name: string;
   phone: string;
   email: string;
-  amount: number;
-  garage_number: string;
 };
 
 type Settings = {
@@ -42,7 +36,7 @@ export default function PaymentsPage() {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toast, setToast] = useState<ToastType | null>(null);
   const [filter, setFilter] = useState<FilterType>('unpaid');
-  const [reminder, setReminder] = useState<{ row: Row; info: ReminderData } | null>(null);
+  const [reminder, setReminder] = useState<Row | null>(null);
   const [settings, setSettings] = useState<Settings>({ business_name: '', business_phone: '', parking_name: '' });
   const [copied, setCopied] = useState(false);
 
@@ -53,8 +47,9 @@ export default function PaymentsPage() {
       fetch(`/api/payments?year_month=${ym}`),
       fetch('/api/settings'),
     ]);
-    setRows(await pRes.json());
-    setSettings(await sRes.json());
+    const [pJson, sJson] = await Promise.all([pRes.json().catch(() => []), sRes.json().catch(() => ({}))]);
+    setRows(Array.isArray(pJson) ? pJson as Row[] : []);
+    if (sJson.parking_name !== undefined) setSettings(sJson);
   }, [ym]);
 
   useEffect(() => { load(); }, [load]);
@@ -82,23 +77,14 @@ export default function PaymentsPage() {
     load();
   };
 
-  const openReminder = async (row: Row) => {
-    const cRes = await fetch('/api/contractors');
-    const cs = await cRes.json();
-    const c = cs.find((x: { id: number; phone?: string; email?: string }) => x.id === row.contractor_id);
-    setReminder({
-      row,
-      info: { name: row.contractor_name, phone: c?.phone || '', email: c?.email || '', amount: row.amount, garage_number: row.garage_number },
-    });
-    setCopied(false);
-  };
+  const openReminder = (row: Row) => { setReminder(row); setCopied(false); };
 
-  const reminderText = reminder ? `${reminder.info.name} 様
+  const reminderText = reminder ? `${reminder.contractor_name} 様
 
 平素よりお世話になっております。
 ${settings.parking_name || '駐車場'}の管理者${settings.business_name ? '、' + settings.business_name : ''}です。
 
-${year}年${month}月分の駐車場使用料（¥${reminder.info.amount.toLocaleString()}）の
+${year}年${month}月分の駐車場使用料（¥${reminder.amount.toLocaleString()}）の
 ご入金がまだ確認できておりません。
 
 お忙しいところ大変恐れ入りますが、
@@ -338,7 +324,7 @@ TEL: ${settings.business_phone}` : ''}` : '';
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-5 max-h-[90dvh] overflow-y-auto modal-scroll">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900 text-lg">{reminder.info.name} さんへ連絡</h3>
+              <h3 className="font-bold text-slate-900 text-lg">{reminder.contractor_name} さんへ連絡</h3>
               <button onClick={() => setReminder(null)}
                 className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 w-11 h-11">
                 <X size={20} />
@@ -346,19 +332,19 @@ TEL: ${settings.business_phone}` : ''}` : '';
             </div>
 
             <div className="flex flex-col gap-2 mb-4">
-              {reminder.info.phone && (
-                <a href={`tel:${reminder.info.phone}`}
+              {reminder.phone && (
+                <a href={`tel:${reminder.phone}`}
                   className="flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-xl font-bold text-base hover:bg-emerald-700">
-                  <Phone size={20} /> 電話する　{reminder.info.phone}
+                  <Phone size={20} /> 電話する　{reminder.phone}
                 </a>
               )}
-              {reminder.info.email && (
-                <a href={`mailto:${reminder.info.email}?subject=${encodeURIComponent(`【${year}年${month}月分】駐車場使用料のご確認`)}&body=${encodeURIComponent(reminderText)}`}
+              {reminder.email && (
+                <a href={`mailto:${reminder.email}?subject=${encodeURIComponent(`【${year}年${month}月分】駐車場使用料のご確認`)}&body=${encodeURIComponent(reminderText)}`}
                   className="flex items-center justify-center gap-2 bg-slate-700 text-white py-4 rounded-xl font-bold text-base hover:bg-slate-800">
                   <Mail size={18} /> メールを送る
                 </a>
               )}
-              {!reminder.info.phone && !reminder.info.email && (
+              {!reminder.phone && !reminder.email && (
                 <p className="text-sm text-slate-500 text-center py-3 bg-slate-50 rounded-xl">連絡先が登録されていません</p>
               )}
             </div>

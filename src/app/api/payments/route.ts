@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
+import { naturalSort } from '@/lib/sort-utils';
 
 export async function GET(req: NextRequest) {
   const { supabase, user } = await requireAuth();
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const { data: contractors } = await supabase
     .from('contractors')
-    .select('id, name, garage_id, contract_start, contract_end, garages!inner(number, monthly_fee)')
+    .select('id, name, phone, email, garage_id, contract_start, contract_end, garages!inner(number, monthly_fee)')
     .eq('archived_at', '');
 
   const eligible = (contractors ?? []).filter(c => {
@@ -33,6 +34,8 @@ export async function GET(req: NextRequest) {
     return {
       contractor_id:   c.id,
       contractor_name: c.name,
+      phone:           c.phone ?? '',
+      email:           c.email ?? '',
       garage_number:   (c.garages as unknown as { number: string }).number,
       amount:          (c.garages as unknown as { monthly_fee: number }).monthly_fee,
       payment_id:      p?.id ?? null,
@@ -41,11 +44,7 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  rows.sort((a, b) =>
-    a.garage_number.length !== b.garage_number.length
-      ? a.garage_number.length - b.garage_number.length
-      : a.garage_number.localeCompare(b.garage_number, 'ja-JP', { numeric: true })
-  );
+  rows.sort((a, b) => naturalSort(a.garage_number, b.garage_number));
 
   return NextResponse.json(rows);
 }
