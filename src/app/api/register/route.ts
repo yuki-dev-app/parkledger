@@ -78,10 +78,13 @@ export async function POST(req: NextRequest) {
         .select('id')
         .single();
       if (org) {
-        await supabaseAdmin
-          .from('org_members')
-          .insert({ org_id: org.id, user_id: userId, role: 'owner' })
-          .catch(() => {}); // 競合は無視
+        try {
+          await supabaseAdmin
+            .from('org_members')
+            .insert({ org_id: org.id, user_id: userId, role: 'owner' });
+        } catch {
+          // 競合は無視（DBトリガーが先に作成した場合など）
+        }
       }
     }
   }
