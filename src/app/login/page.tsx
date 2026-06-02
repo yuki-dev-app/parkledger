@@ -57,18 +57,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden" style={{ backgroundColor: '#080e20' }}>
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f1e] via-[#0d1836] to-[#060c18]" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-[240px] rounded-full blur-3xl pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(52,211,153,0.07) 0%, transparent 70%)' }} />
-
-      <div className="relative min-h-full flex flex-col items-center justify-center"
+    /*
+     * fixed は使わない → iOS でキーボード表示時に visual viewport が縮んで
+     * fixed 要素が上にズレ、body（白）が露出する問題を避けるため。
+     * 代わりに min-h-[100dvh] + overflow-y-auto で「画面を埋めつつスクロール可能」にする。
+     * html { background: #080e20 } も設定済みなので、
+     * iOS キーボード拡張エリアが露出しても白くならない。
+     */
+    <div
+      className="overflow-y-auto overflow-x-hidden"
+      style={{
+        minHeight: '100dvh',
+        backgroundColor: '#080e20',
+        backgroundImage: 'linear-gradient(135deg, #0a0f1e 0%, #0d1836 50%, #060c18 100%)',
+      }}
+    >
+      <div
+        className="relative flex flex-col items-center justify-center"
         style={{
+          minHeight: '100dvh',
           paddingTop:    'max(52px, env(safe-area-inset-top))',
           paddingBottom: 'max(36px, env(safe-area-inset-bottom))',
           paddingLeft:   'max(20px, env(safe-area-inset-left))',
           paddingRight:  'max(20px, env(safe-area-inset-right))',
-        }}>
+        }}
+      >
+      {/* glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-[240px] rounded-full blur-3xl pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse, rgba(52,211,153,0.07) 0%, transparent 70%)' }} />
         <div className="w-full max-w-[360px]">
 
           {/* ロゴ */}

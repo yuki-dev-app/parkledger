@@ -11,6 +11,8 @@
 html {
   /* 横スクロールを完全禁止 */
   overflow-x: hidden;
+  /* iOS キーボード表示時に html が露出する場合の背景色（auth ページに合わせた暗色） */
+  background-color: #080e20;
 }
 
 body {
@@ -26,6 +28,8 @@ body {
   /* iPhoneのセーフエリア対応 */
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  /* アプリページの背景色（auth ページは自前で上書き） */
+  background-color: #f8fafc; /* slate-50 */
 }
 
 /* iOS Safariでのダブルタップズームを防ぐ */
@@ -34,7 +38,7 @@ button, a, input, select, textarea {
   touch-action: manipulation;
 }
 
-/* タップ領域の最小サイズ（ボタンのみ。a[href]全体には適用しない） */
+/* タップ領域の最小サイズ（高齢者向けアクセシビリティ） */
 button {
   min-height: 44px;
 }

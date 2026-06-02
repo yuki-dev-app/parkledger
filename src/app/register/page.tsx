@@ -52,18 +52,26 @@ export default function RegisterPage() {
   const canSubmit = email && password.length >= 8 && password === confirm;
 
   return (
-    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden" style={{ backgroundColor: '#080e20' }}>
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f1e] via-[#0d1836] to-[#060c18]" />
+    <div
+      className="overflow-y-auto overflow-x-hidden"
+      style={{
+        minHeight: '100dvh',
+        backgroundColor: '#080e20',
+        backgroundImage: 'linear-gradient(135deg, #0a0f1e 0%, #0d1836 50%, #060c18 100%)',
+      }}
+    >
+      <div
+        className="relative flex flex-col items-center justify-center"
+        style={{
+          minHeight: '100dvh',
+          paddingTop:    'max(52px, env(safe-area-inset-top))',
+          paddingBottom: 'max(36px, env(safe-area-inset-bottom))',
+          paddingLeft:   'max(20px, env(safe-area-inset-left))',
+          paddingRight:  'max(20px, env(safe-area-inset-right))',
+        }}
+      >
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-[240px] rounded-full blur-3xl pointer-events-none"
         style={{ background: 'radial-gradient(ellipse, rgba(52,211,153,0.07) 0%, transparent 70%)' }} />
-
-      <div className="relative min-h-full flex flex-col items-center justify-center"
-        style={{
-          paddingTop: 'max(52px, env(safe-area-inset-top))',
-          paddingBottom: 'max(36px, env(safe-area-inset-bottom))',
-          paddingLeft: 'max(20px, env(safe-area-inset-left))',
-          paddingRight: 'max(20px, env(safe-area-inset-right))',
-        }}>
         <div className="w-full max-w-[360px]">
           <div className="text-center mb-7">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4"
