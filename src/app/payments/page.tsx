@@ -104,7 +104,6 @@ TEL: ${settings.business_phone}` : ''}` : '';
 
   const paidCount   = rows.filter(r => r.status === 'paid').length;
   const unpaidCount = rows.length - paidCount;
-  const total       = rows.filter(r => r.status === 'paid').reduce((s, r) => s + r.amount, 0);
 
   const displayRows =
     filter === 'all'    ? rows :
@@ -137,24 +136,6 @@ TEL: ${settings.business_phone}` : ''}` : '';
           className="flex items-center justify-center w-12 h-12 text-slate-600 hover:bg-slate-100 rounded-xl active:bg-slate-200">
           <ChevronRight size={26} />
         </button>
-      </div>
-
-      {/* サマリー3枚 */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-center">
-          <p className="text-2xl font-bold text-emerald-600 tabular-nums">{paidCount}</p>
-          <p className="text-xs text-emerald-700 font-medium mt-0.5">入金済み</p>
-        </div>
-        <div className={`rounded-2xl p-3 text-center border ${unpaidCount > 0 ? 'bg-red-50 border-red-300' : 'bg-slate-50 border-slate-200'}`}>
-          <p className={`text-2xl font-bold tabular-nums ${unpaidCount > 0 ? 'text-red-600' : 'text-slate-400'}`}>{unpaidCount}</p>
-          <p className={`text-xs font-medium mt-0.5 ${unpaidCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>
-            {unpaidCount > 0 ? '未入金' : '全員済み'}
-          </p>
-        </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-center">
-          <p className="text-sm font-bold text-slate-700 leading-tight pt-1.5 tabular-nums">¥{total.toLocaleString()}</p>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">入金合計</p>
-        </div>
       </div>
 
       {/* ── 月次レポート（CSV）── 実務用に目立たせる */}
