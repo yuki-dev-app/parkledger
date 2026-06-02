@@ -61,8 +61,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // ログイン済みでログインページ → ホームにリダイレクト
-  if (user && path === '/login') {
+  // ログイン済みでログイン・登録ページ → ホームにリダイレクト
+  if (user && (path === '/login' || path === '/register')) {
     const homeUrl = request.nextUrl.clone();
     homeUrl.pathname = '/';
     return NextResponse.redirect(homeUrl);

@@ -22,8 +22,14 @@ export default function Nav() {
 
   useEffect(() => { setShowLogout(false); }, [pathname]);
 
-  // ログイン・印刷・セットアップは非表示
-  if (pathname === '/login' || pathname.startsWith('/print') || pathname.startsWith('/setup')) return null;
+  // ログイン・登録・印刷・セットアップは非表示
+  if (
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname.startsWith('/print') ||
+    pathname.startsWith('/setup') ||
+    pathname.startsWith('/auth')
+  ) return null;
 
   const logout = async () => {
     const supabase = createClient();
