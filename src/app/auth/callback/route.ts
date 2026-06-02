@@ -1,6 +1,6 @@
 /**
  * Supabase Auth コールバック
- * 招待メールのリンク・メール確認リンクはここに飛んでくる
+ * メール確認リンクはここに飛んでくる（現在は確認メールなし設定のため通常は通らない）
  */
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const tokenHash = searchParams.get('token_hash');
-  const type      = searchParams.get('type') as 'invite' | 'magiclink' | 'recovery' | 'email' | null;
+  const type      = searchParams.get('type') as 'magiclink' | 'recovery' | 'email' | null;
 
   if (tokenHash && type) {
     const cookieStore = await cookies();
@@ -32,15 +32,9 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
 
     if (!error) {
-      // 招待からのログインは初回パスワード設定ページへ
-      if (type === 'invite') {
-        return NextResponse.redirect(new URL('/auth/set-password', request.url));
-      }
-      // その他（メール確認など）はホームへ
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
 
-  // エラー時はログインページへ（エラーメッセージ付き）
   return NextResponse.redirect(new URL('/login?error=auth_callback', request.url));
 }

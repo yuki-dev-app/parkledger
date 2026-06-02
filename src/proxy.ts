@@ -9,11 +9,12 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // 認証不要なパス
-const PUBLIC_PATHS = new Set(['/login', '/auth/callback', '/auth/confirm', '/auth/set-password']);
+const PUBLIC_PATHS = new Set(['/login', '/register', '/auth/callback', '/auth/confirm']);
 
 function isPublicPath(path: string): boolean {
   if (PUBLIC_PATHS.has(path)) return true;
   if (path.startsWith('/api/auth')) return true;
+  if (path === '/api/register') return true;
   if (path.startsWith('/_next')) return true;
   if (path === '/favicon.ico') return true;
   return false;

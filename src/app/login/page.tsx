@@ -137,7 +137,14 @@ export default function LoginPage() {
             </form>
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 mt-5">
+          <p className="text-center text-slate-500 text-sm mt-5">
+            はじめてご利用の方は{' '}
+            <a href="/register" className="text-emerald-400 hover:text-emerald-300 font-medium">
+              新規登録
+            </a>
+          </p>
+
+          <div className="flex items-center justify-center gap-1.5 mt-4">
             <Shield size={12} className="text-slate-600" />
             <p className="text-slate-600 text-xs">SSL暗号化通信で保護されています</p>
           </div>
