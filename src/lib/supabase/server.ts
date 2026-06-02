@@ -116,8 +116,8 @@ export async function requireAuth() {
   return { supabase, user, orgId };
 }
 
-/** システム管理者かどうかを確認 */
+/** システム管理者かどうかを確認（app_metadata で判定 - ユーザー自身は書き換え不可） */
 export async function isSystemAdmin(): Promise<boolean> {
   const user = await getUser();
-  return user?.user_metadata?.is_admin === true;
+  return user?.app_metadata?.is_admin === true;
 }

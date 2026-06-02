@@ -52,8 +52,9 @@ export default function LoginPage() {
 
   const inputStyle = {
     fontSize: '16px',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.10)',
+    background: 'rgba(255,255,255,0.10)',    // コントラスト改善（60代向け）
+    border: '1px solid rgba(255,255,255,0.25)',
+    color: 'white',
   };
 
   return (

@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const [error,    setError]    = useState('');
   const [done,     setDone]     = useState(false);
 
-  const inputStyle = { fontSize: '16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' };
+  const inputStyle = { fontSize: '16px', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.25)', color: 'white' };
   const focusStyle = { border: '1px solid rgba(52,211,153,0.35)', boxShadow: '0 0 0 3px rgba(52,211,153,0.08)' };
   const blurStyle  = { border: '1px solid rgba(255,255,255,0.10)', boxShadow: 'none' };
 

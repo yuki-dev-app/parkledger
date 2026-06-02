@@ -33,7 +33,8 @@ export default function PaymentsPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [rows, setRows] = useState<Row[]>([]);
+  const [rows,   setRows]   = useState<Row[]>([]);
+  const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toast, setToast] = useState<ToastType | null>(null);
   const [filter, setFilter] = useState<FilterType>('unpaid');
@@ -112,10 +113,16 @@ TEL: ${settings.business_phone}` : ''}` : '';
   const paidCount   = rows.filter(r => r.status === 'paid').length;
   const unpaidCount = rows.length - paidCount;
 
-  const displayRows =
+  // 現在月より未来へは移動しない（誤操作防止）
+  const nowDate = new Date();
+  const isCurrentOrFuture = year > nowDate.getFullYear() ||
+    (year === nowDate.getFullYear() && month >= nowDate.getMonth() + 1);
+
+  const filteredRows = (
     filter === 'all'    ? rows :
     filter === 'unpaid' ? rows.filter(r => r.status !== 'paid') :
-                          rows.filter(r => r.status === 'paid');
+                          rows.filter(r => r.status === 'paid')
+  ).filter(r => !search || r.contractor_name.includes(search) || r.garage_number.includes(search));
 
   const TABS: { key: FilterType; label: string; count: number; color: string }[] = [
     { key: 'unpaid', label: '未入金', count: unpaidCount, color: unpaidCount > 0 ? 'text-red-600' : 'text-slate-500' },
@@ -138,9 +145,13 @@ TEL: ${settings.business_phone}` : ''}` : '';
           className="flex items-center justify-center w-12 h-12 text-slate-600 hover:bg-slate-100 rounded-xl active:bg-slate-200">
           <ChevronLeft size={26} />
         </button>
-        <span className="font-bold text-slate-900 text-xl">{year}年 {month}月</span>
-        <button onClick={nextMonth} aria-label="次の月"
-          className="flex items-center justify-center w-12 h-12 text-slate-600 hover:bg-slate-100 rounded-xl active:bg-slate-200">
+        <span className="font-bold text-slate-900 text-xl">{year}年{month}月</span>
+        <button
+          onClick={nextMonth}
+          aria-label="次の月"
+          disabled={isCurrentOrFuture}
+          className="flex items-center justify-center w-12 h-12 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-slate-600 hover:bg-slate-100 active:bg-slate-200"
+        >
           <ChevronRight size={26} />
         </button>
       </div>
@@ -159,6 +170,19 @@ TEL: ${settings.business_phone}` : ''}` : '';
             <p className="text-xs text-slate-500 mt-0.5">CSV形式 · Excelで開けます · 経理・確定申告に利用可</p>
           </div>
         </a>
+      )}
+
+      {/* 検索 */}
+      {rows.length > 0 && (
+        <div className="relative mb-3">
+          <input
+            className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-slate-700 shadow-sm"
+            placeholder="名前・区画番号で検索"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </div>
       )}
 
       {/* ── フィルタータブ ── */}
@@ -193,13 +217,13 @@ TEL: ${settings.business_phone}` : ''}` : '';
           </div>
         )}
 
-        {displayRows.length === 0 && rows.length > 0 && (
+        {filteredRows.length === 0 && rows.length > 0 && (
           <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 text-slate-400 text-sm">
             {filter === 'unpaid' ? '未入金の方はいません ✓' : '入金済みの方はいません'}
           </div>
         )}
 
-        {displayRows.map(row => {
+        {filteredRows.map(row => {
           const paid = row.status === 'paid';
           const busy = busyId === row.contractor_id;
           return (

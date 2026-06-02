@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
 
   const ym = new URL(req.url).searchParams.get('year_month');
-  if (!ym) return NextResponse.json({ error: 'year_month は必須です' }, { status: 400 });
+  if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return NextResponse.json({ error: 'year_month の形式が正しくありません' }, { status: 400 });
 
   const { data: contractors } = await supabase
     .from('contractors')

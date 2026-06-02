@@ -70,7 +70,8 @@ export async function proxy(request: NextRequest) {
 
   // /admin は is_admin ユーザーのみ
   if (user && path.startsWith('/admin')) {
-    const isAdmin = user.user_metadata?.is_admin === true;
+    // is_admin は app_metadata に格納（user_metadata はユーザー自身が書き換え可能なため危険）
+    const isAdmin = user.app_metadata?.is_admin === true;
     if (!isAdmin) {
       const homeUrl = request.nextUrl.clone();
       homeUrl.pathname = '/';
