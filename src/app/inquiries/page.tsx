@@ -36,7 +36,7 @@ export default function InquiriesPage() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
-  const [filter, setFilter] = useState<'all' | 'new' | 'in_progress' | 'resolved'>('all');
+  const [filter, setFilter] = useState<'all' | 'in_progress' | 'resolved'>('all');
   const [toast, setToast] = useState<ToastType | null>(null);
 
   const load = useCallback(async () => {
@@ -87,7 +87,6 @@ export default function InquiriesPage() {
   useScrollLock(showForm);
 
   const filtered = inquiries.filter(i => filter === 'all' || i.status === filter);
-  const newCount = inquiries.filter(i => i.status === 'new').length;
 
   return (
     <div>
@@ -105,10 +104,7 @@ export default function InquiriesPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">問い合わせ</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            {newCount > 0 && <span className="text-amber-600 font-bold">新着 {newCount} 件　</span>}
-            全 {inquiries.length} 件
-          </p>
+          <p className="text-base text-slate-600 mt-0.5">全 {inquiries.length} 件</p>
         </div>
         <button
           onClick={() => { setShowForm(true); setForm(emptyForm); }}
@@ -120,7 +116,7 @@ export default function InquiriesPage() {
 
       {/* フィルターチップ */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-0.5">
-        {(['all', 'new', 'in_progress', 'resolved'] as const).map(s => (
+        {(['all', 'in_progress', 'resolved'] as const).map(s => (
           <button
             key={s}
             onClick={() => setFilter(s)}
@@ -179,7 +175,7 @@ export default function InquiriesPage() {
                     <span className="font-bold text-slate-900 text-base">{inq.name} さん</span>
                   </div>
                   <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">{inq.message}</p>
-                  <p className="text-xs text-slate-400 mt-1">{inq.created_at.slice(0, 10)}</p>
+                  <p className="text-sm text-slate-500 mt-1">{inq.created_at.slice(0, 10)}</p>
                 </div>
                 <div className="text-slate-400 shrink-0">
                   {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -228,14 +224,6 @@ export default function InquiriesPage() {
                           className="text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl font-medium hover:bg-emerald-100 active:bg-emerald-200 flex items-center gap-1.5"
                         >
                           <Check size={14} /> 解決済にする
-                        </button>
-                      )}
-                      {inq.status !== 'new' && (
-                        <button
-                          onClick={() => updateStatus(inq.id, 'new', notes)}
-                          className="text-sm bg-amber-50 text-amber-700 border border-amber-200 px-4 py-2.5 rounded-xl font-medium hover:bg-amber-100 active:bg-amber-200"
-                        >
-                          新着に戻す
                         </button>
                       )}
                       <button

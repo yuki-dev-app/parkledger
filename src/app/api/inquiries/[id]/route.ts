@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 
-const VALID_STATUSES = ['new', 'in_progress', 'resolved'] as const;
+const VALID_STATUSES = ['in_progress', 'resolved'] as const;
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requireAuth();

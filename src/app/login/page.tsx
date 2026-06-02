@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Lock, Shield, Eye, EyeOff } from 'lucide-react';
+import { Shield, Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
@@ -45,116 +45,122 @@ export default function LoginPage() {
       setLoading(false);
     } else {
       router.push('/');
-      router.refresh();
     }
   };
 
   return (
     <div
-      className="min-h-[100dvh] overflow-y-auto overflow-x-hidden bg-slate-50 flex flex-col items-center justify-center"
+      className="h-[100dvh] overflow-hidden bg-slate-100 flex flex-col"
       style={{
-        paddingTop:    'max(40px, env(safe-area-inset-top))',
-        paddingBottom: 'max(40px, env(safe-area-inset-bottom))',
-        paddingLeft:   'max(20px, env(safe-area-inset-left))',
-        paddingRight:  'max(20px, env(safe-area-inset-right))',
+        paddingTop:    'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft:   'env(safe-area-inset-left)',
+        paddingRight:  'env(safe-area-inset-right)',
       }}
     >
-      <div className="w-full max-w-[400px]">
+      {/* ヘッダー帯 */}
+      <div className="bg-slate-800 text-white text-center py-4 shrink-0">
+        <p className="text-xs tracking-widest text-slate-300 mb-0.5">PARK LEDGER</p>
+        <p className="text-lg font-bold tracking-wide">駐車場管理システム</p>
+      </div>
 
-        {/* ロゴ */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-600 mb-5 shadow-lg">
-            <Lock size={28} className="text-white" />
-          </div>
-          <div className="flex items-center justify-center gap-1 mb-2">
-            <span className="text-3xl font-black tracking-tight text-slate-900">Park</span>
-            <span className="text-3xl font-black tracking-tight text-emerald-600">Ledger</span>
-          </div>
-          <p className="text-slate-500 text-base">駐車場管理システム</p>
-        </div>
-
-        {/* カード */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <h1 className="text-xl font-bold text-slate-900 mb-1">ログイン</h1>
-          <p className="text-slate-500 text-sm mb-5">メールアドレスまたはIDでログインしてください</p>
-
-          <form onSubmit={login} className="flex flex-col gap-4">
-            <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">
-                メールアドレスまたはID
-              </label>
-              <input
-                type="text"
-                required
-                autoComplete="username"
-                value={identifier}
-                onChange={e => setIdentifier(e.target.value)}
-                placeholder="例: yamada@example.com"
-                className="w-full px-4 py-3.5 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                style={{ fontSize: '16px' }}
-              />
+      {/* メインカード */}
+      <div className="flex-1 flex items-center justify-center px-5">
+        <div className="w-full max-w-[400px]">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+            {/* カードヘッダー */}
+            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4">
+              <h1 className="text-xl font-bold text-slate-900">ログイン</h1>
+              <p className="text-slate-500 text-sm mt-0.5">IDまたはメールアドレスでログインしてください</p>
             </div>
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">パスワード</label>
-              <div className="relative">
+            {/* フォーム */}
+            <form onSubmit={login} className="px-6 py-5 flex flex-col gap-4">
+              <div>
+                <label className="text-sm font-bold text-slate-700 block mb-1.5">
+                  メールアドレス または ID
+                </label>
                 <input
-                  type={showPass ? 'text' : 'password'}
+                  type="text"
                   required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="パスワードを入力"
-                  className="w-full px-4 py-3.5 pr-14 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  autoComplete="username"
+                  value={identifier}
+                  onChange={e => setIdentifier(e.target.value)}
+                  placeholder="例: yamada@example.com"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-600 transition-colors"
                   style={{ fontSize: '16px' }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 flex items-center justify-center w-9 h-9"
-                >
-                  {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
               </div>
-            </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <p className="text-sm text-red-700 font-medium">{error}</p>
+              <div>
+                <label className="text-sm font-bold text-slate-700 block mb-1.5">パスワード</label>
+                <div className="relative">
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="パスワードを入力"
+                    className="w-full px-4 py-3 pr-14 rounded-xl border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-600 transition-colors"
+                    style={{ fontSize: '16px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(p => !p)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 flex items-center justify-center w-10 h-10"
+                  >
+                    {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={loading || !identifier || !password}
-              className="w-full bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-              style={{ minHeight: '56px', fontSize: '17px' }}
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  ログイン中...
-                </span>
-              ) : 'ログインする'}
-            </button>
-          </form>
+              {error && (
+                <div className="bg-red-50 border border-red-300 rounded-xl px-4 py-3">
+                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || !identifier || !password}
+                className="w-full bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 active:bg-slate-900 disabled:opacity-40 flex items-center justify-center gap-2 transition-colors"
+                style={{ minHeight: '54px', fontSize: '17px' }}
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    ログイン中...
+                  </span>
+                ) : 'ログインする'}
+              </button>
+            </form>
+          </div>
+
+          {/* 新規登録リンク */}
+          <p className="text-center text-slate-600 text-base mt-4">
+            はじめての方は{' '}
+            <Link href="/register" className="text-slate-800 hover:text-slate-900 font-bold underline underline-offset-2">
+              新規登録はこちら
+            </Link>
+          </p>
         </div>
+      </div>
 
-        <p className="text-center text-slate-600 text-base mt-6">
-          はじめての方は{' '}
-          <Link href="/register" className="text-emerald-600 hover:text-emerald-700 font-bold underline underline-offset-2">
-            新規登録
-          </Link>
-        </p>
-
-        <div className="flex items-center justify-center gap-2 mt-5">
-          <Shield size={14} className="text-slate-400" />
-          <p className="text-slate-400 text-sm">SSL暗号化通信で保護されています</p>
+      {/* フッター */}
+      <div className="shrink-0 pb-4 text-center space-y-1">
+        <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs">
+          <Shield size={12} />
+          <span>SSL暗号化通信で保護されています</span>
+          <span className="mx-1">·</span>
+          <span>ParkLedger © 2026</span>
         </div>
-        <p className="text-center text-slate-400 text-sm mt-1">ParkLedger © 2026</p>
+        <div className="flex items-center justify-center gap-3 text-xs text-slate-400">
+          <a href="/privacy" className="hover:text-slate-600 underline underline-offset-2">プライバシーポリシー</a>
+        </div>
       </div>
     </div>
   );

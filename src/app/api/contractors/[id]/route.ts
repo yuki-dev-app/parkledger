@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/supabase/server';
+import { requireAuth, requireOwner } from '@/lib/supabase/server';
 
 const t = (v: unknown, max: number) => (typeof v === 'string' ? v.trim() : '').slice(0, max);
 
@@ -38,6 +38,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const perm = await requireOwner();
+  if (!perm.ok) return perm.response;
 
   const { id } = await params;
 
@@ -49,11 +51,15 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   if (!contractor) return NextResponse.json({ error: '見つかりません' }, { status: 404 });
 
-  // 契約者削除（失敗したら中断）→ 支払い削除 → 区画を空きに
+  // 契約者削除（失敗したら中断）→ 関連データ削除 → 区画を空きに
   const { error } = await supabase.from('contractors').delete().eq('id', Number(id));
   if (error) return NextResponse.json({ error: '削除に失敗しました' }, { status: 500 });
 
-  await supabase.from('payments').delete().eq('contractor_id', Number(id));
+  // 関連レコードを並行削除（エラーは無視 — 親レコード削除済みのため孤立しても問題ない）
+  await Promise.all([
+    supabase.from('payments').delete().eq('contractor_id', Number(id)),
+    supabase.from('reminder_logs').delete().eq('contractor_id', Number(id)),
+  ]);
 
   await supabase.from('garages').update({ status: 'vacant' }).eq('id', contractor.garage_id);
 

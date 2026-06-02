@@ -162,7 +162,7 @@ export default function GaragesPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">駐車区画</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-base text-slate-600 mt-0.5">
             空き <span className="font-bold text-emerald-600">{vacant}</span>　使用中 <span className="font-bold text-slate-700">{occupied}</span>　全 {garages.length} 区画
           </p>
         </div>
@@ -170,7 +170,7 @@ export default function GaragesPage() {
           {garages.length === 0 && (
             <button
               onClick={() => setShowBulk(true)}
-              className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-emerald-700 shadow-sm text-base"
+              className="flex items-center gap-1.5 bg-slate-700 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-slate-600 shadow-sm text-base"
             >
               <List size={18} /> まとめて追加
             </button>
@@ -206,7 +206,7 @@ export default function GaragesPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => setShowBulk(true)}
-              className="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-bold text-base hover:bg-emerald-700"
+              className="inline-flex items-center justify-center gap-2 bg-slate-700 text-white px-6 py-3.5 rounded-xl font-bold text-base hover:bg-slate-600"
             >
               <List size={18} /> まとめて追加する
             </button>
@@ -249,26 +249,27 @@ export default function GaragesPage() {
                   {(g.monthly_fee > 0 || g.notes) && (
                     <div className="px-4 pb-2.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
                       {g.monthly_fee > 0 && (
-                        <span className="text-sm text-slate-600">
-                          月額 <span className="font-bold text-slate-800">¥{g.monthly_fee.toLocaleString()}</span>
+                        <span className="text-base text-slate-700">
+                          月額 <span className="font-bold text-slate-900">¥{g.monthly_fee.toLocaleString()}</span>
                         </span>
                       )}
-                      {g.notes && <span className="text-sm text-slate-400">{g.notes}</span>}
+                      {g.notes && <span className="text-sm text-slate-600">{g.notes}</span>}
                     </div>
                   )}
 
-                  <div className="flex border-t border-slate-100 divide-x divide-slate-100 bg-white/60">
+                  <div className="flex border-t border-slate-100 bg-white/60">
                     <button
                       onClick={() => openEdit(g)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-slate-600 font-medium text-sm hover:bg-slate-100"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-3 text-slate-600 font-medium text-sm hover:bg-slate-100"
                     >
-                      <Pencil size={14} /> 編集する
+                      <Pencil size={15} /> 編集する
                     </button>
                     <button
                       onClick={() => remove(g.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-red-500 font-medium text-sm hover:bg-red-50"
+                      className="w-12 border-l border-slate-100 flex items-center justify-center py-3 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      title="削除する"
                     >
-                      <Trash2 size={14} /> 削除する
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -410,7 +411,7 @@ export default function GaragesPage() {
           <button
             onClick={saveBulk}
             disabled={loading || !bulkValid}
-            className="w-full bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-600 disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ minHeight: '56px', fontSize: '16px' }}
           >
             {loading ? '追加中...' : (

@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   // メール確認アリに切り替える場合: email_confirm を false に変更し、
   // Supabase Dashboard の Authentication > Settings で "Confirm email" を有効にするだけでOK。
   // （確認メールが来るようになり、/auth/callback が処理する）
-  const { error } = await supabaseAdmin.auth.admin.createUser({
+  const { data: userData, error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -59,6 +59,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'このメールアドレスはすでに登録されています' }, { status: 409 });
     }
     return NextResponse.json({ error: '登録に失敗しました。しばらく時間をおいて再試行してください' }, { status: 500 });
+  }
+
+  // 登録時に確実にorgを作成（DBトリガーの失敗に備えた二重保証）
+  if (userData?.user) {
+    const userId = userData.user.id;
+    // 既にorg_membersにあれば作らない
+    const { data: existing } = await supabaseAdmin
+      .from('org_members')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!existing) {
+      const { data: org } = await supabaseAdmin
+        .from('organizations')
+        .insert({ name: '新規事業者' })
+        .select('id')
+        .single();
+      if (org) {
+        await supabaseAdmin
+          .from('org_members')
+          .insert({ org_id: org.id, user_id: userId, role: 'owner' })
+          .catch(() => {}); // 競合は無視
+      }
+    }
   }
 
   return NextResponse.json({ ok: true });

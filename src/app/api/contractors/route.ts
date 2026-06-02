@@ -63,7 +63,16 @@ export async function POST(req: NextRequest) {
 
   if (cErr) return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
 
-  await supabase.from('garages').update({ status: 'occupied' }).eq('id', garage_id);
+  const { error: garageErr } = await supabase
+    .from('garages')
+    .update({ status: 'occupied' })
+    .eq('id', garage_id);
+
+  if (garageErr) {
+    // 契約者登録は成功しているが区画ステータス更新に失敗 → ロールバック
+    await supabase.from('contractors').delete().eq('id', contractor.id);
+    return NextResponse.json({ error: '区画ステータスの更新に失敗しました。再度お試しください。' }, { status: 500 });
+  }
 
   return NextResponse.json({ id: contractor.id });
 }

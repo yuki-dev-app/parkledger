@@ -13,8 +13,10 @@ export default async function HomePage() {
 
   const now   = new Date();
   const ym    = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const today = now.toISOString().slice(0, 10);
-  const in30  = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  // JST (UTC+9) で今日の日付を取得（サーバーはUTCのため +9h オフセット）
+  const jst   = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const today = jst.toISOString().slice(0, 10);
+  const in30  = new Date(jst.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   // RLS が自動的に自分のorgのデータだけ返す
   const [
@@ -27,7 +29,7 @@ export default async function HomePage() {
     supabase.from('garages').select('status'),
     supabase.from('contractors').select('id, name, phone, contract_start, contract_end, garages!inner(number, monthly_fee)').eq('archived_at', ''),
     supabase.from('payments').select('contractor_id, status, paid_date').eq('year_month', ym),
-    supabase.from('inquiries').select('name, created_at').eq('status', 'new').order('created_at', { ascending: false }).limit(5),
+    supabase.from('inquiries').select('name, created_at').eq('status', 'in_progress').order('created_at', { ascending: false }).limit(5),
     getSettings(supabase),
   ]);
 
@@ -64,12 +66,17 @@ export default async function HomePage() {
   const allPaid    = unpaid.length === 0;
   const hasActions = unpaid.length > 0 || (newInquiries?.length ?? 0) > 0 || expiring.length > 0;
 
+  const totalExpected  = activeConts.reduce((s, c) => s + (c.garages as unknown as { monthly_fee: number }).monthly_fee, 0);
+  const totalCollected = activeConts.filter(c => payMap.get(c.id)?.status === 'paid')
+    .reduce((s, c) => s + (c.garages as unknown as { monthly_fee: number }).monthly_fee, 0);
+  const collectRate = totalExpected > 0 ? Math.min(100, Math.round(totalCollected / totalExpected * 100)) : 0;
+
   // 初回セットアップ画面
   if (isFirstTime) {
     return (
       <div className="space-y-4 max-w-2xl mx-auto">
         <div>
-          <p className="text-sm text-slate-400">{month}月{day}日（{week}）</p>
+          <p className="text-base text-slate-500">{month}月{day}日（{week}）</p>
           <h1 className="text-2xl font-bold text-slate-900 mt-0.5">ようこそ！</h1>
         </div>
 
@@ -123,9 +130,36 @@ export default async function HomePage() {
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
       <div>
-        <p className="text-sm text-slate-400">{month}月{day}日（{week}）</p>
+        <p className="text-base text-slate-500">{month}月{day}日（{week}）</p>
         <h1 className="text-2xl font-bold text-slate-900 mt-0.5">今日の状況</h1>
       </div>
+
+      {/* 月次収入サマリー */}
+      {total > 0 && totalExpected > 0 && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <p className="text-sm font-bold text-slate-500 mb-2">{month}月の入金状況</p>
+          <div className="flex items-end gap-2 mb-2">
+            <span className="text-3xl font-black text-slate-900 tabular-nums">
+              ¥{totalCollected.toLocaleString()}
+            </span>
+            <span className="text-base text-slate-400 mb-0.5">
+              / ¥{totalExpected.toLocaleString()}
+            </span>
+            <span className={`text-base font-bold mb-0.5 ml-auto ${allPaid ? 'text-emerald-600' : 'text-slate-500'}`}>
+              {collectRate}%
+            </span>
+          </div>
+          <div className="h-3 bg-slate-100 rounded-full overflow-hidden mb-2">
+            <div
+              className={`h-full rounded-full transition-all ${allPaid ? 'bg-emerald-500' : 'bg-slate-700'}`}
+              style={{ width: `${collectRate}%` }}
+            />
+          </div>
+          <p className="text-sm text-slate-500">
+            {activeConts.length - unpaid.length}名 回収済み　・　未回収 {unpaid.length}名
+          </p>
+        </div>
+      )}
 
       {!hasActions && total > 0 && (
         <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 flex items-center gap-4">
@@ -150,7 +184,7 @@ export default async function HomePage() {
               <div key={i} className="px-4 py-4 flex items-center justify-between gap-3">
                 <div>
                   <p className="font-bold text-slate-900 text-lg">{c.name} さん</p>
-                  <p className="text-sm text-slate-500 mt-0.5">{c.garage_number}番区画　¥{c.monthly_fee.toLocaleString()}</p>
+                  <p className="text-base text-slate-600 mt-0.5">{c.garage_number}番区画　¥{c.monthly_fee.toLocaleString()}</p>
                 </div>
                 {c.phone ? (
                   <a href={`tel:${c.phone}`} className="flex items-center gap-1.5 bg-red-500 text-white px-4 py-3 rounded-xl font-bold text-sm shrink-0">
@@ -182,7 +216,7 @@ export default async function HomePage() {
               <div key={i} className="px-4 py-4 flex items-center justify-between gap-3">
                 <div>
                   <p className="font-bold text-slate-900 text-base">{c.name} さん</p>
-                  <p className="text-sm text-amber-700 mt-0.5">{c.garage_number}番区画　{c.contract_end} まで</p>
+                  <p className="text-base text-amber-700 mt-0.5">{c.garage_number}番区画　{c.contract_end} まで</p>
                 </div>
                 <Link href="/contractors" className="bg-amber-500 text-white px-4 py-3 rounded-xl font-bold text-sm shrink-0">確認する</Link>
               </div>
@@ -195,7 +229,7 @@ export default async function HomePage() {
         <div className="bg-white border-2 border-blue-400 rounded-2xl overflow-hidden">
           <div className="bg-blue-500 px-4 py-3 flex items-center gap-2">
             <MessageSquare size={18} className="text-white" />
-            <p className="text-white font-bold text-base">問い合わせが届いています（{newInquiries?.length}件）</p>
+            <p className="text-white font-bold text-base">対応中の問い合わせ（{newInquiries?.length}件）</p>
           </div>
           <div className="divide-y divide-slate-100">
             {newInquiries?.map((inq, i) => (
@@ -204,7 +238,7 @@ export default async function HomePage() {
                   <p className="font-bold text-slate-900 text-base">{inq.name} さんから</p>
                   <p className="text-sm text-slate-500 mt-0.5">{String(inq.created_at).slice(0, 10)}</p>
                 </div>
-                <Link href="/inquiries" className="bg-blue-500 text-white px-4 py-3 rounded-xl font-bold text-sm shrink-0">返答する</Link>
+                <Link href="/inquiries" className="bg-blue-500 text-white px-4 py-3 rounded-xl font-bold text-sm shrink-0">確認する</Link>
               </div>
             ))}
           </div>
@@ -216,20 +250,20 @@ export default async function HomePage() {
           <Link href="/garages" className="bg-white border border-slate-200 rounded-2xl p-4 text-center hover:bg-slate-50">
             <Car size={20} className="text-slate-500 mx-auto mb-1.5" />
             <p className="text-2xl font-black text-slate-900 tabular-nums">{vacant}</p>
-            <p className="text-xs text-slate-500 mt-0.5">空き区画</p>
-            <p className="text-xs text-slate-400">全{total}区画</p>
+            <p className="text-sm text-slate-600 mt-0.5">空き区画</p>
+            <p className="text-sm text-slate-500">全{total}区画</p>
           </Link>
           <Link href="/contractors" className="bg-white border border-slate-200 rounded-2xl p-4 text-center hover:bg-slate-50">
             <Users size={20} className="text-slate-500 mx-auto mb-1.5" />
             <p className="text-2xl font-black text-slate-900 tabular-nums">{contractors?.length ?? 0}</p>
-            <p className="text-xs text-slate-500 mt-0.5">契約者</p>
-            <p className="text-xs text-slate-400">名</p>
+            <p className="text-sm text-slate-600 mt-0.5">契約者</p>
+            <p className="text-sm text-slate-500">名</p>
           </Link>
           <Link href="/payments" className={`border rounded-2xl p-4 text-center ${allPaid ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
             <CreditCard size={20} className={`mx-auto mb-1.5 ${allPaid ? 'text-emerald-500' : 'text-red-500'}`} />
             <p className={`text-2xl font-black tabular-nums ${allPaid ? 'text-emerald-700' : 'text-red-600'}`}>{unpaid.length}</p>
-            <p className={`text-xs mt-0.5 ${allPaid ? 'text-emerald-600' : 'text-red-600'}`}>未入金</p>
-            <p className="text-xs text-slate-400">{month}月分</p>
+            <p className={`text-sm mt-0.5 ${allPaid ? 'text-emerald-600' : 'text-red-600'}`}>未入金</p>
+            <p className="text-sm text-slate-500">{month}月分</p>
           </Link>
         </div>
       )}

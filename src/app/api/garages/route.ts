@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     if (error.code === '23505') return NextResponse.json({ error: `区画番号 ${number} はすでに存在します` }, { status: 400 });
-    return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+    return NextResponse.json({ error: '保存に失敗しました。時間をおいて再度お試しください' }, { status: 500 });
   }
 
   return NextResponse.json({ id: data.id });

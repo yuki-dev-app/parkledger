@@ -21,6 +21,12 @@ type Row = {
   email: string;
 };
 
+type ReminderInfo = {
+  contractor_id: number;
+  reminded_at: string;
+  count: number;
+};
+
 type Settings = {
   business_name: string;
   business_phone: string;
@@ -35,13 +41,14 @@ export default function PaymentsPage() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [rows,       setRows]       = useState<Row[]>([]);
   const [search,     setSearch]     = useState('');
-  const [busyId,     setBusyId]     = useState<number | null>(null);
+  const [busyIds,    setBusyIds]    = useState<Set<number>>(new Set());
   const [toast,      setToast]      = useState<ToastType | null>(null);
   const [filter,     setFilter]     = useState<FilterType>('unpaid');
   const [reminder,   setReminder]   = useState<Row | null>(null);
   const [settings,   setSettings]   = useState<Settings>({ business_name: '', business_phone: '', parking_name: '' });
-  const [copied,     setCopied]     = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
+  const [copied,      setCopied]      = useState(false);
+  const [showPicker,  setShowPicker]  = useState(false);
+  const [reminders,   setReminders]   = useState<Map<number, ReminderInfo>>(new Map());
 
   const ym = `${year}-${String(month).padStart(2, '0')}`;
 
@@ -49,15 +56,23 @@ export default function PaymentsPage() {
     const cachedRows = getCached<Row[]>(`payments:${ym}`);
     if (cachedRows) setRows(cachedRows);
 
-    const [pRes, sRes] = await Promise.all([
+    const [pRes, sRes, rRes] = await Promise.all([
       fetch(`/api/payments?year_month=${ym}`),
       fetch('/api/settings'),
+      fetch(`/api/payments/remind?year_month=${ym}`),
     ]);
-    const [pJson, sJson] = await Promise.all([pRes.json().catch(() => []), sRes.json().catch(() => ({}))]);
+    const [pJson, sJson, rJson] = await Promise.all([
+      pRes.json().catch(() => []),
+      sRes.json().catch(() => ({})),
+      rRes.json().catch(() => []),
+    ]);
     const rows = Array.isArray(pJson) ? pJson as Row[] : [];
     setCached(`payments:${ym}`, rows);
     setRows(rows);
     if (sJson.parking_name !== undefined) setSettings(sJson);
+    if (Array.isArray(rJson)) {
+      setReminders(new Map(rJson.map((r: ReminderInfo) => [r.contractor_id, r])));
+    }
   }, [ym]);
 
   useEffect(() => { load(); }, [load]);
@@ -70,13 +85,13 @@ export default function PaymentsPage() {
   };
 
   const toggle = async (row: Row, next: 'paid' | 'unpaid') => {
-    setBusyId(row.contractor_id);
+    setBusyIds(prev => new Set(prev).add(row.contractor_id));
     const res = await fetch('/api/payments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contractor_id: row.contractor_id, year_month: ym, status: next }),
     });
-    setBusyId(null);
+    setBusyIds(prev => { const s = new Set(prev); s.delete(row.contractor_id); return s; });
     if (!res.ok) { setToast({ message: '更新に失敗しました', kind: 'error' }); return; }
     invalidateCache(`payments:${ym}`);
     setToast({
@@ -86,7 +101,31 @@ export default function PaymentsPage() {
     load();
   };
 
-  const openReminder = (row: Row) => { setReminder(row); setCopied(false); };
+  const openReminder = (row: Row) => {
+    setReminder(row);
+    setCopied(false);
+  };
+
+  const recordReminder = async (row: Row, method: 'phone' | 'email' | 'other') => {
+    const res = await fetch('/api/payments/remind', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contractor_id: row.contractor_id, year_month: ym, method }),
+    });
+    if (res.ok) {
+      const { reminded_at } = await res.json();
+      setReminders(prev => {
+        const next = new Map(prev);
+        const existing = next.get(row.contractor_id);
+        next.set(row.contractor_id, {
+          contractor_id: row.contractor_id,
+          reminded_at,
+          count: (existing?.count ?? 0) + 1,
+        });
+        return next;
+      });
+    }
+  };
 
   const reminderText = reminder ? `${reminder.contractor_name} 様
 
@@ -106,10 +145,11 @@ TEL: ${settings.business_phone}` : ''}` : '';
     await navigator.clipboard.writeText(reminderText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    if (reminder) recordReminder(reminder, 'other');
   };
 
-  // 督促モーダル表示中は背景スクロールを止める（iOS Safari 対応）
-  useScrollLock(!!reminder);
+  // モーダル表示中は背景スクロールを止める（iOS Safari 対応）
+  useScrollLock(!!reminder || showPicker);
 
   const paidCount   = rows.filter(r => r.status === 'paid').length;
   const unpaidCount = rows.length - paidCount;
@@ -174,7 +214,7 @@ TEL: ${settings.business_phone}` : ''}` : '';
           </div>
           <div className="min-w-0">
             <p className="font-bold text-slate-800 text-base">{year}年{month}月　月次レポート</p>
-            <p className="text-xs text-slate-500 mt-0.5">CSV形式 · Excelで開けます · 経理・確定申告に利用可</p>
+            <p className="text-sm text-slate-500 mt-0.5">CSV形式 · Excelで開けます · 経理・確定申告に利用可</p>
           </div>
         </a>
       )}
@@ -207,7 +247,7 @@ TEL: ${settings.business_phone}` : ''}` : '';
             <span className={`text-lg font-black tabular-nums leading-none ${filter === tab.key ? tab.color : ''}`}>
               {tab.count}
             </span>
-            <span className="text-xs mt-0.5">{tab.label}</span>
+            <span className="text-sm mt-0.5">{tab.label}</span>
           </button>
         ))}
       </div>
@@ -232,7 +272,8 @@ TEL: ${settings.business_phone}` : ''}` : '';
 
         {filteredRows.map(row => {
           const paid = row.status === 'paid';
-          const busy = busyId === row.contractor_id;
+          const busy = busyIds.has(row.contractor_id);
+          const reminderInfo = reminders.get(row.contractor_id);
           return (
             <div
               key={row.contractor_id}
@@ -256,6 +297,13 @@ TEL: ${settings.business_phone}` : ''}` : '';
                         <span className="text-sm text-emerald-600 ml-2 font-normal">{row.paid_date} 入金</span>
                       )}
                     </p>
+                    {/* 督促履歴 */}
+                    {!paid && reminderInfo && (
+                      <p className="text-sm text-amber-700 mt-1 flex items-center gap-1">
+                        <Bell size={13} />
+                        最終連絡: {reminderInfo.reminded_at}（{reminderInfo.count}回）
+                      </p>
+                    )}
                   </div>
                   {paid && (
                     <span className="flex items-center gap-1 text-emerald-600 font-bold text-sm bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 shrink-0">
@@ -356,6 +404,7 @@ TEL: ${settings.business_phone}` : ''}` : '';
                 {years.map(y => (
                   <button
                     key={y}
+                    type="button"
                     onClick={() => setYear(y)}
                     className={`flex-1 py-3 rounded-xl font-bold text-base transition-colors ${
                       y === year
@@ -373,13 +422,15 @@ TEL: ${settings.business_phone}` : ''}` : '';
                 {months.map(m => {
                   const isFuture = year > currentYear ||
                     (year === currentYear && m > now.getMonth() + 1);
+                  const isSelected = m === month && year === (years.includes(year) ? year : currentYear);
                   return (
                     <button
                       key={m}
+                      type="button"
                       disabled={isFuture}
                       onClick={() => { setMonth(m); setShowPicker(false); }}
                       className={`py-3 rounded-xl font-bold text-base transition-colors ${
-                        m === month && year === year
+                        isSelected
                           ? 'bg-emerald-600 text-white'
                           : isFuture
                             ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
@@ -418,12 +469,14 @@ TEL: ${settings.business_phone}` : ''}` : '';
             <div className="flex flex-col gap-2 mb-4">
               {reminder.phone && (
                 <a href={`tel:${reminder.phone}`}
+                  onClick={() => recordReminder(reminder, 'phone')}
                   className="flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-xl font-bold text-base hover:bg-emerald-700">
                   <Phone size={20} /> 電話する　{reminder.phone}
                 </a>
               )}
               {reminder.email && (
                 <a href={`mailto:${reminder.email}?subject=${encodeURIComponent(`【${year}年${month}月分】駐車場使用料のご確認`)}&body=${encodeURIComponent(reminderText)}`}
+                  onClick={() => recordReminder(reminder, 'email')}
                   className="flex items-center justify-center gap-2 bg-slate-700 text-white py-4 rounded-xl font-bold text-base hover:bg-slate-800">
                   <Mail size={18} /> メールを送る
                 </a>

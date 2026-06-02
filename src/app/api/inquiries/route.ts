@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('inquiries')
-    .insert({ name, phone, email, message, status: 'new', notes, org_id: orgId })
+    .insert({ name, phone, email, message, status: 'in_progress', notes, org_id: orgId })
     .select().single();
 
   if (error) return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });

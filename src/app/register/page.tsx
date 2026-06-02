@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, Shield, Check, Eye, EyeOff } from 'lucide-react';
+import { Shield, Check, Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
@@ -48,45 +48,42 @@ export default function RegisterPage() {
 
   return (
     <div
-      className="min-h-[100dvh] overflow-y-auto overflow-x-hidden bg-slate-50 flex flex-col items-center justify-center"
+      className="h-[100dvh] overflow-hidden bg-slate-100 flex flex-col"
       style={{
-        paddingTop:    'max(40px, env(safe-area-inset-top))',
-        paddingBottom: 'max(40px, env(safe-area-inset-bottom))',
-        paddingLeft:   'max(20px, env(safe-area-inset-left))',
-        paddingRight:  'max(20px, env(safe-area-inset-right))',
+        paddingTop:    'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft:   'env(safe-area-inset-left)',
+        paddingRight:  'env(safe-area-inset-right)',
       }}
     >
-      <div className="w-full max-w-[400px]">
+      {/* ヘッダー帯 */}
+      <div className="bg-slate-800 text-white text-center py-4 shrink-0">
+        <p className="text-xs tracking-widest text-slate-300 mb-0.5">PARK LEDGER</p>
+        <p className="text-lg font-bold tracking-wide">駐車場管理システム</p>
+      </div>
 
-        {/* ロゴ */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-600 mb-5 shadow-lg">
-            <UserPlus size={28} className="text-white" />
-          </div>
-          <div className="flex items-center justify-center gap-1 mb-2">
-            <span className="text-3xl font-black tracking-tight text-slate-900">Park</span>
-            <span className="text-3xl font-black tracking-tight text-emerald-600">Ledger</span>
-          </div>
-          <p className="text-slate-500 text-base">新規アカウント登録</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          {done ? (
-            <div className="text-center py-6">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-                <Check size={32} className="text-emerald-600" />
-              </div>
-              <p className="text-xl font-bold text-slate-900">登録完了！</p>
-              <p className="text-slate-500 text-base mt-1">ホーム画面に移動します…</p>
+      {/* メインカード */}
+      <div className="flex-1 flex items-center justify-center px-5">
+        <div className="w-full max-w-[400px]">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+            {/* カードヘッダー */}
+            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4">
+              <h1 className="text-xl font-bold text-slate-900">新規アカウント登録</h1>
+              <p className="text-slate-500 text-sm mt-0.5">メールアドレスとパスワードを入力してください</p>
             </div>
-          ) : (
-            <>
-              <h1 className="text-xl font-bold text-slate-900 mb-1">アカウントを作成</h1>
-              <p className="text-slate-500 text-sm mb-5">メールアドレスとパスワードを入力してください</p>
 
-              <form onSubmit={submit} className="flex flex-col gap-4">
+            {done ? (
+              <div className="px-6 py-10 text-center">
+                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4 border-2 border-slate-300">
+                  <Check size={32} className="text-slate-700" />
+                </div>
+                <p className="text-xl font-bold text-slate-900">登録完了！</p>
+                <p className="text-slate-500 text-base mt-1">ホーム画面に移動します…</p>
+              </div>
+            ) : (
+              <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-3.5">
                 <div>
-                  <label className="text-sm font-semibold text-slate-700 block mb-2">メールアドレス</label>
+                  <label className="text-sm font-bold text-slate-700 block mb-1.5">メールアドレス</label>
                   <input
                     type="email"
                     required
@@ -94,13 +91,13 @@ export default function RegisterPage() {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="例: yamada@example.com"
-                    className="w-full px-4 py-3.5 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-600 transition-colors"
                     style={{ fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-slate-700 block mb-2">パスワード（8文字以上）</label>
+                  <label className="text-sm font-bold text-slate-700 block mb-1.5">パスワード（8文字以上）</label>
                   <div className="relative">
                     <input
                       type={showPass ? 'text' : 'password'}
@@ -109,18 +106,18 @@ export default function RegisterPage() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       placeholder="パスワードを入力"
-                      className="w-full px-4 py-3.5 pr-14 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 pr-14 rounded-xl border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-600 transition-colors"
                       style={{ fontSize: '16px' }}
                     />
                     <button type="button" onClick={() => setShowPass(p => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 flex items-center justify-center w-9 h-9">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 flex items-center justify-center w-10 h-10">
                       {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-slate-700 block mb-2">パスワード（確認）</label>
+                  <label className="text-sm font-bold text-slate-700 block mb-1.5">パスワード（確認）</label>
                   <input
                     type={showPass ? 'text' : 'password'}
                     required
@@ -128,16 +125,16 @@ export default function RegisterPage() {
                     value={confirm}
                     onChange={e => setConfirm(e.target.value)}
                     placeholder="パスワードを再入力"
-                    className="w-full px-4 py-3.5 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-600 transition-colors"
                     style={{ fontSize: '16px' }}
                   />
                   {password && confirm && password !== confirm && (
-                    <p className="text-sm text-red-600 mt-1.5">パスワードが一致しません</p>
+                    <p className="text-sm text-red-600 mt-1.5 font-medium">パスワードが一致しません</p>
                   )}
                 </div>
 
                 {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  <div className="bg-red-50 border border-red-300 rounded-xl px-4 py-3">
                     <p className="text-sm text-red-700 font-medium">{error}</p>
                   </div>
                 )}
@@ -145,8 +142,8 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading || !canSubmit}
-                  className="w-full bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors mt-1"
-                  style={{ minHeight: '56px', fontSize: '17px' }}
+                  className="w-full bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 active:bg-slate-900 disabled:opacity-40 flex items-center justify-center gap-2 transition-colors mt-1"
+                  style={{ minHeight: '54px', fontSize: '17px' }}
                 >
                   {loading ? (
                     <span className="flex items-center gap-2">
@@ -159,22 +156,30 @@ export default function RegisterPage() {
                   ) : '登録する'}
                 </button>
               </form>
-            </>
-          )}
-        </div>
+            )}
+          </div>
 
-        <p className="text-center text-slate-600 text-base mt-6">
-          すでにアカウントをお持ちの方は{' '}
-          <Link href="/login" className="text-emerald-600 hover:text-emerald-700 font-bold underline underline-offset-2">
-            ログイン
-          </Link>
-        </p>
-
-        <div className="flex items-center justify-center gap-2 mt-5">
-          <Shield size={14} className="text-slate-400" />
-          <p className="text-slate-400 text-sm">SSL暗号化通信で保護されています</p>
+          {/* ログインリンク */}
+          <p className="text-center text-slate-600 text-base mt-4">
+            すでにアカウントをお持ちの方は{' '}
+            <Link href="/login" className="text-slate-800 hover:text-slate-900 font-bold underline underline-offset-2">
+              ログインはこちら
+            </Link>
+          </p>
         </div>
-        <p className="text-center text-slate-400 text-sm mt-1">ParkLedger © 2026</p>
+      </div>
+
+      {/* フッター */}
+      <div className="shrink-0 pb-4 text-center space-y-1">
+        <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs">
+          <Shield size={12} />
+          <span>SSL暗号化通信で保護されています</span>
+          <span className="mx-1">·</span>
+          <span>ParkLedger © 2026</span>
+        </div>
+        <div className="flex items-center justify-center gap-3 text-xs text-slate-400">
+          <a href="/privacy" className="hover:text-slate-600 underline underline-offset-2">プライバシーポリシー</a>
+        </div>
       </div>
     </div>
   );

@@ -8,13 +8,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// 認証不要なパス
+// 認証不要なパス（ページ）
 const PUBLIC_PATHS = new Set(['/login', '/register', '/auth/callback', '/auth/confirm']);
 
 function isPublicPath(path: string): boolean {
   if (PUBLIC_PATHS.has(path)) return true;
-  if (path.startsWith('/api/auth')) return true;
-  if (path === '/api/register') return true;
   if (path.startsWith('/_next')) return true;
   if (path === '/favicon.ico') return true;
   return false;
@@ -32,11 +30,9 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          // リクエストのcookieを更新
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          // レスポンスのcookieを更新（セッション維持に必須）
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -46,33 +42,31 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // セッションを更新（必ずこの位置で呼ぶ）
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession()でcookieから読むだけ（ネットワーク通信なし）
+  // セキュリティの検証はAPIルートのrequireAuth()が担当
+  const { data: { session } } = await supabase.auth.getSession();
+  const hasSession = !!session;
 
   const path = request.nextUrl.pathname;
 
-  // 未認証 + 保護されたパス → ログインにリダイレクト
-  if (!user && !isPublicPath(path)) {
-    if (path.startsWith('/api/')) {
-      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-    }
+  // 未認証 + 保護されたページ → ログインにリダイレクト
+  if (!hasSession && !isPublicPath(path)) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
     return NextResponse.redirect(loginUrl);
   }
 
   // ログイン済みでログイン・登録ページ → ホームにリダイレクト
-  if (user && (path === '/login' || path === '/register')) {
+  if (hasSession && (path === '/login' || path === '/register')) {
     const homeUrl = request.nextUrl.clone();
     homeUrl.pathname = '/';
     return NextResponse.redirect(homeUrl);
   }
 
-  // /admin は is_admin ユーザーのみ
-  if (user && path.startsWith('/admin')) {
-    // is_admin は app_metadata に格納（user_metadata はユーザー自身が書き換え可能なため危険）
-    const isAdmin = user.app_metadata?.is_admin === true;
-    if (!isAdmin) {
+  // /admin は app_metadata チェック（getUser()で検証 — adminのみ低速パス）
+  if (hasSession && path.startsWith('/admin')) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.app_metadata?.is_admin) {
       const homeUrl = request.nextUrl.clone();
       homeUrl.pathname = '/';
       return NextResponse.redirect(homeUrl);
@@ -83,5 +77,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // /api/ を除外 → APIルートは自前でrequireAuth()するので二重チェック不要
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

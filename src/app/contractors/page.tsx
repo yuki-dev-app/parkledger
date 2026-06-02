@@ -153,7 +153,7 @@ export default function ContractorsPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">契約者</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-base text-slate-600 mt-0.5">
             {contractors.length} 名
             {expiringCount > 0 && (
               <span className="ml-2 text-amber-600 font-bold">・期限まもなく {expiringCount} 名</span>
@@ -274,12 +274,12 @@ export default function ContractorsPage() {
                   <div className="px-4 py-4 space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <p className="text-xs text-slate-400 font-medium mb-0.5">月額</p>
+                        <p className="text-sm text-slate-600 font-medium mb-0.5">月額</p>
                         <p className="text-base font-bold text-slate-800">¥{c.monthly_fee?.toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-400 font-medium mb-0.5">契約期間</p>
-                        <p className={`text-sm font-medium ${expiringSoon || expired ? 'text-amber-700' : 'text-slate-700'}`}>
+                        <p className="text-sm text-slate-600 font-medium mb-0.5">契約期間</p>
+                        <p className={`text-base font-medium ${expiringSoon || expired ? 'text-amber-700' : 'text-slate-700'}`}>
                           {formatDate(c.contract_start)}<br />〜 {formatDate(c.contract_end)}
                         </p>
                       </div>
@@ -287,7 +287,7 @@ export default function ContractorsPage() {
 
                     {(c.vehicle_type || c.vehicle_number) && (
                       <div>
-                        <p className="text-xs text-slate-400 font-medium mb-0.5">お車</p>
+                        <p className="text-sm text-slate-600 font-medium mb-0.5">お車</p>
                         <p className="text-sm text-slate-700 flex items-center gap-1.5">
                           <Car size={14} className="text-slate-400 shrink-0" />
                           {[c.vehicle_type, c.vehicle_number].filter(Boolean).join('　')}
@@ -297,8 +297,8 @@ export default function ContractorsPage() {
 
                     {c.address && (
                       <div>
-                        <p className="text-xs text-slate-400 font-medium mb-0.5">住所</p>
-                        <p className="text-sm text-slate-700">{c.address}</p>
+                        <p className="text-sm text-slate-600 font-medium mb-0.5">住所</p>
+                        <p className="text-base text-slate-700">{c.address}</p>
                       </div>
                     )}
 

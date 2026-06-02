@@ -145,6 +145,35 @@ export async function requireAuth() {
   return { supabase, user, orgId };
 }
 
+/** 現在のユーザーのロールを取得（'owner' | 'admin' | null） */
+export async function getRole(): Promise<'owner' | 'admin' | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from('org_members')
+    .select('role')
+    .eq('user_id', user.id)
+    .single();
+  return (data?.role as 'owner' | 'admin') ?? null;
+}
+
+/** ownerのみが実行できる操作の認可チェック */
+export async function requireOwner(): Promise<{ ok: true } | { ok: false; response: Response }> {
+  const role = await getRole();
+  if (role !== 'owner') {
+    const { NextResponse } = await import('next/server');
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: 'この操作はオーナーのみ実行できます' },
+        { status: 403 }
+      ),
+    };
+  }
+  return { ok: true };
+}
+
 /** システム管理者かどうかを確認（app_metadata で判定 - ユーザー自身は書き換え不可） */
 export async function isSystemAdmin(): Promise<boolean> {
   const user = await getUser();

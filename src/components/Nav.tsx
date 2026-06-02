@@ -12,7 +12,7 @@ const BOTTOM_NAV = [
   { href: '/garages',     label: '区画',     icon: Car },
   { href: '/contractors', label: '契約者',   icon: Users },
   { href: '/payments',    label: '入金',     icon: CreditCard },
-  { href: '/inquiries',   label: '問合せ',   icon: MessageSquare },
+  { href: '/inquiries',   label: '問い合わせ', icon: MessageSquare },
 ];
 
 // ── PC上部ナビ：全項目 ────────────────────────────────────
@@ -21,7 +21,7 @@ const TOP_NAV = [
   { href: '/garages',     label: '空き状況', icon: Car },
   { href: '/contractors', label: '契約者',   icon: Users },
   { href: '/payments',    label: '入金',     icon: CreditCard },
-  { href: '/inquiries',   label: '問合せ',   icon: MessageSquare },
+  { href: '/inquiries',   label: '問い合わせ', icon: MessageSquare },
   { href: '/cleaning',    label: '清掃',     icon: Sparkles },
 ];
 
@@ -45,7 +45,6 @@ export default function Nav() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/login');
-    router.refresh();
   };
 
   return (
@@ -120,7 +119,7 @@ export default function Nav() {
           {BOTTOM_NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== '/' && pathname.startsWith(href));
             return (
-              <li key={href} className="flex-1">
+              <li key={href} className="flex-1 relative">
                 <Link
                   href={href}
                   className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${
@@ -131,7 +130,7 @@ export default function Nav() {
                     <span className="absolute" style={{ top: 0, width: '40px', height: '3px', backgroundColor: '#059669', borderRadius: '0 0 3px 3px' }} />
                   )}
                   <Icon size={24} strokeWidth={active ? 2.5 : 1.8} />
-                  <span className={`text-[12px] font-medium leading-none ${active ? 'font-bold' : ''}`}>{label}</span>
+                  <span className={`text-xs font-medium leading-none ${active ? 'font-bold' : ''}`} style={{ fontSize: '13px' }}>{label}</span>
                 </Link>
               </li>
             );

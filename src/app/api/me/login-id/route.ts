@@ -52,6 +52,12 @@ export async function PUT(req: NextRequest) {
     .update({ login_id: id })
     .eq('user_id', user.id);
 
-  if (error) return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
+  // ユニーク制約違反 = レースコンディションで先に他のユーザーが取得した
+  if (error) {
+    if (error.code === '23505') {
+      return NextResponse.json({ error: 'このIDはすでに使われています' }, { status: 409 });
+    }
+    return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }
