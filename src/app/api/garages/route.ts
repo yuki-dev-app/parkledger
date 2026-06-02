@@ -26,8 +26,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const { supabase, user, orgId } = await requireAuth();
-  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-  if (!orgId) return NextResponse.json({ error: '組織が見つかりません' }, { status: 403 });
+  if (!user)  return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  if (!orgId) return NextResponse.json({ error: '初期設定が完了していません。いったんログアウトして再度ログインしてください。' }, { status: 403 });
 
   const body        = await req.json().catch(() => ({}));
   const number      = (typeof body.number === 'string' ? body.number.trim() : '').slice(0, 20);
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     if (error.code === '23505') return NextResponse.json({ error: `区画番号 ${number} はすでに存在します` }, { status: 400 });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
   }
 
   return NextResponse.json({ id: data.id });

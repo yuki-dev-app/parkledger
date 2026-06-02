@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     ? await query.neq('archived_at', '').order('archived_at', { ascending: false })
     : await query.eq('archived_at', '');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
 
   const rows = (data ?? []).map(c => ({
     ...c,
@@ -35,34 +35,33 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { supabase, user, orgId } = await requireAuth();
-  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-  if (!orgId) return NextResponse.json({ error: '組織が見つかりません' }, { status: 403 });
+  if (!user)  return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  if (!orgId) return NextResponse.json({ error: '初期設定が完了していません。いったんログアウトして再度ログインしてください。' }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
-  const garage_id        = Number(body.garage_id) || 0;
-  const name             = t(body.name,             MAX.name);
-  const phone            = t(body.phone,            MAX.phone);
-  const email            = t(body.email,            MAX.email);
-  const address          = t(body.address,          MAX.address);
-  const vehicle_type     = t(body.vehicle_type,     MAX.vehicle_type);
-  const vehicle_number   = t(body.vehicle_number,   MAX.vehicle_number);
-  const vehicle_chassis  = t(body.vehicle_chassis,  MAX.vehicle_chassis);
-  const emergency_contact= t(body.emergency_contact,MAX.emergency_contact);
-  const contract_start   = t(body.contract_start,   10);
-  const contract_end     = t(body.contract_end,     10);
-  const notes            = t(body.notes,            MAX.notes);
+  const garage_id         = Number(body.garage_id) || 0;
+  const name              = t(body.name,              MAX.name);
+  const phone             = t(body.phone,             MAX.phone);
+  const email             = t(body.email,             MAX.email);
+  const address           = t(body.address,           MAX.address);
+  const vehicle_type      = t(body.vehicle_type,      MAX.vehicle_type);
+  const vehicle_number    = t(body.vehicle_number,    MAX.vehicle_number);
+  const vehicle_chassis   = t(body.vehicle_chassis,   MAX.vehicle_chassis);
+  const emergency_contact = t(body.emergency_contact, MAX.emergency_contact);
+  const contract_start    = t(body.contract_start,    10);
+  const contract_end      = t(body.contract_end,      10);
+  const notes             = t(body.notes,             MAX.notes);
 
   if (!garage_id || !name || !contract_start)
     return NextResponse.json({ error: '区画・氏名・契約開始日は必須です' }, { status: 400 });
 
-  // トランザクション: contractors INSERT + garages UPDATE
   const { data: contractor, error: cErr } = await supabase
     .from('contractors')
     .insert({ garage_id, name, phone, email, address, vehicle_type, vehicle_number, vehicle_chassis, emergency_contact, contract_start, contract_end, notes, org_id: orgId })
     .select()
     .single();
 
-  if (cErr) return NextResponse.json({ error: cErr.message }, { status: 500 });
+  if (cErr) return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
 
   await supabase.from('garages').update({ status: 'occupied' }).eq('id', garage_id);
 

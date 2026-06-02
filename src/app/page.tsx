@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Phone, MessageSquare, AlertTriangle, CheckCircle2, ChevronRight, Car, Users, CreditCard } from 'lucide-react';
+import { Phone, MessageSquare, AlertTriangle, CheckCircle2, ChevronRight, Car, Users, CreditCard, Settings, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { getSettings } from '@/lib/settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,12 +22,18 @@ export default async function HomePage() {
     { data: contractors },
     { data: payments },
     { data: newInquiries },
+    settings,
   ] = await Promise.all([
     supabase.from('garages').select('status'),
     supabase.from('contractors').select('id, name, phone, contract_start, contract_end, garages!inner(number, monthly_fee)').eq('archived_at', ''),
     supabase.from('payments').select('contractor_id, status, paid_date').eq('year_month', ym),
     supabase.from('inquiries').select('name, created_at').eq('status', 'new').order('created_at', { ascending: false }).limit(5),
+    getSettings(supabase),
   ]);
+
+  // 初回セットアップ判定：区画がゼロの場合はセットアップガイドを表示
+  const isFirstTime = !garages || garages.length === 0;
+  const hasBusinessInfo = !!(settings as { business_name?: string })?.business_name;
 
   const payMap      = new Map((payments ?? []).map(p => [p.contractor_id, p]));
   const activeConts = (contractors ?? []).filter(c => {
@@ -56,6 +63,62 @@ export default async function HomePage() {
   const week       = ['日','月','火','水','木','金','土'][now.getDay()];
   const allPaid    = unpaid.length === 0;
   const hasActions = unpaid.length > 0 || (newInquiries?.length ?? 0) > 0 || expiring.length > 0;
+
+  // 初回セットアップ画面
+  if (isFirstTime) {
+    return (
+      <div className="space-y-4 max-w-2xl mx-auto">
+        <div>
+          <p className="text-sm text-slate-400">{month}月{day}日（{week}）</p>
+          <h1 className="text-2xl font-bold text-slate-900 mt-0.5">ようこそ！</h1>
+        </div>
+
+        <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5">
+          <p className="text-lg font-bold text-emerald-800 mb-1">はじめに3つの設定をしましょう</p>
+          <p className="text-sm text-emerald-700">以下の順番に進んでください</p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {/* STEP 1 */}
+          <Link href="/settings" className={`flex items-center gap-4 rounded-2xl border-2 p-4 hover:bg-slate-50 transition-colors ${hasBusinessInfo ? 'border-emerald-300 bg-emerald-50' : 'border-slate-300 bg-white'}`}>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 font-black text-xl ${hasBusinessInfo ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-white'}`}>
+              {hasBusinessInfo ? <CheckCircle2 size={22} /> : '1'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-slate-900 text-base">事業者情報を入力する</p>
+              <p className="text-sm text-slate-500 mt-0.5">領収書・書類に使う名前・住所・電話番号</p>
+            </div>
+            <ArrowRight size={20} className="text-slate-400 shrink-0" />
+          </Link>
+
+          {/* STEP 2 */}
+          <Link href="/garages" className="flex items-center gap-4 rounded-2xl border-2 border-slate-300 bg-white p-4 hover:bg-slate-50 transition-colors">
+            <div className="w-12 h-12 rounded-2xl bg-slate-800 text-white flex items-center justify-center shrink-0 font-black text-xl">2</div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-slate-900 text-base">駐車区画を登録する</p>
+              <p className="text-sm text-slate-500 mt-0.5">「まとめて追加」で1〜20番など一気に登録できます</p>
+            </div>
+            <ArrowRight size={20} className="text-slate-400 shrink-0" />
+          </Link>
+
+          {/* STEP 3 */}
+          <Link href="/contractors" className="flex items-center gap-4 rounded-2xl border-2 border-slate-300 bg-white p-4 hover:bg-slate-50 transition-colors">
+            <div className="w-12 h-12 rounded-2xl bg-slate-800 text-white flex items-center justify-center shrink-0 font-black text-xl">3</div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-slate-900 text-base">契約者を登録する</p>
+              <p className="text-sm text-slate-500 mt-0.5">氏名・電話番号・契約期間などを入力します</p>
+            </div>
+            <ArrowRight size={20} className="text-slate-400 shrink-0" />
+          </Link>
+        </div>
+
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <p className="text-sm font-bold text-amber-800 mb-1">💡 ヒント</p>
+          <p className="text-sm text-amber-700">STEP2の区画追加で「まとめて追加」ボタンを使うと、1番〜20番などをまとめて登録できます。</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto">

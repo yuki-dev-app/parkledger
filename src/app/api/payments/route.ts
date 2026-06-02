@@ -51,10 +51,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { supabase, user, orgId } = await requireAuth();
-  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-  if (!orgId) return NextResponse.json({ error: '組織が見つかりません' }, { status: 403 });
+  if (!user)  return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  if (!orgId) return NextResponse.json({ error: '初期設定が完了していません。いったんログアウトして再度ログインしてください。' }, { status: 403 });
 
-  const body                   = await req.json();
+  const body = await req.json();
   const { contractor_id, year_month, status } = body;
 
   if (!contractor_id || !year_month || !status)
@@ -78,6 +78,6 @@ export async function POST(req: NextRequest) {
       { onConflict: 'contractor_id,year_month' }
     );
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

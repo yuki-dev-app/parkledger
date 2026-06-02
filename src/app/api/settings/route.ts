@@ -10,8 +10,8 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   const { supabase, user, orgId } = await requireAuth();
-  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-  if (!orgId) return NextResponse.json({ error: '組織が見つかりません' }, { status: 403 });
+  if (!user)  return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  if (!orgId) return NextResponse.json({ error: '初期設定が完了していません。いったんログアウトして再度ログインしてください。' }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
   await saveSettings(supabase, orgId, body);

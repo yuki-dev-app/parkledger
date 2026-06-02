@@ -10,14 +10,14 @@ export async function GET() {
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
   return NextResponse.json(data ?? []);
 }
 
 export async function POST(req: NextRequest) {
   const { supabase, user, orgId } = await requireAuth();
-  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-  if (!orgId) return NextResponse.json({ error: '組織が見つかりません' }, { status: 403 });
+  if (!user)  return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  if (!orgId) return NextResponse.json({ error: '初期設定が完了していません。いったんログアウトして再度ログインしてください。' }, { status: 403 });
 
   const body    = await req.json().catch(() => ({}));
   const name    = (typeof body.name    === 'string' ? body.name.trim()    : '').slice(0, 100);
@@ -34,6 +34,6 @@ export async function POST(req: NextRequest) {
     .insert({ name, phone, email, message, status: 'new', notes, org_id: orgId })
     .select().single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
   return NextResponse.json({ id: data.id });
 }

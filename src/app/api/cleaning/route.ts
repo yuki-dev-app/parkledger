@@ -15,8 +15,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const { supabase, user, orgId } = await requireAuth();
-  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-  if (!orgId) return NextResponse.json({ error: '組織が見つかりません' }, { status: 403 });
+  if (!user)  return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  if (!orgId) return NextResponse.json({ error: '初期設定が完了していません。いったんログアウトして再度ログインしてください。' }, { status: 403 });
 
   const body = await req.json();
   const { cleaned_date, person, notes = '' } = body;
@@ -28,6 +28,6 @@ export async function POST(req: NextRequest) {
     .insert({ cleaned_date, person, notes, org_id: orgId })
     .select().single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
   return NextResponse.json({ id: data.id });
 }

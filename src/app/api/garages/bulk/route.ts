@@ -4,7 +4,7 @@ import { requireAuth } from '@/lib/supabase/server';
 export async function POST(req: NextRequest) {
   const { supabase, user, orgId } = await requireAuth();
   if (!user)  return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-  if (!orgId) return NextResponse.json({ error: '組織が見つかりません' }, { status: 403 });
+  if (!orgId) return NextResponse.json({ error: '初期設定が完了していません。いったんログアウトして再度ログインしてください。' }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
   const start       = Math.floor(Number(body.start));
