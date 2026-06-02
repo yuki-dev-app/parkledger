@@ -164,13 +164,13 @@ export default function CleaningPage() {
               <div className="flex gap-1 shrink-0">
                 <button
                   onClick={() => openEdit(log)}
-                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 px-3 py-2 rounded-xl hover:bg-slate-100 active:bg-slate-200"
+                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 px-3 py-3 rounded-xl hover:bg-slate-100 active:bg-slate-200"
                 >
                   <Pencil size={14} /> 編集
                 </button>
                 <button
                   onClick={() => setDeleteTarget({ id: log.id, date: log.cleaned_date })}
-                  className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 px-3 py-2 rounded-xl hover:bg-red-50 active:bg-red-100"
+                  className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 px-3 py-3 rounded-xl hover:bg-red-50 active:bg-red-100"
                 >
                   <Trash2 size={14} /> 削除
                 </button>

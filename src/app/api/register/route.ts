@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     if (error.message.toLowerCase().includes('already registered')) {
       return NextResponse.json({ error: 'このメールアドレスはすでに登録されています' }, { status: 409 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: '登録に失敗しました。しばらく時間をおいて再試行してください' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

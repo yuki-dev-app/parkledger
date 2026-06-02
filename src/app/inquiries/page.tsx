@@ -198,7 +198,7 @@ export default function InquiriesPage() {
                       <label className="text-xs text-slate-500 mb-1 block font-medium">対応メモ</label>
                       <textarea
                         className={inputCls}
-                        style={{ fontSize: '14px' }}
+                        style={{ fontSize: '16px' }}
                         rows={2}
                         value={notes}
                         onChange={e => setEditNotes({ ...editNotes, [inq.id]: e.target.value })}
@@ -254,7 +254,7 @@ export default function InquiriesPage() {
       {/* 追加フォーム */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-4 sm:p-5">
+          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-4 sm:p-5 max-h-[90dvh] overflow-y-auto" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-slate-900">問い合わせを追加</h3>
               <button onClick={() => setShowForm(false)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 w-10 h-10"><X size={19} /></button>

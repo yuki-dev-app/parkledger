@@ -53,6 +53,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   }
 
   const { error } = await supabase.from('garages').delete().eq('id', Number(id));
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: '削除に失敗しました' }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

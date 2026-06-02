@@ -24,7 +24,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     notes:             t(body.notes, 1000),
   };
 
-  // RLS が自分のorgのみを更新可能にする
   const { data, error } = await supabase
     .from('contractors')
     .update(updates)
@@ -50,9 +49,12 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   if (!contractor) return NextResponse.json({ error: '見つかりません' }, { status: 404 });
 
-  // 支払い削除 → 契約者削除 → 区画を空きに
+  // 支払い削除 → 契約者削除（失敗したら中断）→ 区画を空きに
   await supabase.from('payments').delete().eq('contractor_id', Number(id));
-  await supabase.from('contractors').delete().eq('id', Number(id));
+
+  const { error } = await supabase.from('contractors').delete().eq('id', Number(id));
+  if (error) return NextResponse.json({ error: '削除に失敗しました' }, { status: 500 });
+
   await supabase.from('garages').update({ status: 'vacant' }).eq('id', contractor.garage_id);
 
   return NextResponse.json({ ok: true });

@@ -335,7 +335,7 @@ export default function ContractorsPage() {
                     </button>
                     <button
                       onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
-                      className="flex items-center justify-center w-14 py-3.5 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                      className="flex items-center justify-center min-w-[44px] w-14 py-3.5 text-slate-400 hover:text-red-500 hover:bg-red-50"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -386,7 +386,7 @@ export default function ContractorsPage() {
       {/* 契約者追加・編集フォーム */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-5 max-h-[92dvh] overflow-y-auto modal-scroll">
+          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-5 max-h-[92dvh] overflow-y-auto modal-scroll" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-slate-900 text-lg">
                 {editTarget ? `${editTarget.name} さんを編集` : '新しい契約者を追加'}

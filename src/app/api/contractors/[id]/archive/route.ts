@@ -5,8 +5,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
 
-  const { id }             = await params;
-  const { reason = '' }    = await req.json().catch(() => ({}));
+  const { id }          = await params;
+  const { reason = '' } = await req.json().catch(() => ({}));
 
   const { data: contractor } = await supabase
     .from('contractors')
@@ -18,7 +18,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!contractor) return NextResponse.json({ error: '契約者が見つかりません' }, { status: 404 });
 
   const today = new Date().toISOString().slice(0, 10);
-  await supabase.from('contractors').update({ archived_at: today, archive_reason: reason }).eq('id', Number(id));
+
+  const { error: archiveError } = await supabase
+    .from('contractors')
+    .update({ archived_at: today, archive_reason: reason })
+    .eq('id', Number(id));
+
+  if (archiveError) return NextResponse.json({ error: '解約処理に失敗しました' }, { status: 500 });
+
   await supabase.from('garages').update({ status: 'vacant' }).eq('id', contractor.garage_id);
 
   return NextResponse.json({ ok: true });
