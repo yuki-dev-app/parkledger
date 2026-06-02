@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
-import { sql } from '@/lib/db';
+import { createClient } from '@/lib/supabase/server';
 import { getSettings } from '@/lib/settings';
 import PrintButton from '@/components/PrintButton';
 
@@ -16,21 +15,19 @@ function toWareki(iso: string): string {
 function todayWareki() { return toWareki(new Date().toISOString().slice(0, 10)); }
 
 export default async function ParkingCertPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect('/login');
-  const ownerId = Number(session.user.id);
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
 
   const { id } = await params;
 
-  const rows = await sql`
-    SELECT c.name, c.address, c.phone, c.vehicle_type, c.vehicle_number, c.vehicle_chassis,
-           c.contract_start, c.contract_end, g.number AS garage_number
-    FROM contractors c
-    JOIN garages g ON g.id = c.garage_id
-    WHERE c.id = ${id} AND c.owner_id = ${ownerId}
-  `;
+  const { data: contractor } = await supabase
+    .from('contractors')
+    .select('name, address, phone, vehicle_type, vehicle_number, vehicle_chassis, contract_start, contract_end, garages!inner(number)')
+    .eq('id', Number(id))
+    .single();
 
-  if (rows.length === 0) {
+  if (!contractor) {
     return (
       <div className="p-8 text-center">
         <p className="text-slate-500 text-lg">契約者が見つかりません。</p>
@@ -39,12 +36,13 @@ export default async function ParkingCertPage({ params }: { params: Promise<{ id
     );
   }
 
-  const c = rows[0] as {
-    name: string; address: string; phone: string; vehicle_type: string;
-    vehicle_number: string; vehicle_chassis: string;
-    contract_start: string; contract_end: string; garage_number: string;
-  };
-  const s = await getSettings(ownerId);
+  const c = {
+    ...contractor,
+    garage_number: (contractor.garages as unknown as { number: string }).number,
+    garages: undefined,
+  } as { name: string; address: string; phone: string; vehicle_type: string; vehicle_number: string; vehicle_chassis: string; contract_start: string; contract_end: string; garage_number: string };
+
+  const s = await getSettings(supabase);
   const locationStr = [s.parking_address, `${c.garage_number}番区画`].filter(Boolean).join('　');
   const endStr = c.contract_end ? toWareki(c.contract_end) : '期間の定めなし';
 

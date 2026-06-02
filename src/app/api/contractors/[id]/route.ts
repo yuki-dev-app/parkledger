@@ -1,56 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { sql } from '@/lib/db';
+import { requireAuth } from '@/lib/supabase/server';
 
-async function getOwnerId() {
-  const session = await auth();
-  return Number(session?.user?.id) || 0;
-}
+const t = (v: unknown, max: number) => (typeof v === 'string' ? v.trim() : '').slice(0, max);
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const ownerId = await getOwnerId();
-  if (!ownerId) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const { supabase, user } = await requireAuth();
+  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
 
   const { id } = await params;
+  const body   = await req.json();
 
-  // 自分のオーナーの契約者かチェック
-  const owned = await sql`SELECT id FROM contractors WHERE id = ${id} AND owner_id = ${ownerId}`;
-  if (owned.length === 0) return NextResponse.json({ error: '契約者が見つかりません' }, { status: 404 });
+  const updates = {
+    name:              t(body.name, 100),
+    phone:             t(body.phone, 20),
+    email:             t(body.email, 200),
+    address:           t(body.address, 300),
+    vehicle_type:      t(body.vehicle_type, 100),
+    vehicle_number:    t(body.vehicle_number, 50),
+    vehicle_chassis:   t(body.vehicle_chassis, 100),
+    emergency_contact: t(body.emergency_contact, 100),
+    contract_start:    t(body.contract_start, 10),
+    contract_end:      t(body.contract_end, 10),
+    notes:             t(body.notes, 1000),
+  };
 
-  const body = await req.json();
-  const {
-    name, phone, email, address, vehicle_type, vehicle_number, vehicle_chassis,
-    emergency_contact, contract_start, contract_end, notes,
-  } = body;
+  // RLS が自分のorgのみを更新可能にする
+  const { data, error } = await supabase
+    .from('contractors')
+    .update(updates)
+    .eq('id', Number(id))
+    .select()
+    .single();
 
-  await sql`
-    UPDATE contractors
-    SET name=${name}, phone=${phone ?? ''}, email=${email ?? ''},
-        address=${address ?? ''}, vehicle_type=${vehicle_type ?? ''},
-        vehicle_number=${vehicle_number ?? ''}, vehicle_chassis=${vehicle_chassis ?? ''},
-        emergency_contact=${emergency_contact ?? ''},
-        contract_start=${contract_start}, contract_end=${contract_end ?? ''},
-        notes=${notes ?? ''}
-    WHERE id = ${id} AND owner_id = ${ownerId}
-  `;
+  if (error || !data) return NextResponse.json({ error: '契約者が見つかりません' }, { status: 404 });
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const ownerId = await getOwnerId();
-  if (!ownerId) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const { supabase, user } = await requireAuth();
+  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
 
   const { id } = await params;
 
-  const rows = await sql`SELECT garage_id FROM contractors WHERE id = ${id} AND owner_id = ${ownerId}`;
-  if (rows.length === 0) return NextResponse.json({ error: '見つかりません' }, { status: 404 });
-  const garageId = (rows[0] as { garage_id: number }).garage_id;
+  const { data: contractor } = await supabase
+    .from('contractors')
+    .select('garage_id')
+    .eq('id', Number(id))
+    .single();
 
-  await sql.transaction([
-    sql`DELETE FROM payments WHERE contractor_id = ${id}`,
-    sql`DELETE FROM contractors WHERE id = ${id} AND owner_id = ${ownerId}`,
-    sql`UPDATE garages SET status = 'vacant' WHERE id = ${garageId} AND owner_id = ${ownerId}`,
-  ]);
+  if (!contractor) return NextResponse.json({ error: '見つかりません' }, { status: 404 });
+
+  // 支払い削除 → 契約者削除 → 区画を空きに
+  await supabase.from('payments').delete().eq('contractor_id', Number(id));
+  await supabase.from('contractors').delete().eq('id', Number(id));
+  await supabase.from('garages').update({ status: 'vacant' }).eq('id', contractor.garage_id);
 
   return NextResponse.json({ ok: true });
 }

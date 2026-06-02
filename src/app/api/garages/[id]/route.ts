@@ -1,50 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { sql } from '@/lib/db';
-
-async function getOwnerId() {
-  const session = await auth();
-  return Number(session?.user?.id) || 0;
-}
+import { requireAuth } from '@/lib/supabase/server';
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const ownerId = await getOwnerId();
-  if (!ownerId) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const { supabase, user } = await requireAuth();
+  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
 
   const { id } = await params;
-  const body = await req.json();
-  const { monthly_fee, notes } = body;
+  const body   = await req.json();
   let { status } = body;
+  const { monthly_fee, notes } = body;
 
-  // 自分のオーナーの区画かチェック
-  const owned = await sql`SELECT id FROM garages WHERE id = ${id} AND owner_id = ${ownerId}`;
-  if (owned.length === 0) return NextResponse.json({ error: '区画が見つかりません' }, { status: 404 });
+  // 契約者がいれば強制的に occupied（RLS が自分のorgのみを見る）
+  const { data: contractor } = await supabase
+    .from('contractors')
+    .select('id')
+    .eq('garage_id', Number(id))
+    .eq('archived_at', '')
+    .maybeSingle();
 
-  const contractor = await sql`SELECT id FROM contractors WHERE garage_id = ${id} AND archived_at = ''`;
-  if (contractor.length > 0) {
+  if (contractor) {
     status = 'occupied';
   } else if (status === 'occupied') {
     return NextResponse.json({ error: '契約者がいないため使用中にできません' }, { status: 400 });
   }
 
-  await sql`UPDATE garages SET status=${status}, monthly_fee=${monthly_fee}, notes=${notes} WHERE id=${id} AND owner_id=${ownerId}`;
+  const { data, error } = await supabase
+    .from('garages')
+    .update({ status, monthly_fee: Number(monthly_fee) || 0, notes: notes ?? '' })
+    .eq('id', Number(id))
+    .select()
+    .single();
+
+  if (error || !data) return NextResponse.json({ error: '区画が見つかりません' }, { status: 404 });
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const ownerId = await getOwnerId();
-  if (!ownerId) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const { supabase, user } = await requireAuth();
+  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
 
   const { id } = await params;
 
-  // 自分のオーナーの区画かチェック
-  const owned = await sql`SELECT id FROM garages WHERE id = ${id} AND owner_id = ${ownerId}`;
-  if (owned.length === 0) return NextResponse.json({ error: '区画が見つかりません' }, { status: 404 });
+  const { data: contractor } = await supabase
+    .from('contractors')
+    .select('id')
+    .eq('garage_id', Number(id))
+    .eq('archived_at', '')
+    .maybeSingle();
 
-  const contractor = await sql`SELECT id FROM contractors WHERE garage_id = ${id} AND archived_at = ''`;
-  if (contractor.length > 0)
+  if (contractor) {
     return NextResponse.json({ error: '契約者がいる区画は削除できません。先に契約者を削除してください。' }, { status: 400 });
+  }
 
-  await sql`DELETE FROM garages WHERE id = ${id} AND owner_id = ${ownerId}`;
+  const { error } = await supabase.from('garages').delete().eq('id', Number(id));
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

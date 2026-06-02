@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
-import { sql } from '@/lib/db';
+import { createClient } from '@/lib/supabase/server';
 import { getSettings } from '@/lib/settings';
 import PrintButton from '@/components/PrintButton';
 
@@ -54,23 +53,19 @@ function toDaiji(num: number): string {
 }
 
 export default async function ReceiptPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect('/login');
-  const ownerId = Number(session.user.id);
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
 
   const { id } = await params;
 
-  const rows = await sql`
-    SELECT p.id, p.amount, p.year_month, p.paid_date,
-           c.name AS contractor_name, c.address AS contractor_address,
-           g.number AS garage_number
-    FROM payments p
-    JOIN contractors c ON c.id = p.contractor_id
-    JOIN garages g ON g.id = c.garage_id
-    WHERE p.id = ${id} AND p.owner_id = ${ownerId}
-  `;
+  const { data: payment } = await supabase
+    .from('payments')
+    .select('id, amount, year_month, paid_date, contractors!inner(name, address, garages!inner(number))')
+    .eq('id', Number(id))
+    .single();
 
-  if (rows.length === 0) {
+  if (!payment) {
     return (
       <div className="p-8 text-center">
         <p className="text-slate-500 text-lg">記録が見つかりません。</p>
@@ -79,11 +74,17 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const p = rows[0] as {
-    id: number; amount: number; year_month: string; paid_date: string;
-    contractor_name: string; contractor_address: string; garage_number: string;
+  const cont = payment.contractors as unknown as { name: string; address: string; garages: { number: string } };
+  const p = {
+    id:                  payment.id,
+    amount:              payment.amount,
+    year_month:          payment.year_month,
+    paid_date:           payment.paid_date,
+    contractor_name:     cont.name,
+    contractor_address:  cont.address,
+    garage_number:       cont.garages.number,
   };
-  const s = await getSettings(ownerId);
+  const s = await getSettings(supabase);
   const [y, m] = p.year_month.split('-');
   const issueDate = p.paid_date || new Date().toISOString().slice(0, 10);
   const no = issueNo(p.id, s.receipt_no_prefix || 'R');

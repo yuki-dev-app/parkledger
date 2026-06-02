@@ -1,38 +1,29 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Shield } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [identifier,   setIdentifier]   = useState(''); // メールまたはID
-  const [password,     setPassword]     = useState('');
-  const [error,        setError]        = useState('');
-  const [loading,      setLoading]      = useState(false);
-  const [isFirstTime,  setIsFirstTime]  = useState(false);
-
-  useEffect(() => {
-    fetch('/api/setup')
-      .then(r => r.json())
-      .then(d => { if (!d.hasUsers) setIsFirstTime(true); })
-      .catch(() => {});
-  }, []);
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const [email,    setEmail]    = useState('');
+  const [password, setPassword] = useState('');
+  const [error,    setError]    = useState(
+    searchParams.get('error') === 'auth_callback' ? 'ログインリンクが無効または期限切れです' : ''
+  );
+  const [loading, setLoading] = useState(false);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const result = await signIn('credentials', {
-      identifier,
-      password,
-      redirect: false,
-    });
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (result?.error || !result?.ok) {
-      setError('IDまたはパスワードが違います');
+    if (signInError) {
+      setError('メールアドレスまたはパスワードが違います');
       setLoading(false);
     } else {
       router.push('/');
@@ -41,12 +32,8 @@ export default function LoginPage() {
   };
 
   return (
-    // overflow-x-hidden でグロー要素による横スクロールを防止
     <div className="fixed inset-0 overflow-y-auto overflow-x-hidden" style={{ backgroundColor: '#080e20' }}>
-
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f1e] via-[#0d1836] to-[#060c18]" />
-
-      {/* グロー：w-full で横スクロール防止 */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-[240px] rounded-full blur-3xl pointer-events-none"
         style={{ background: 'radial-gradient(ellipse, rgba(52,211,153,0.07) 0%, transparent 70%)' }}
@@ -88,22 +75,17 @@ export default function LoginPage() {
           >
             <div className="mb-4">
               <h1 className="text-white font-bold text-base">管理者ログイン</h1>
-              <p className="text-slate-500 text-sm mt-0.5">メールアドレスまたはIDでログイン</p>
+              <p className="text-slate-500 text-sm mt-0.5">メールアドレスとパスワードを入力してください</p>
             </div>
 
             <form onSubmit={login} className="flex flex-col gap-3">
-              {/* メールまたはID（type=text でオリジナルIDも受け付ける） */}
               <input
-                type="text"
+                type="email"
                 required
-                autoComplete="username"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck="false"
-                inputMode="email"
-                value={identifier}
-                onChange={e => setIdentifier(e.target.value)}
-                placeholder="メールアドレス または ID"
+                autoComplete="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="メールアドレス"
                 className="w-full px-4 py-3.5 rounded-xl text-white placeholder-slate-600 focus:outline-none transition-all"
                 style={{ fontSize: '16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
                 onFocus={e => { e.currentTarget.style.border = '1px solid rgba(52,211,153,0.35)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(52,211,153,0.08)'; }}
@@ -123,7 +105,7 @@ export default function LoginPage() {
               />
 
               {error && (
-                <div className="rounded-xl px-4 py-3"
+                <div className="rounded-xl px-4 py-2.5"
                   style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)' }}>
                   <p className="text-sm text-red-400 font-medium leading-snug">{error}</p>
                 </div>
@@ -131,15 +113,15 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={loading || !identifier || !password}
+                disabled={loading || !email || !password}
                 className="relative w-full text-white font-bold rounded-xl transition-all"
                 style={{
                   minHeight: '52px',
                   fontSize: '16px',
-                  background: loading || !identifier || !password
+                  background: loading || !email || !password
                     ? 'rgba(52,211,153,0.25)'
                     : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  opacity: (!identifier || !password) ? 0.5 : 1,
+                  opacity: (!email || !password) ? 0.5 : 1,
                 }}
               >
                 {loading ? (
@@ -154,21 +136,6 @@ export default function LoginPage() {
               </button>
             </form>
           </div>
-
-          {/* 初めての方リンク（ユーザーが0人のときだけ表示） */}
-          {isFirstTime && (
-            <div className="mt-4 rounded-2xl p-4 text-center"
-              style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}>
-              <p className="text-emerald-400 text-sm font-medium mb-2">初めてご利用の方</p>
-              <Link
-                href="/setup"
-                className="inline-block w-full text-white font-bold py-3.5 rounded-xl text-sm"
-                style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.25)' }}
-              >
-                アカウントを作成する →
-              </Link>
-            </div>
-          )}
 
           <div className="flex items-center justify-center gap-1.5 mt-5">
             <Shield size={12} className="text-slate-600" />
