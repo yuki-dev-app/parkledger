@@ -33,14 +33,15 @@ export default function PaymentsPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [rows,   setRows]   = useState<Row[]>([]);
-  const [search, setSearch] = useState('');
-  const [busyId, setBusyId] = useState<number | null>(null);
-  const [toast, setToast] = useState<ToastType | null>(null);
-  const [filter, setFilter] = useState<FilterType>('unpaid');
-  const [reminder, setReminder] = useState<Row | null>(null);
-  const [settings, setSettings] = useState<Settings>({ business_name: '', business_phone: '', parking_name: '' });
-  const [copied, setCopied] = useState(false);
+  const [rows,       setRows]       = useState<Row[]>([]);
+  const [search,     setSearch]     = useState('');
+  const [busyId,     setBusyId]     = useState<number | null>(null);
+  const [toast,      setToast]      = useState<ToastType | null>(null);
+  const [filter,     setFilter]     = useState<FilterType>('unpaid');
+  const [reminder,   setReminder]   = useState<Row | null>(null);
+  const [settings,   setSettings]   = useState<Settings>({ business_name: '', business_phone: '', parking_name: '' });
+  const [copied,     setCopied]     = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
   const ym = `${year}-${String(month).padStart(2, '0')}`;
 
@@ -145,7 +146,13 @@ TEL: ${settings.business_phone}` : ''}` : '';
           className="flex items-center justify-center w-12 h-12 text-slate-600 hover:bg-slate-100 rounded-xl active:bg-slate-200">
           <ChevronLeft size={26} />
         </button>
-        <span className="font-bold text-slate-900 text-xl">{year}年{month}月</span>
+        <button
+          onClick={() => setShowPicker(true)}
+          className="font-bold text-slate-900 text-xl px-3 py-1.5 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors"
+          title="月を選ぶ"
+        >
+          {year}年{month}月
+        </button>
         <button
           onClick={nextMonth}
           aria-label="次の月"
@@ -330,6 +337,71 @@ TEL: ${settings.business_phone}` : ''}` : '';
           );
         })}
       </div>
+
+      {/* 年月ピッカー */}
+      {showPicker && (() => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const years = [currentYear, currentYear - 1, currentYear - 2];
+        const months = [1,2,3,4,5,6,7,8,9,10,11,12];
+        return (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
+            onClick={() => setShowPicker(false)}>
+            <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-xs sm:mx-4 p-5"
+              onClick={e => e.stopPropagation()}>
+              <p className="font-bold text-slate-900 text-lg mb-4 text-center">年月を選ぶ</p>
+
+              {/* 年 */}
+              <div className="flex gap-2 mb-4">
+                {years.map(y => (
+                  <button
+                    key={y}
+                    onClick={() => setYear(y)}
+                    className={`flex-1 py-3 rounded-xl font-bold text-base transition-colors ${
+                      y === year
+                        ? 'bg-slate-800 text-white'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {y}年
+                  </button>
+                ))}
+              </div>
+
+              {/* 月 */}
+              <div className="grid grid-cols-4 gap-2">
+                {months.map(m => {
+                  const isFuture = year > currentYear ||
+                    (year === currentYear && m > now.getMonth() + 1);
+                  return (
+                    <button
+                      key={m}
+                      disabled={isFuture}
+                      onClick={() => { setMonth(m); setShowPicker(false); }}
+                      className={`py-3 rounded-xl font-bold text-base transition-colors ${
+                        m === month && year === year
+                          ? 'bg-emerald-600 text-white'
+                          : isFuture
+                            ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 active:bg-slate-300'
+                      }`}
+                    >
+                      {m}月
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setShowPicker(false)}
+                className="w-full mt-4 py-3 rounded-xl bg-slate-100 text-slate-700 font-medium text-base hover:bg-slate-200"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 督促モーダル */}
       {reminder && (
