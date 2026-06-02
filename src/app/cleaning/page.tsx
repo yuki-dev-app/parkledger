@@ -60,7 +60,7 @@ export default function CleaningPage() {
     const isInList = persons.includes(log.person);
     setForm({
       cleaned_date: log.cleaned_date,
-      person: isInList ? log.person : log.person,
+      person: log.person,
       personSelect: isInList ? log.person : '__other__',
       notes: log.notes,
     });
