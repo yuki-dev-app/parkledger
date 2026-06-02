@@ -1,6 +1,5 @@
 /**
  * サーバーサイド用Supabaseクライアント
- * API Routes・Server Componentsで使用
  */
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -8,7 +7,6 @@ import { supabaseAdmin } from './admin';
 
 export async function createClient() {
   const cookieStore = await cookies();
-
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -36,30 +34,43 @@ export async function getUser() {
 }
 
 /**
+ * orgIdを app_metadata にキャッシュする（非同期・エラー無視）
+ *
+ * app_metadata はユーザー自身では書き換え不可（admin API のみ書き込み可能）。
+ * 一度キャッシュすると getUser() の返り値に含まれるため、
+ * 次回から org_members DBクエリが不要になる。
+ */
+function cacheOrgIdInMetadata(userId: string, orgId: string, currentMeta: Record<string, unknown>) {
+  if (currentMeta?.org_id === orgId) return; // すでにキャッシュ済み
+  supabaseAdmin.auth.admin
+    .updateUserById(userId, { app_metadata: { ...currentMeta, org_id: orgId } })
+    .catch(() => {}); // 非ブロッキング、失敗しても動作継続
+}
+
+/**
  * ユーザーのorg_idを確保する（なければ自動作成）
  *
  * 【なぜ必要か】
- * supabase_schema.sql の古いトリガーは招待フロー専用で、
- * 自己登録（メタデータに org_id なし）では org_members が作られない。
- * supabase_self_register.sql を未実行のユーザーへの救済処理として
- * コード側でも org を自動生成する。
+ * supabase_schema.sql の古いトリガーは招待フロー専用のため
+ * 自己登録では org_members が作られない場合がある。
+ * その救済処理として、org を自動生成する。
  */
-async function ensureOrg(userId: string): Promise<string | null> {
+async function ensureOrg(userId: string, currentMeta: Record<string, unknown> = {}): Promise<string | null> {
   try {
-    // admin で RLS をバイパスして確認
+    // admin で RLS をバイパスして再確認
     const { data: member } = await supabaseAdmin
       .from('org_members')
       .select('org_id')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (member?.org_id) return member.org_id;
+    if (member?.org_id) {
+      cacheOrgIdInMetadata(userId, member.org_id, currentMeta);
+      return member.org_id;
+    }
 
-    // ユーザーのメタデータから事業者名を取得
-    const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const orgName = (authUser?.user_metadata?.business_name as string | undefined) || '新規事業者';
-
-    // 組織を作成
+    // 組織を新規作成
+    const orgName = (currentMeta?.business_name as string | undefined) || '新規事業者';
     const { data: org, error: orgErr } = await supabaseAdmin
       .from('organizations')
       .insert({ name: orgName })
@@ -68,11 +79,12 @@ async function ensureOrg(userId: string): Promise<string | null> {
 
     if (orgErr || !org) return null;
 
-    // org_members を作成
     await supabaseAdmin
       .from('org_members')
       .insert({ org_id: org.id, user_id: userId, role: 'owner' });
 
+    // 次回リクエストの高速化のためキャッシュ
+    cacheOrgIdInMetadata(userId, org.id, currentMeta);
     return org.id;
   } catch {
     return null;
@@ -85,16 +97,23 @@ export async function getOrgId(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // ── 高速パス: app_metadata からキャッシュ読み取り（DBクエリ不要）
+  const cached = user.app_metadata?.org_id as string | undefined;
+  if (cached) return cached;
+
+  // ── 低速パス: DBクエリ
   const { data } = await supabase
     .from('org_members')
     .select('org_id')
     .eq('user_id', user.id)
     .single();
 
-  if (data?.org_id) return data.org_id;
+  if (data?.org_id) {
+    cacheOrgIdInMetadata(user.id, data.org_id, user.app_metadata ?? {});
+    return data.org_id;
+  }
 
-  // org が存在しない場合は自動作成
-  return ensureOrg(user.id);
+  return ensureOrg(user.id, user.user_metadata ?? {});
 }
 
 /** ユーザーとorg_idをまとめて取得（API Routeで頻用） */
@@ -103,16 +122,26 @@ export async function requireAuth() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { supabase, user: null, orgId: null };
 
+  // ── 高速パス: app_metadata にキャッシュされていれば DBクエリ不要 ──
+  // （初回以降はほぼ全てここで返る = getUser 1回のみ）
+  const cachedOrgId = user.app_metadata?.org_id as string | undefined;
+  if (cachedOrgId) return { supabase, user, orgId: cachedOrgId };
+
+  // ── 低速パス: org_members テーブルから取得（初回またはキャッシュ未設定時）──
   const { data: member } = await supabase
     .from('org_members')
     .select('org_id')
     .eq('user_id', user.id)
     .single();
 
-  if (member?.org_id) return { supabase, user, orgId: member.org_id };
+  if (member?.org_id) {
+    // 次回から高速パスを使えるよう非同期でキャッシュ設定
+    cacheOrgIdInMetadata(user.id, member.org_id, user.app_metadata ?? {});
+    return { supabase, user, orgId: member.org_id };
+  }
 
-  // org_members が存在しない → 自動作成（初回登録時のトリガー未実行への救済）
-  const orgId = await ensureOrg(user.id);
+  // ── 組織が存在しない → 自動作成（SQL未実行ユーザーの救済）──
+  const orgId = await ensureOrg(user.id, user.user_metadata ?? {});
   return { supabase, user, orgId };
 }
 

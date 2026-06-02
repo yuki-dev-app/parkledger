@@ -1,17 +1,31 @@
 @import "tailwindcss";
 
-/* ════════════════════════════════
+/* ════════════════════════════════════════
    ParkLedger – グローバルスタイル
-   ════════════════════════════════ */
+   対応: iPhone Safari / LINE / Android Chrome
+   ════════════════════════════════════════ */
 
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
+/* ══ html/body ── 背景・viewport の基盤 ══════════════════════════════
+ *
+ * 【なぜこう設定するか】
+ * iOS Safari でキーボードが開くと visual viewport が縮む。
+ * position:fixed の要素は visual viewport に追従して上にズレ、
+ * その下の html/body 背景が露出する。
+ * html と body の両方に同じ背景色を設定することで白いすき間を防ぐ。
+ *
+ * overscroll-behavior: none で iOS ラバーバンドスクロール時に
+ * html 背景が見えても同色なので破綻しない。
+ * ═══════════════════════════════════════════════════════════════════ */
+
 html {
   overflow-x: hidden;
-  /* ログインページが light mode になったため html も light に合わせる */
-  background-color: #f8fafc;
+  background-color: #f8fafc;   /* slate-50 — body と統一 */
+  /* iOS ラバーバンドで html が見えても body と同色 */
+  overscroll-behavior: none;
 }
 
 body {
@@ -21,14 +35,19 @@ body {
   text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  /* 高齢者向け：ベースラインとして読みやすい行間を確保 */
   font-size: 16px;
   line-height: 1.65;
-  /* iPhoneのセーフエリア対応 */
+
+  /* 背景は html と統一（キーボード開閉時に露出しても同色） */
+  background-color: #f8fafc;
+
+  /* セーフエリア（ノッチ・ホームバー）対応 */
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
-  /* アプリページの背景色（auth ページは自前で上書き） */
-  background-color: #f8fafc; /* slate-50 */
+
+  /* 最低画面高さを保証（iOS キーボード表示時も背景が途切れない） */
+  min-height: 100dvh;
+  min-height: -webkit-fill-available; /* 古い iOS Safari フォールバック */
 }
 
 /* iOS Safariでのダブルタップズームを防ぐ */
@@ -37,20 +56,9 @@ button, a, input, select, textarea {
   touch-action: manipulation;
 }
 
-/* タップ領域の最小サイズ（高齢者向けアクセシビリティ） */
+/* タップ領域の最小サイズ（50〜60代向けアクセシビリティ） */
 button {
   min-height: 44px;
-}
-
-/* ══ モバイル：下部ナビ分の余白（コンテンツが隠れないよう確保） ══ */
-.page-main {
-  /* モバイル: ナビ68px + safe-area + 余裕20px */
-  padding-bottom: calc(68px + env(safe-area-inset-bottom) + 20px);
-}
-@media (min-width: 768px) {
-  .page-main {
-    padding-bottom: 3rem;
-  }
 }
 
 /* ══ フォーカスアクセシビリティ ══ */
@@ -60,14 +68,26 @@ button {
   border-radius: 6px;
 }
 
-/* iOS Safariで16px未満のフォントはズームが起きるため16px以上に統一 */
+/* iOS Safari で 16px 未満はズームするため強制統一 */
 input, select, textarea {
   font-size: 16px !important;
 }
 
-/* ══ 下部ナビ safe-area（iPhone ホームバー対応）══ */
+/* ══ ページコンテンツ余白 ══════════════════════════════════════════
+ * 下部ナビバー（h-[68px]）＋ safe-area ＋ 余裕 の合計分だけ余白を確保
+ * ═══════════════════════════════════════════════════════════════════ */
+.page-main {
+  padding-bottom: calc(68px + env(safe-area-inset-bottom) + 20px);
+}
+@media (min-width: 768px) {
+  .page-main {
+    padding-bottom: 3rem;
+  }
+}
+
+/* ══ 下部ナビ safe-area ══ */
 .nav-bottom {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 0px);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* ══ モーダル内スクロール ══ */
@@ -76,8 +96,7 @@ input, select, textarea {
   -webkit-overflow-scrolling: touch;
 }
 
-/* ══ 設定ページ保存ボタン：スマホでボトムナビの上に固定 ══
-   bottom-0 だとボトムナビ(64px)に隠れるため、モバイルでは上にずらす */
+/* ══ 設定ページ保存ボタン（下部ナビの上に固定）══ */
 .save-bar {
   position: fixed;
   bottom: 0;
@@ -86,7 +105,7 @@ input, select, textarea {
 }
 @media (max-width: 767px) {
   .save-bar {
-    bottom: calc(64px + env(safe-area-inset-bottom));
+    bottom: calc(68px + env(safe-area-inset-bottom));
   }
 }
 @media (min-width: 768px) {
@@ -102,9 +121,9 @@ input, select, textarea {
   }
 }
 
-/* ══ Toast：スマホはボトムナビ上、PCは通常位置 ══ */
+/* ══ Toast 位置 ══ */
 .toast-wrap {
-  bottom: calc(env(safe-area-inset-bottom) + 80px);
+  bottom: calc(env(safe-area-inset-bottom) + 88px);
 }
 @media (min-width: 768px) {
   .toast-wrap {
