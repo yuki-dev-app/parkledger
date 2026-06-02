@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Check, Settings as SettingsIcon, Plus, X, Users, Building2, FileText, Car, KeyRound, Eye, EyeOff, Mail } from 'lucide-react';
+import { Check, Settings as SettingsIcon, Plus, X, Users, Building2, FileText, Car, KeyRound, Eye, EyeOff, Mail, ChevronLeft } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 
 type Settings = {
   business_name: string; business_address: string; business_phone: string;
@@ -130,6 +131,15 @@ export default function SettingsPage() {
   return (
     <div className="max-w-xl mx-auto pb-28">
       <Toast toast={toast} onClose={() => setToast(null)} />
+
+      {/* 戻るボタン */}
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 mb-4 py-2 pr-3 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors"
+      >
+        <ChevronLeft size={20} />
+        <span className="font-medium text-base">ホームに戻る</span>
+      </Link>
 
       <div className="flex items-center gap-2 mb-4">
         <div className="bg-slate-800 text-white rounded-xl w-10 h-10 flex items-center justify-center shrink-0">
