@@ -29,14 +29,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = await req.json().catch(() => ({}));
-  const businessName = (typeof body.business_name === 'string' ? body.business_name.trim() : '').slice(0, 100);
-  const email        = (typeof body.email         === 'string' ? body.email.trim().toLowerCase() : '');
-  const password     = (typeof body.password      === 'string' ? body.password : '');
+  const body     = await req.json().catch(() => ({}));
+  const email    = (typeof body.email    === 'string' ? body.email.trim().toLowerCase() : '');
+  const password = (typeof body.password === 'string' ? body.password : '');
 
   // 入力検証
-  if (!businessName || !email || !password) {
-    return NextResponse.json({ error: '全ての項目を入力してください' }, { status: 400 });
+  if (!email || !password) {
+    return NextResponse.json({ error: 'メールアドレスとパスワードを入力してください' }, { status: 400 });
   }
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ error: '正しいメールアドレスを入力してください' }, { status: 400 });
@@ -53,7 +52,6 @@ export async function POST(req: NextRequest) {
     email,
     password,
     email_confirm: true,
-    user_metadata: { business_name: businessName },
   });
 
   if (error) {

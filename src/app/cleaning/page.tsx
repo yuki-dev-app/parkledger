@@ -40,8 +40,8 @@ export default function CleaningPage() {
 
   const load = useCallback(async () => {
     const [cRes, sRes] = await Promise.all([fetch('/api/cleaning'), fetch('/api/settings')]);
-    setLogs(await cRes.json());
-    const settings = await sRes.json();
+    const [cJson, settings] = await Promise.all([cRes.json().catch(() => []), sRes.json().catch(() => ({}))]);
+    setLogs(Array.isArray(cJson) ? cJson : []);
     const list = settings.cleaning_persons
       ? settings.cleaning_persons.split(',').map((s: string) => s.trim()).filter(Boolean)
       : [];

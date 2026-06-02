@@ -35,8 +35,9 @@ export default function GaragesPage() {
 
   const load = useCallback(async () => {
     setDataLoading(true);
-    const res = await fetch('/api/garages');
-    setGarages(await res.json());
+    const res  = await fetch('/api/garages');
+    const json = await res.json().catch(() => []);
+    setGarages(Array.isArray(json) ? json : []);
     setDataLoading(false);
   }, []);
 

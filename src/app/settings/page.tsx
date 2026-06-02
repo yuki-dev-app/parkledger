@@ -32,13 +32,21 @@ export default function SettingsPage() {
   const [showNew,      setShowNew]      = useState(false);
   const [savingPass,   setSavingPass]   = useState(false);
 
+  // ログインID
+  const [loginId,      setLoginId]      = useState('');
+  const [newLoginId,   setNewLoginId]   = useState('');
+  const [savingId,     setSavingId]     = useState(false);
+
   const load = useCallback(async () => {
     const supabase = createClient();
-    const [sRes, { data: { user } }] = await Promise.all([
+    const [sRes, idRes, { data: { user } }] = await Promise.all([
       fetch('/api/settings'),
+      fetch('/api/me/login-id'),
       supabase.auth.getUser(),
     ]);
-    setForm(await sRes.json());
+    setForm(await sRes.json().catch(() => ({})));
+    const idJson = await idRes.json().catch(() => ({}));
+    setLoginId(idJson.login_id ?? '');
     setCurrentEmail(user?.email ?? '');
   }, []);
 
@@ -82,6 +90,23 @@ export default function SettingsPage() {
     if (error) { setToast({ message: error.message, kind: 'error' }); return; }
     setNewEmail('');
     setToast({ message: '確認メールを送りました。新しいメールを確認してください。', kind: 'success' });
+  };
+
+  const saveLoginId = async () => {
+    setSavingId(true);
+    const res = await fetch('/api/me/login-id', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login_id: newLoginId }),
+    });
+    setSavingId(false);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setToast({ message: d.error ?? '更新に失敗しました', kind: 'error' });
+      return;
+    }
+    setLoginId(newLoginId);
+    setNewLoginId('');
+    setToast({ message: 'ログインIDを設定しました', kind: 'success' });
   };
 
   const changePassword = async () => {
@@ -181,6 +206,31 @@ export default function SettingsPage() {
       {/* アカウント設定 */}
       <section className="mb-4">
         <div className="flex items-center gap-2 mb-2 px-1"><KeyRound size={16} className="text-slate-600"/><h2 className="text-base font-bold text-slate-700">アカウント設定</h2></div>
+
+        {/* ログインID */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
+          <div className="px-4 py-3.5 border-b border-slate-100">
+            <p className="text-xs text-slate-400 mb-0.5">現在のログインID</p>
+            <p className="text-base font-bold text-slate-800">{loginId || '（未設定）'}</p>
+            <p className="text-xs text-slate-400 mt-1">メールアドレスの代わりにこのIDでログインできます</p>
+          </div>
+          <div className="px-4 py-3.5">
+            <label className="text-sm font-medium text-slate-600 block mb-1.5">新しいログインID</label>
+            <input
+              className={inputCls}
+              value={newLoginId}
+              onChange={e => setNewLoginId(e.target.value)}
+              placeholder="例: yamada123（半角英数字・ハイフン・_、3〜30文字）"
+            />
+            <button
+              onClick={saveLoginId}
+              disabled={savingId || !newLoginId.trim()}
+              className="mt-2.5 w-full flex items-center justify-center gap-2 bg-slate-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-40"
+            >
+              <Check size={15} />{savingId ? '保存中...' : 'ログインIDを設定する'}
+            </button>
+          </div>
+        </div>
 
         {/* メール変更 */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">

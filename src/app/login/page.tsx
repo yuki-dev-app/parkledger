@@ -3,13 +3,14 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Shield } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [error,    setError]    = useState(
+  const [identifier, setIdentifier] = useState('');
+  const [password,   setPassword]   = useState('');
+  const [error,      setError]      = useState(
     searchParams.get('error') === 'auth_callback' ? 'ログインリンクが無効または期限切れです' : ''
   );
   const [loading, setLoading] = useState(false);
@@ -19,11 +20,29 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
+    let email = identifier.trim().toLowerCase();
+
+    // @ が含まれていない場合はログインIDとして解決する
+    if (!email.includes('@')) {
+      const res = await fetch('/api/auth/resolve-login-id', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ login_id: identifier.trim() }),
+      });
+      if (!res.ok) {
+        setError('メールアドレスまたはIDが違います');
+        setLoading(false);
+        return;
+      }
+      const d = await res.json();
+      email = d.email;
+    }
+
     const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (signInError) {
-      setError('メールアドレスまたはパスワードが違います');
+      setError('メールアドレス（またはID）またはパスワードが違います');
       setLoading(false);
     } else {
       router.push('/');
@@ -31,23 +50,25 @@ export default function LoginPage() {
     }
   };
 
+  const inputStyle = {
+    fontSize: '16px',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.10)',
+  };
+
   return (
     <div className="fixed inset-0 overflow-y-auto overflow-x-hidden" style={{ backgroundColor: '#080e20' }}>
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f1e] via-[#0d1836] to-[#060c18]" />
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-[240px] rounded-full blur-3xl pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(52,211,153,0.07) 0%, transparent 70%)' }}
-      />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-[240px] rounded-full blur-3xl pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse, rgba(52,211,153,0.07) 0%, transparent 70%)' }} />
 
-      <div
-        className="relative min-h-full flex flex-col items-center justify-center"
+      <div className="relative min-h-full flex flex-col items-center justify-center"
         style={{
           paddingTop:    'max(52px, env(safe-area-inset-top))',
           paddingBottom: 'max(36px, env(safe-area-inset-bottom))',
           paddingLeft:   'max(20px, env(safe-area-inset-left))',
           paddingRight:  'max(20px, env(safe-area-inset-right))',
-        }}
-      >
+        }}>
         <div className="w-full max-w-[360px]">
 
           {/* ロゴ */}
@@ -71,23 +92,22 @@ export default function LoginPage() {
               backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)',
               boxShadow: '0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
-            }}
-          >
+            }}>
             <div className="mb-4">
-              <h1 className="text-white font-bold text-base">管理者ログイン</h1>
-              <p className="text-slate-500 text-sm mt-0.5">メールアドレスとパスワードを入力してください</p>
+              <h1 className="text-white font-bold text-base">ログイン</h1>
+              <p className="text-slate-500 text-sm mt-0.5">メールアドレスまたはIDで入力してください</p>
             </div>
 
             <form onSubmit={login} className="flex flex-col gap-3">
               <input
-                type="email"
+                type="text"
                 required
-                autoComplete="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="メールアドレス"
+                autoComplete="username"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
+                placeholder="メールアドレスまたはID"
                 className="w-full px-4 py-3.5 rounded-xl text-white placeholder-slate-600 focus:outline-none transition-all"
-                style={{ fontSize: '16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
+                style={inputStyle}
                 onFocus={e => { e.currentTarget.style.border = '1px solid rgba(52,211,153,0.35)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(52,211,153,0.08)'; }}
                 onBlur={e  => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.10)'; e.currentTarget.style.boxShadow = 'none'; }}
               />
@@ -99,7 +119,7 @@ export default function LoginPage() {
                 onChange={e => setPassword(e.target.value)}
                 placeholder="パスワード"
                 className="w-full px-4 py-3.5 rounded-xl text-white placeholder-slate-600 focus:outline-none transition-all"
-                style={{ fontSize: '16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
+                style={inputStyle}
                 onFocus={e => { e.currentTarget.style.border = '1px solid rgba(52,211,153,0.35)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(52,211,153,0.08)'; }}
                 onBlur={e  => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.10)'; e.currentTarget.style.boxShadow = 'none'; }}
               />
@@ -113,17 +133,16 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={loading || !email || !password}
+                disabled={loading || !identifier || !password}
                 className="relative w-full text-white font-bold rounded-xl transition-all"
                 style={{
                   minHeight: '52px',
                   fontSize: '16px',
-                  background: loading || !email || !password
+                  background: loading || !identifier || !password
                     ? 'rgba(52,211,153,0.25)'
                     : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  opacity: (!email || !password) ? 0.5 : 1,
-                }}
-              >
+                  opacity: (!identifier || !password) ? 0.5 : 1,
+                }}>
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
@@ -139,9 +158,7 @@ export default function LoginPage() {
 
           <p className="text-center text-slate-500 text-sm mt-5">
             はじめてご利用の方は{' '}
-            <a href="/register" className="text-emerald-400 hover:text-emerald-300 font-medium">
-              新規登録
-            </a>
+            <Link href="/register" className="text-emerald-400 hover:text-emerald-300 font-medium">新規登録</Link>
           </p>
 
           <div className="flex items-center justify-center gap-1.5 mt-4">

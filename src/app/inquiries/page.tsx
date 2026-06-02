@@ -39,8 +39,9 @@ export default function InquiriesPage() {
   const [toast, setToast] = useState<ToastType | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/inquiries');
-    setInquiries(await res.json());
+    const res  = await fetch('/api/inquiries');
+    const json = await res.json().catch(() => []);
+    setInquiries(Array.isArray(json) ? json : []);
   }, []);
 
   useEffect(() => { load(); }, [load]);

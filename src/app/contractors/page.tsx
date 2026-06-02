@@ -65,9 +65,9 @@ export default function ContractorsPage() {
   const load = useCallback(async () => {
     setDataLoading(true);
     const [cRes, gRes] = await Promise.all([fetch('/api/contractors'), fetch('/api/garages')]);
-    setContractors(await cRes.json());
-    const gs = await gRes.json();
-    setVacantGarages(gs.filter((g: Garage) => g.status === 'vacant'));
+    const [cJson, gJson] = await Promise.all([cRes.json().catch(() => []), gRes.json().catch(() => [])]);
+    setContractors(Array.isArray(cJson) ? cJson : []);
+    setVacantGarages((Array.isArray(gJson) ? gJson : []).filter((g: Garage) => g.status === 'vacant'));
     setDataLoading(false);
   }, []);
 
