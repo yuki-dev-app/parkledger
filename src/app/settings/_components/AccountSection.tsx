@@ -98,19 +98,19 @@ export default function AccountSection({ loginId, currentEmail, onToast, onLogin
   return (
     <section className="mb-4">
       <div className="flex items-center gap-2 mb-2 px-1">
-        <KeyRound size={16} className="text-slate-600" />
-        <h2 className="text-base font-bold text-slate-700">アカウント設定</h2>
+        <KeyRound size={16} className="text-slate-600 dark:text-slate-400" />
+        <h2 className="text-base font-bold text-slate-700 dark:text-slate-300">アカウント設定</h2>
       </div>
 
       {/* ログインID */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
-        <div className="px-4 py-3.5 border-b border-slate-100">
-          <p className="text-xs text-slate-400 mb-0.5">現在のログインID</p>
-          <p className="text-base font-bold text-slate-800">{loginId || '（未設定）'}</p>
-          <p className="text-xs text-slate-400 mt-1">メールアドレスの代わりにこのIDでログインできます</p>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm mb-3">
+        <div className="px-4 py-3.5 border-b border-slate-100 dark:border-slate-700">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">現在のログインID</p>
+          <p className="text-base font-bold text-slate-800 dark:text-slate-200">{loginId || '（未設定）'}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">メールアドレスの代わりにこのIDでログインできます</p>
         </div>
         <div className="px-4 py-3.5">
-          <label className="text-sm font-medium text-slate-600 block mb-1.5">新しいログインID</label>
+          <label className="text-sm font-medium text-slate-600 dark:text-slate-400 block mb-1.5">新しいログインID</label>
           <input
             className={inputCls}
             value={newLoginId}
@@ -129,17 +129,17 @@ export default function AccountSection({ loginId, currentEmail, onToast, onLogin
       </div>
 
       {/* メール変更 */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
-        <div className="px-4 py-3.5 border-b border-slate-100">
-          <p className="text-xs text-slate-400 mb-0.5">現在のメールアドレス</p>
-          <p className="text-base font-bold text-slate-800">{currentEmail || '—'}</p>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm mb-3">
+        <div className="px-4 py-3.5 border-b border-slate-100 dark:border-slate-700">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">現在のメールアドレス</p>
+          <p className="text-base font-bold text-slate-800 dark:text-slate-200">{currentEmail || '—'}</p>
         </div>
         <div className="px-4 py-3.5">
-          <label className="text-sm font-medium text-slate-600 block mb-1.5">新しいメールアドレス</label>
+          <label className="text-sm font-medium text-slate-600 dark:text-slate-400 block mb-1.5">新しいメールアドレス</label>
           <input type="email" className={inputCls} value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@example.com" />
           <label className="text-sm font-medium text-slate-600 block mb-1.5 mt-3">現在のパスワード（確認）</label>
           <input type="password" className={inputCls} value={emailPass} onChange={e => setEmailPass(e.target.value)} placeholder="現在のパスワードを入力" autoComplete="current-password" />
-          <p className="text-xs text-slate-400 mt-1.5">変更するとSupabaseから確認メールが送られます</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">変更するとSupabaseから確認メールが送られます</p>
           <button
             type="button"
             onClick={changeEmail}
@@ -152,18 +152,18 @@ export default function AccountSection({ loginId, currentEmail, onToast, onLogin
       </div>
 
       {/* パスワード変更 */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="px-4 py-3.5 flex flex-col gap-3">
-          <label className="text-sm font-medium text-slate-600">パスワードを変更する</label>
+          <label className="text-sm font-medium text-slate-600 dark:text-slate-400">パスワードを変更する</label>
           <div className="relative">
             <input type={showCur ? 'text' : 'password'} className={`${inputCls} pr-12`} value={currentPass} onChange={e => setCurrentPass(e.target.value)} placeholder="現在のパスワード" autoComplete="current-password" />
-            <button type="button" onClick={() => setShowCur(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <button type="button" onClick={() => setShowCur(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
               {showCur ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
           <div className="relative">
             <input type={showNew ? 'text' : 'password'} className={`${inputCls} pr-12`} value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="新しいパスワード（8文字以上）" autoComplete="new-password" />
-            <button type="button" onClick={() => setShowNew(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <button type="button" onClick={() => setShowNew(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
               {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>

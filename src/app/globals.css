@@ -28,6 +28,10 @@ html {
   overscroll-behavior: none;
 }
 
+@media (prefers-color-scheme: dark) {
+  html { background-color: #0f172a; /* slate-900 */ }
+}
+
 body {
   font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP',
                'Meiryo', system-ui, -apple-system, sans-serif;
@@ -48,6 +52,10 @@ body {
   /* 最低画面高さを保証（iOS キーボード表示時も背景が途切れない） */
   min-height: 100dvh;
   min-height: -webkit-fill-available; /* 古い iOS Safari フォールバック */
+}
+
+@media (prefers-color-scheme: dark) {
+  body { background-color: #0f172a; /* slate-900 */ color: #f1f5f9; /* slate-100 */ }
 }
 
 /* iOS Safariでのダブルタップズームを防ぐ */

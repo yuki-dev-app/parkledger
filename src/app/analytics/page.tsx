@@ -33,10 +33,10 @@ export default function AnalyticsPage() {
       {/* ヘッダー */}
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-1">
-          <BarChart2 size={22} className="text-slate-600" />
-          <h1 className="text-2xl font-bold text-slate-900">年間収入分析</h1>
+          <BarChart2 size={22} className="text-slate-600 dark:text-slate-400" />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">年間収入分析</h1>
         </div>
-        <p className="text-slate-500 text-sm">過去12ヶ月の入金状況</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">過去12ヶ月の入金状況</p>
       </div>
 
       {loading ? (
@@ -45,28 +45,28 @@ export default function AnalyticsPage() {
         <>
           {/* サマリーカード */}
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 text-center">
-              <p className="text-xs text-slate-500 mb-1">12ヶ月合計</p>
-              <p className="text-lg font-black text-slate-900 tabular-nums leading-tight">
-                ¥{(totalPaid / 10000).toFixed(0)}<span className="text-xs font-normal text-slate-500">万</span>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-3 text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">12ヶ月合計</p>
+              <p className="text-lg font-black text-slate-900 dark:text-slate-100 tabular-nums leading-tight">
+                ¥{(totalPaid / 10000).toFixed(0)}<span className="text-xs font-normal text-slate-500 dark:text-slate-400">万</span>
               </p>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 text-center">
-              <p className="text-xs text-slate-500 mb-1">月平均（入金済）</p>
-              <p className="text-lg font-black text-slate-900 tabular-nums leading-tight">
-                ¥{(avgMonthly / 10000).toFixed(1)}<span className="text-xs font-normal text-slate-500">万</span>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-3 text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">月平均（入金済）</p>
+              <p className="text-lg font-black text-slate-900 dark:text-slate-100 tabular-nums leading-tight">
+                ¥{(avgMonthly / 10000).toFixed(1)}<span className="text-xs font-normal text-slate-500 dark:text-slate-400">万</span>
               </p>
             </div>
             <div className={`rounded-2xl border shadow-sm p-3 text-center ${
-              diff === null ? 'bg-white border-slate-200'
-              : diff >= 0 ? 'bg-emerald-50 border-emerald-200'
-              : 'bg-red-50 border-red-200'
+              diff === null ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+              : diff >= 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200'
+              : 'bg-red-50 dark:bg-red-900/20 border-red-200'
             }`}>
-              <p className="text-xs text-slate-500 mb-1">前月比</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">前月比</p>
               <p className={`text-lg font-black tabular-nums leading-tight ${
-                diff === null ? 'text-slate-400'
-                : diff >= 0 ? 'text-emerald-600'
-                : 'text-red-600'
+                diff === null ? 'text-slate-400 dark:text-slate-500'
+                : diff >= 0 ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-red-600 dark:text-red-400'
               }`}>
                 {diff === null ? '—' : `${diff >= 0 ? '+' : ''}${diff}%`}
               </p>
@@ -74,13 +74,13 @@ export default function AnalyticsPage() {
           </div>
 
           {/* 棒グラフ */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 mb-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+              <h2 className="font-bold text-slate-700 dark:text-slate-300 text-sm flex items-center gap-2">
                 <TrendingUp size={16} className="text-emerald-500" />
                 月別入金額
               </h2>
-              <div className="flex items-center gap-3 text-xs text-slate-500">
+              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                 <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />入金済</span>
                 <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-200 inline-block" />未入金</span>
               </div>
@@ -110,10 +110,10 @@ export default function AnalyticsPage() {
                         />
                       )}
                       {m.total === 0 && (
-                        <div className="w-full bg-slate-100 rounded-t-sm" style={{ height: '4px' }} />
+                        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-t-sm" style={{ height: '4px' }} />
                       )}
                     </div>
-                    <p className={`text-xs tabular-nums ${isCurrentMonth ? 'font-bold text-slate-700' : 'text-slate-400'}`}
+                    <p className={`text-xs tabular-nums ${isCurrentMonth ? 'font-bold text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}
                       style={{ fontSize: '10px' }}>
                       {m.label}
                     </p>
@@ -123,31 +123,31 @@ export default function AnalyticsPage() {
             </div>
 
             {/* 最大金額ガイド */}
-            <p className="text-right text-xs text-slate-400 mt-1 tabular-nums">
+            <p className="text-right text-xs text-slate-400 dark:text-slate-500 mt-1 tabular-nums">
               最大: ¥{maxTotal.toLocaleString()}
             </p>
           </div>
 
           {/* 月別明細テーブル */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100">
-              <h2 className="font-bold text-slate-700 text-sm">月別明細</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+              <h2 className="font-bold text-slate-700 dark:text-slate-300 text-sm">月別明細</h2>
             </div>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-700">
               {[...months].reverse().map(m => (
                 <div key={m.ym} className="px-4 py-3 flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-700">{m.year}年{m.label}</p>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{m.year}年{m.label}</p>
                     {m.unpaid > 0 && (
                       <p className="text-xs text-red-500 mt-0.5">未入金 ¥{m.unpaid.toLocaleString()}</p>
                     )}
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="font-black text-slate-900 tabular-nums text-base">
+                    <p className="font-black text-slate-900 dark:text-slate-100 tabular-nums text-base">
                       ¥{m.paid.toLocaleString()}
                     </p>
                     {m.total > 0 && (
-                      <p className="text-xs text-slate-400 tabular-nums">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
                         / ¥{m.total.toLocaleString()}
                       </p>
                     )}
@@ -155,15 +155,15 @@ export default function AnalyticsPage() {
                 </div>
               ))}
             </div>
-            <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-600">12ヶ月合計（入金済）</p>
-              <p className="font-black text-emerald-700 tabular-nums text-lg">¥{totalPaid.toLocaleString()}</p>
+            <div className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-400">12ヶ月合計（入金済）</p>
+              <p className="font-black text-emerald-700 dark:text-emerald-300 tabular-nums text-lg">¥{totalPaid.toLocaleString()}</p>
             </div>
           </div>
 
           {totalUnpaid > 0 && (
-            <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-              <p className="text-sm text-red-700">
+            <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl px-4 py-3">
+              <p className="text-sm text-red-700 dark:text-red-400">
                 <strong>未回収合計: ¥{totalUnpaid.toLocaleString()}</strong>
                 　— 入金チェック画面で確認・督促できます
               </p>

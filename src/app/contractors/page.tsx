@@ -132,8 +132,8 @@ export default function ContractorsPage() {
       {/* ページヘッダー */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">契約者</h1>
-          <p className="text-base text-slate-600 mt-0.5">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">契約者</h1>
+          <p className="text-base text-slate-600 dark:text-slate-400 mt-0.5">
             {contractors.length} 名
             {expiringCount > 0 && (
               <span className="ml-2 text-amber-600 font-bold">・期限まもなく {expiringCount} 名</span>
@@ -143,7 +143,7 @@ export default function ContractorsPage() {
         <div className="flex gap-2">
           <Link
             href="/contractors/archived"
-            className="flex items-center gap-1.5 text-slate-600 border border-slate-200 bg-white px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 shadow-sm"
+            className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm"
           >
             <Archive size={15} /> 解約履歴
           </Link>
@@ -160,7 +160,7 @@ export default function ContractorsPage() {
       <div className="relative mb-4">
         <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
-          className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-slate-700 shadow-sm"
+          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-base text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-700 shadow-sm"
           placeholder="名前・区画番号で検索"
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -183,12 +183,12 @@ export default function ContractorsPage() {
         {dataLoading && <SkeletonList count={3} lines={2} />}
 
         {!dataLoading && contractors.length === 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Users size={30} className="text-slate-400" />
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-10 text-center">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Users size={30} className="text-slate-400 dark:text-slate-500" />
             </div>
-            <p className="font-bold text-slate-700 text-lg mb-2">契約者がいません</p>
-            <p className="text-sm text-slate-400 mb-6">「追加」から契約者を登録してください</p>
+            <p className="font-bold text-slate-700 dark:text-slate-300 text-lg mb-2">契約者がいません</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">「追加」から契約者を登録してください</p>
             <button
               onClick={openNew}
               className="inline-flex items-center gap-2 bg-slate-800 text-white px-6 py-3.5 rounded-xl font-bold text-base hover:bg-slate-700"
@@ -199,7 +199,7 @@ export default function ContractorsPage() {
         )}
 
         {!dataLoading && search && filtered.length === 0 && (
-          <div className="text-center py-10 text-slate-500 text-base">
+          <div className="text-center py-10 text-slate-500 dark:text-slate-400 text-base">
             「{search}」に一致する方が見つかりません
           </div>
         )}
@@ -221,12 +221,12 @@ export default function ContractorsPage() {
       {/* 解約モーダル */}
       {showArchiveModal && (
         <Modal title="解約処理" onClose={() => setShowArchiveModal(null)}>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <p className="text-base text-amber-800 font-bold">{showArchiveModal.name} さんを解約します</p>
-            <p className="text-sm text-amber-700 mt-1">区画が「空き」に戻ります。入金履歴は保持されます。</p>
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl p-4">
+            <p className="text-base text-amber-800 dark:text-amber-400 font-bold">{showArchiveModal.name} さんを解約します</p>
+            <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">区画が「空き」に戻ります。入金履歴は保持されます。</p>
           </div>
           <div>
-            <label className="text-base font-bold text-slate-700 mb-2 block">解約理由（任意）</label>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">解約理由（任意）</label>
             <input
               className={inputCls}
               value={archiveReason}
@@ -253,7 +253,7 @@ export default function ContractorsPage() {
           {/* 区画選択 */}
           {!editTarget ? (
             <div>
-              <label className="text-base font-bold text-slate-700 mb-2 block">区画番号 <span className="text-red-500">*</span></label>
+              <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">区画番号 <span className="text-red-500">*</span></label>
               <select className={inputCls} value={form.garage_id} onChange={e => setForm({ ...form, garage_id: e.target.value })}>
                 <option value="">どの区画か選んでください</option>
                 {vacantGarages.map(g => <option key={g.id} value={g.id}>{g.number}番区画</option>)}
@@ -263,7 +263,7 @@ export default function ContractorsPage() {
               )}
             </div>
           ) : (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-600 font-medium">
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-base text-slate-600 dark:text-slate-400 font-medium">
               {editTarget.garage_number}番区画
             </div>
           )}
@@ -277,7 +277,7 @@ export default function ContractorsPage() {
             { label: 'メールアドレス', key: 'email', placeholder: 'example@mail.com', type: 'email' },
           ].map(({ label, key, placeholder, type, required }) => (
             <div key={key}>
-              <label className="text-base font-bold text-slate-700 mb-2 block">
+              <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">
                 {label} {required && <span className="text-red-500">*</span>}
               </label>
               <input
@@ -291,17 +291,17 @@ export default function ContractorsPage() {
           ))}
 
           {/* 車両情報 */}
-          <div className="bg-slate-50 rounded-xl p-4 space-y-3">
-            <p className="text-sm font-bold text-slate-500">お車の情報（車庫証明に使用）</p>
+          <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 space-y-3">
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">お車の情報（車庫証明に使用）</p>
             {[
               { label: '車種・メーカー', key: 'vehicle_type', placeholder: '例: プリウス' },
               { label: '登録番号（ナンバー）', key: 'vehicle_number', placeholder: '例: 品川 300 あ 12-34' },
               { label: '車台番号（車検証に記載）', key: 'vehicle_chassis', placeholder: '例: ZVW30-XXXXXXX' },
             ].map(({ label, key, placeholder }) => (
               <div key={key}>
-                <label className="text-sm font-medium text-slate-600 mb-1.5 block">{label}</label>
+                <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">{label}</label>
                 <input
-                  className="border border-slate-300 rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white text-base"
+                  className="border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white dark:bg-slate-700 text-base text-slate-900 dark:text-slate-100"
                   value={form[key as keyof typeof form]}
                   onChange={e => setForm({ ...form, [key]: e.target.value })}
                   placeholder={placeholder}
@@ -312,16 +312,16 @@ export default function ContractorsPage() {
 
           {/* 契約期間 */}
           <div>
-            <label className="text-base font-bold text-slate-700 mb-2 block">契約開始日 <span className="text-red-500">*</span></label>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">契約開始日 <span className="text-red-500">*</span></label>
             <input className={inputCls} value={form.contract_start} onChange={e => setForm({ ...form, contract_start: e.target.value })} type="date" />
           </div>
           <div>
-            <label className="text-base font-bold text-slate-700 mb-2 block">契約終了日</label>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">契約終了日</label>
             <input className={inputCls} value={form.contract_end} onChange={e => setForm({ ...form, contract_end: e.target.value })} type="date" />
-            <p className="text-sm text-slate-400 mt-1">※ 終了30日前に画面で警告が表示されます</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">※ 終了30日前に画面で警告が表示されます</p>
           </div>
           <div>
-            <label className="text-base font-bold text-slate-700 mb-2 block">メモ（任意）</label>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">メモ（任意）</label>
             <textarea className={inputCls} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} />
           </div>
 

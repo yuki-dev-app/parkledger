@@ -127,10 +127,10 @@ export default function HelpPage() {
       <div className="space-y-6 px-1">
         {FAQS.map(section => (
           <div key={section.category}>
-            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-2 px-1">
+            <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 px-1">
               {section.category}
             </h2>
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden divide-y divide-slate-100 dark:divide-slate-700">
               {section.items.map((item, i) => {
                 const key = `${section.category}-${i}`;
                 const isOpen = !!openMap[key];
@@ -139,17 +139,17 @@ export default function HelpPage() {
                     <button
                       type="button"
                       onClick={() => toggle(key)}
-                      className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700 active:bg-slate-100 transition-colors"
                     >
-                      <span className="font-medium text-slate-800 text-base pr-4 leading-snug">{item.q}</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200 text-base pr-4 leading-snug">{item.q}</span>
                       {isOpen
-                        ? <ChevronUp size={18} className="text-slate-400 shrink-0" />
-                        : <ChevronDown size={18} className="text-slate-400 shrink-0" />
+                        ? <ChevronUp size={18} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                        : <ChevronDown size={18} className="text-slate-400 dark:text-slate-500 shrink-0" />
                       }
                     </button>
                     {isOpen && (
-                      <div className="px-4 pb-4 bg-slate-50 border-t border-slate-100">
-                        <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line pt-3">{item.a}</p>
+                      <div className="px-4 pb-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700">
+                        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed whitespace-pre-line pt-3">{item.a}</p>
                       </div>
                     )}
                   </div>
@@ -161,12 +161,12 @@ export default function HelpPage() {
       </div>
 
       {/* 問い合わせ */}
-      <div className="mt-8 bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mx-1">
+      <div className="mt-8 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-2xl p-5 mx-1">
         <div className="flex items-center gap-3 mb-2">
-          <MessageSquare size={20} className="text-emerald-600" />
-          <p className="font-bold text-emerald-800">解決しない場合はお問い合わせください</p>
+          <MessageSquare size={20} className="text-emerald-600 dark:text-emerald-400" />
+          <p className="font-bold text-emerald-800 dark:text-emerald-300">解決しない場合はお問い合わせください</p>
         </div>
-        <p className="text-sm text-emerald-700 mb-3">
+        <p className="text-sm text-emerald-700 dark:text-emerald-400 mb-3">
           問い合わせフォームからお気軽にご連絡ください。通常2営業日以内に返信します。
         </p>
         <Link

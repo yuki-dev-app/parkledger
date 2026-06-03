@@ -123,8 +123,8 @@ export default function CleaningPage() {
 
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">清掃記録</h1>
-          <p className="text-sm text-slate-500 mt-0.5">全 {logs.length} 件</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">清掃記録</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">全 {logs.length} 件</p>
         </div>
         <button
           onClick={openNew}
@@ -137,12 +137,12 @@ export default function CleaningPage() {
       {/* 記録一覧 */}
       <div className="flex flex-col gap-3">
         {logs.length === 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
-            <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Sparkles size={26} className="text-slate-400" />
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-10 text-center">
+            <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Sparkles size={26} className="text-slate-400 dark:text-slate-500" />
             </div>
-            <p className="font-semibold text-slate-700 mb-1">清掃記録がありません</p>
-            <p className="text-sm text-slate-400 mb-5">清掃した日付と担当者を記録できます</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-300 mb-1">清掃記録がありません</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mb-5">清掃した日付と担当者を記録できます</p>
             <button
               onClick={openNew}
               className="inline-flex items-center gap-1.5 bg-slate-800 text-white px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-700"
@@ -153,28 +153,28 @@ export default function CleaningPage() {
         )}
 
         {logs.map(log => (
-          <div key={log.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5">
+          <div key={log.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-3.5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1.5">
-                  <span className="font-bold text-slate-900 text-base whitespace-nowrap">{formatDate(log.cleaned_date)}</span>
-                  <span className="text-sm text-slate-600 bg-slate-100 px-3 py-1 rounded-full font-medium shrink-0">{log.person}</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100 text-base whitespace-nowrap">{formatDate(log.cleaned_date)}</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full font-medium shrink-0">{log.person}</span>
                 </div>
                 {log.notes && (
-                  <p className="text-sm text-slate-500 leading-relaxed mt-1 bg-slate-50 rounded-lg px-3 py-2">{log.notes}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mt-1 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-2">{log.notes}</p>
                 )}
-                <p className="text-xs text-slate-400 mt-1.5">登録: {log.created_at.slice(0, 10)}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">登録: {log.created_at.slice(0, 10)}</p>
               </div>
               <div className="flex gap-1 shrink-0">
                 <button
                   onClick={() => openEdit(log)}
-                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 px-3 py-3 rounded-xl hover:bg-slate-100 active:bg-slate-200"
+                  className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-600"
                 >
                   <Pencil size={14} /> 編集
                 </button>
                 <button
                   onClick={() => setDeleteTarget({ id: log.id, date: log.cleaned_date })}
-                  className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 px-3 py-3 rounded-xl hover:bg-red-50 active:bg-red-100"
+                  className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500 hover:text-red-500 px-3 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100"
                 >
                   <Trash2 size={14} /> 削除
                 </button>

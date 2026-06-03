@@ -1,7 +1,6 @@
 'use client';
 import { Check, Bell, Undo2, FileText, Printer } from 'lucide-react';
 import Link from 'next/link';
-
 import type { Row, ReminderInfo } from '../_types';
 
 type Props = {
@@ -23,54 +22,51 @@ export default function PaymentCard({ row, busy, reminderInfo, onToggle, onRemin
   const paid = row.status === 'paid';
 
   return (
-    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col ${
-      paid ? 'border-emerald-200' : 'border-red-200'
+    <div className={`bg-white dark:bg-slate-800 rounded-2xl border shadow-sm overflow-hidden flex flex-col ${
+      paid ? 'border-emerald-200 dark:border-emerald-800' : 'border-red-200 dark:border-red-900'
     }`}>
       {/* ステータス色帯 */}
       <div className={`h-1.5 ${paid ? 'bg-emerald-400' : 'bg-red-400'}`} />
 
       {/* メイン情報 */}
       <div className="px-4 pt-3 pb-2 flex-1">
-        {/* 区画番号 + 名前 + ステータスバッジ */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-xs px-2 py-0.5 rounded-md font-black border shrink-0 ${
                 paid
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-slate-100 text-slate-600 border-slate-200'
+                  ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600'
               }`}>
                 {row.garage_number}番
               </span>
-              <span className="font-bold text-slate-900 text-lg leading-tight truncate">
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-lg leading-tight truncate">
                 {row.contractor_name}
               </span>
             </div>
           </div>
           {paid ? (
-            <span className="flex items-center gap-1 text-emerald-600 font-bold text-xs bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 shrink-0">
+            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-xs bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 shrink-0">
               <Check size={12} strokeWidth={3} /> 入金済み
             </span>
           ) : (
-            <span className="text-red-600 font-bold text-xs bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 shrink-0">
+            <span className="text-red-600 dark:text-red-400 font-bold text-xs bg-red-50 dark:bg-red-900/30 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-800 shrink-0">
               未入金
             </span>
           )}
         </div>
 
-        {/* 金額（大きく） */}
-        <p className="text-3xl font-black text-slate-900 tabular-nums leading-none mb-1">
+        <p className="text-3xl font-black text-slate-900 dark:text-slate-100 tabular-nums leading-none mb-1">
           ¥{row.amount.toLocaleString()}
         </p>
 
-        {/* サブ情報 */}
         {paid && row.paid_date && (
-          <p className="text-sm text-emerald-600 font-medium">
+          <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
             {row.paid_date} 入金確認
           </p>
         )}
         {!paid && reminderInfo && (
-          <p className="text-xs text-amber-700 flex items-center gap-1 mt-1">
+          <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1 mt-1">
             <Bell size={11} />
             最終連絡: {reminderInfo.reminded_at}（{reminderInfo.count}回目）
           </p>
@@ -94,7 +90,7 @@ export default function PaymentCard({ row, busy, reminderInfo, onToggle, onRemin
             <button
               type="button"
               onClick={() => onReminder(row)}
-              className="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-600 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 active:bg-slate-100"
+              className="w-full flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
             >
               <Bell size={14} /> 連絡する・督促文を送る
             </button>
@@ -106,7 +102,7 @@ export default function PaymentCard({ row, busy, reminderInfo, onToggle, onRemin
                 href={`/print/receipt/${row.payment_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center gap-3 bg-slate-800 text-white py-3 px-4 rounded-xl font-bold text-sm hover:bg-slate-700 active:bg-slate-900"
+                className="w-full flex items-center gap-3 bg-slate-800 dark:bg-slate-700 text-white py-3 px-4 rounded-xl font-bold text-sm hover:bg-slate-700 dark:hover:bg-slate-600"
               >
                 <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
                   <Printer size={16} />
@@ -121,19 +117,19 @@ export default function PaymentCard({ row, busy, reminderInfo, onToggle, onRemin
               href={`/print/parking/${row.contractor_id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center gap-2.5 border border-slate-200 text-slate-700 py-2.5 px-3.5 rounded-xl text-sm font-medium hover:bg-slate-50 active:bg-slate-100"
+              className="w-full flex items-center gap-2.5 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 py-2.5 px-3.5 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
             >
-              <FileText size={15} className="text-slate-400 shrink-0" />
+              <FileText size={15} className="text-slate-400 dark:text-slate-500 shrink-0" />
               <div className="text-left">
                 <p className="text-sm font-bold">車庫証明書</p>
-                <p className="text-xs text-slate-400">陸運局・警察署への申請用</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">陸運局・警察署への申請用</p>
               </div>
             </Link>
             <button
               type="button"
               onClick={() => onToggle(row, 'unpaid')}
               disabled={busy}
-              className="w-full flex items-center justify-center gap-1.5 border border-slate-200 text-slate-400 py-2 rounded-xl text-xs font-medium hover:bg-slate-50 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500 py-2 rounded-xl text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
             >
               <Undo2 size={13} /> 未入金に戻す
             </button>

@@ -18,9 +18,9 @@ type Garage = {
 };
 
 const STATUS_CONFIG = {
-  vacant:      { label: '空き',   cardClass: 'border-emerald-300 bg-emerald-50', badgeClass: 'bg-emerald-500 text-white' },
-  occupied:    { label: '使用中', cardClass: 'border-slate-200  bg-white',       badgeClass: 'bg-slate-500  text-white' },
-  maintenance: { label: '整備中', cardClass: 'border-amber-300  bg-amber-50',    badgeClass: 'bg-amber-500  text-white' },
+  vacant:      { label: '空き',   cardClass: 'border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20', badgeClass: 'bg-emerald-500 text-white' },
+  occupied:    { label: '使用中', cardClass: 'border-slate-200  bg-white dark:bg-slate-800',            badgeClass: 'bg-slate-500  text-white' },
+  maintenance: { label: '整備中', cardClass: 'border-amber-300  bg-amber-50 dark:bg-amber-900/20',      badgeClass: 'bg-amber-500  text-white' },
 };
 
 export default function GaragesPage() {
@@ -151,9 +151,9 @@ export default function GaragesPage() {
       {/* ページヘッダー */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">駐車区画</h1>
-          <p className="text-base text-slate-600 mt-0.5">
-            空き <span className="font-bold text-emerald-600">{vacant}</span>　使用中 <span className="font-bold text-slate-700">{occupied}</span>　全 {garages.length} 区画
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">駐車区画</h1>
+          <p className="text-base text-slate-600 dark:text-slate-400 mt-0.5">
+            空き <span className="font-bold text-emerald-600 dark:text-emerald-400">{vacant}</span>　使用中 <span className="font-bold text-slate-700 dark:text-slate-300">{occupied}</span>　全 {garages.length} 区画
           </p>
         </div>
         <div className="flex gap-2">
@@ -187,12 +187,12 @@ export default function GaragesPage() {
       {dataLoading ? (
         <SkeletonList count={4} />
       ) : garages.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Car size={30} className="text-slate-400" />
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-10 text-center">
+          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Car size={30} className="text-slate-400 dark:text-slate-500" />
           </div>
-          <p className="font-bold text-slate-700 text-lg mb-2">区画が登録されていません</p>
-          <p className="text-sm text-slate-400 mb-6">複数まとめて登録するか、1件ずつ追加できます</p>
+          <p className="font-bold text-slate-700 dark:text-slate-300 text-lg mb-2">区画が登録されていません</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">複数まとめて登録するか、1件ずつ追加できます</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => setShowBulk(true)}
@@ -214,7 +214,7 @@ export default function GaragesPage() {
           <div className="flex justify-end mb-2">
             <button
               onClick={() => setShowBulk(true)}
-              className="flex items-center gap-1.5 text-slate-600 border border-slate-200 bg-white px-3 py-2 rounded-xl text-sm font-medium hover:bg-slate-50"
+              className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
             >
               <List size={15} /> まとめて追加
             </button>
@@ -226,9 +226,9 @@ export default function GaragesPage() {
                 <div key={g.id} className={`rounded-2xl border-2 shadow-sm overflow-hidden ${cfg.cardClass}`}>
                   <div className="flex items-center justify-between px-4 py-3 gap-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-2xl font-black text-slate-900 tabular-nums shrink-0">{g.number}番</span>
+                      <span className="text-2xl font-black text-slate-900 dark:text-slate-100 tabular-nums shrink-0">{g.number}番</span>
                       {g.contractor_name && (
-                        <span className="font-bold text-slate-800 text-base truncate">{g.contractor_name} さん</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-base truncate">{g.contractor_name} さん</span>
                       )}
                     </div>
                     <span className={`text-sm px-3 py-1 rounded-full font-bold shrink-0 ${cfg.badgeClass}`}>
@@ -239,24 +239,24 @@ export default function GaragesPage() {
                   {(g.monthly_fee > 0 || g.notes) && (
                     <div className="px-4 pb-2.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
                       {g.monthly_fee > 0 && (
-                        <span className="text-base text-slate-700">
-                          月額 <span className="font-bold text-slate-900">¥{g.monthly_fee.toLocaleString()}</span>
+                        <span className="text-base text-slate-700 dark:text-slate-300">
+                          月額 <span className="font-bold text-slate-900 dark:text-slate-100">¥{g.monthly_fee.toLocaleString()}</span>
                         </span>
                       )}
-                      {g.notes && <span className="text-sm text-slate-600">{g.notes}</span>}
+                      {g.notes && <span className="text-sm text-slate-600 dark:text-slate-400">{g.notes}</span>}
                     </div>
                   )}
 
-                  <div className="flex border-t border-slate-100 bg-white/60">
+                  <div className="flex border-t border-slate-100 dark:border-slate-700 bg-white/60 dark:bg-slate-700/60">
                     <button
                       onClick={() => openEdit(g)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-3 text-slate-600 font-medium text-sm hover:bg-slate-100"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-3 text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
                     >
                       <Pencil size={15} /> 編集する
                     </button>
                     <button
                       onClick={() => remove(g.id)}
-                      className="w-12 border-l border-slate-100 flex items-center justify-center py-3 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="w-12 border-l border-slate-100 dark:border-slate-700 flex items-center justify-center py-3 text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                       title="削除する"
                     >
                       <Trash2 size={16} />
@@ -273,7 +273,7 @@ export default function GaragesPage() {
       {showForm && (
         <Modal title={editTarget ? `${editTarget.number}番区画を編集` : '新しい区画を追加'} onClose={() => setShowForm(false)}>
           <div>
-            <label className="text-base font-bold text-slate-700 mb-2 block">区画番号 <span className="text-red-500">*</span></label>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">区画番号 <span className="text-red-500">*</span></label>
             <input
               className={inputCls}
               value={form.number}
@@ -285,14 +285,14 @@ export default function GaragesPage() {
 
           {editTarget?.contractor_name ? (
             <div>
-              <label className="text-base font-bold text-slate-700 mb-2 block">ステータス</label>
-              <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-500 text-base">
+              <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">ステータス</label>
+              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-500 dark:text-slate-400 text-base">
                 使用中（契約者がいるため変更できません）
               </div>
             </div>
           ) : (
             <div>
-              <label className="text-base font-bold text-slate-700 mb-2 block">ステータス</label>
+              <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">ステータス</label>
               <select className={inputCls} value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
                 <option value="vacant">空き（使用可能）</option>
                 <option value="maintenance">整備中（使用不可）</option>
@@ -301,9 +301,9 @@ export default function GaragesPage() {
           )}
 
           <div>
-            <label className="text-base font-bold text-slate-700 mb-2 block">月額料金（円）</label>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">月額料金（円）</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">¥</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-medium">¥</span>
               <input
                 className={`${inputCls} pl-8`}
                 type="number" inputMode="numeric"
@@ -315,7 +315,7 @@ export default function GaragesPage() {
           </div>
 
           <div>
-            <label className="text-base font-bold text-slate-700 mb-2 block">メモ（任意）</label>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">メモ（任意）</label>
             <input
               className={inputCls}
               value={form.notes}
@@ -341,8 +341,8 @@ export default function GaragesPage() {
           {/* プレビューバナー */}
           <div className={`rounded-xl px-4 py-3 text-center font-bold text-base ${
             bulkValid
-              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-              : 'bg-slate-50 border border-slate-200 text-slate-400'
+              ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 text-emerald-800 dark:text-emerald-300'
+              : 'bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'
           }`}>
             {bulkValid
               ? `${bulkStart}番〜${bulkEnd}番（${bulkCount}区画）を追加します`
@@ -351,7 +351,7 @@ export default function GaragesPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-base font-bold text-slate-700 mb-2 block">開始番号 <span className="text-red-500">*</span></label>
+              <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">開始番号 <span className="text-red-500">*</span></label>
               <input
                 className={inputCls}
                 type="number" inputMode="numeric"
@@ -361,7 +361,7 @@ export default function GaragesPage() {
               />
             </div>
             <div>
-              <label className="text-base font-bold text-slate-700 mb-2 block">終了番号 <span className="text-red-500">*</span></label>
+              <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">終了番号 <span className="text-red-500">*</span></label>
               <input
                 className={inputCls}
                 type="number" inputMode="numeric"
@@ -373,9 +373,9 @@ export default function GaragesPage() {
           </div>
 
           <div>
-            <label className="text-base font-bold text-slate-700 mb-2 block">月額料金（全区画共通・円）</label>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">月額料金（全区画共通・円）</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">¥</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-medium">¥</span>
               <input
                 className={`${inputCls} pl-8`}
                 type="number" inputMode="numeric"
@@ -387,7 +387,7 @@ export default function GaragesPage() {
           </div>
 
           <div>
-            <label className="text-base font-bold text-slate-700 mb-2 block">メモ（任意・全区画共通）</label>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">メモ（任意・全区画共通）</label>
             <input
               className={inputCls}
               value={bulk.notes}
@@ -396,7 +396,7 @@ export default function GaragesPage() {
             />
           </div>
 
-          <p className="text-sm text-slate-400">※ すでに存在する番号は自動的にスキップされます</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">※ すでに存在する番号は自動的にスキップされます</p>
 
           <button
             onClick={saveBulk}
