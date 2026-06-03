@@ -6,8 +6,9 @@
 *.db-shm
 *.db-wal
 
-# テストファイル
+# テストファイル・DB操作スクリプト（認証情報含む・絶対にコミットしない）
 _test*.mjs
+reset-db.mjs
 
 # dependencies
 /node_modules

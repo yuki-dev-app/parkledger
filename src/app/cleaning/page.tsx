@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Pencil, Trash2, X, Check, Sparkles } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, Sparkles } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
 import { getCached, setCached } from '@/lib/page-cache';
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { useScrollLock } from '@/lib/use-scroll-lock';
+import Modal from '@/components/Modal';
 
 type CleaningLog = {
   id: number;
@@ -90,13 +90,14 @@ export default function CleaningPage() {
     load();
   };
 
-  // モーダル表示中は背景スクロールを止める（iOS Safari 対応）
-  useScrollLock(showForm);
-
   const remove = async () => {
     if (!deleteTarget) return;
-    await fetch(`/api/cleaning/${deleteTarget.id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/cleaning/${deleteTarget.id}`, { method: 'DELETE' });
     setDeleteTarget(null);
+    if (!res.ok) {
+      setToast({ message: '削除に失敗しました。時間をおいて再度お試しください', kind: 'error' });
+      return;
+    }
     setToast({ message: '削除しました', kind: 'success' });
     load();
   };
@@ -177,98 +178,82 @@ export default function CleaningPage() {
         ))}
       </div>
 
-      {/* 入力フォーム（モーダル） */}
+      {/* 入力フォーム（Modalコンポーネントで統一） */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-4 sm:p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900 text-lg">
-                {editTarget ? '清掃記録を編集' : '清掃記録を追加'}
-              </h3>
-              <button onClick={() => setShowForm(false)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100" style={{ minWidth:'44px', minHeight:'44px' }}><X size={20} /></button>
-            </div>
+        <Modal
+          title={editTarget ? '清掃記録を編集' : '清掃記録を追加'}
+          onClose={() => setShowForm(false)}
+        >
+          <div>
+            <label className="text-base text-slate-700 mb-1.5 block font-medium">清掃した日 *</label>
+            <input
+              type="date"
+              className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
+              value={form.cleaned_date}
+              onChange={e => setForm({ ...form, cleaned_date: e.target.value })}
+            />
+          </div>
 
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="text-base text-slate-700 mb-1.5 block font-medium">
-                  清掃した日 *
-                </label>
-                <input
-                  type="date"
-                  className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
-                  value={form.cleaned_date}
-                  onChange={e => setForm({ ...form, cleaned_date: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="text-base text-slate-700 mb-1.5 block font-medium">
-                  担当者 *
-                </label>
-                {persons.length > 0 ? (
-                  <>
-                    <select
-                      className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white"
-                      style={{ fontSize: '16px' }}
-                      value={form.personSelect}
-                      onChange={e => {
-                        const v = e.target.value;
-                        setForm({ ...form, personSelect: v, person: v === '__other__' ? '' : v });
-                      }}
-                    >
-                      <option value="">選択してください</option>
-                      {persons.map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                      <option value="__other__">その他（直接入力）</option>
-                    </select>
-                    {form.personSelect === '__other__' && (
-                      <input
-                        type="text"
-                        className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700 mt-2"
-                        style={{ fontSize: '16px' }}
-                        value={form.person}
-                        onChange={e => setForm({ ...form, person: e.target.value })}
-                        placeholder="担当者名を入力"
-                        autoFocus
-                      />
-                    )}
-                  </>
-                ) : (
+          <div>
+            <label className="text-base text-slate-700 mb-1.5 block font-medium">担当者 *</label>
+            {persons.length > 0 ? (
+              <>
+                <select
+                  className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white"
+                  style={{ fontSize: '16px' }}
+                  value={form.personSelect}
+                  onChange={e => {
+                    const v = e.target.value;
+                    setForm({ ...form, personSelect: v, person: v === '__other__' ? '' : v });
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {persons.map(name => <option key={name} value={name}>{name}</option>)}
+                  <option value="__other__">その他（直接入力）</option>
+                </select>
+                {form.personSelect === '__other__' && (
                   <input
                     type="text"
-                    className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
+                    className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700 mt-2"
                     style={{ fontSize: '16px' }}
                     value={form.person}
                     onChange={e => setForm({ ...form, person: e.target.value })}
-                    placeholder="例: 山田、業者A（設定で担当者を登録するとプルダウンになります）"
+                    placeholder="担当者名を入力"
+                    autoFocus
                   />
                 )}
-              </div>
-
-              <div>
-                <label className="text-base text-slate-700 mb-1.5 block font-medium">
-                  特記事項（任意）
-                </label>
-                <textarea
-                  className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
-                  rows={3}
-                  value={form.notes}
-                  onChange={e => setForm({ ...form, notes: e.target.value })}
-                  placeholder="例: 排水溝を清掃した、ゴミが多かった、次回は〇〇を確認する"
-                />
-              </div>
-
-              <button
-                onClick={save}
-                disabled={loading || !form.cleaned_date || !form.person || (persons.length > 0 && !form.personSelect)}
-                className="bg-slate-800 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-slate-700 active:bg-slate-900 disabled:opacity-50"
-              >
-                <Check size={18} /> {editTarget ? '保存する' : '追加する'}
-              </button>
-            </div>
+              </>
+            ) : (
+              <input
+                type="text"
+                className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
+                style={{ fontSize: '16px' }}
+                value={form.person}
+                onChange={e => setForm({ ...form, person: e.target.value })}
+                placeholder="例: 山田、業者A（設定で担当者を登録するとプルダウンになります）"
+              />
+            )}
           </div>
-        </div>
+
+          <div>
+            <label className="text-base text-slate-700 mb-1.5 block font-medium">特記事項（任意）</label>
+            <textarea
+              className="border border-slate-300 rounded-xl px-3 py-3 w-full text-base focus:outline-none focus:ring-2 focus:ring-slate-700"
+              rows={3}
+              value={form.notes}
+              onChange={e => setForm({ ...form, notes: e.target.value })}
+              placeholder="例: 排水溝を清掃した、ゴミが多かった、次回は〇〇を確認する"
+            />
+          </div>
+
+          <button
+            onClick={save}
+            disabled={loading || !form.cleaned_date || !form.person || (persons.length > 0 && !form.personSelect)}
+            className="w-full bg-slate-800 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-slate-700 active:bg-slate-900 disabled:opacity-50"
+          >
+            <Check size={18} /> {editTarget ? '保存する' : '追加する'}
+          </button>
+        </Modal>
       )}
     </div>
   );

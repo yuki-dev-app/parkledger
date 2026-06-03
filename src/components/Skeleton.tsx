@@ -21,20 +21,3 @@ export function SkeletonList({ count = 3, lines = 2 }: { count?: number; lines?:
     </div>
   );
 }
-
-export function SkeletonGrid({ count = 6 }: { count?: number }) {
-  return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-white rounded-2xl border border-slate-200 p-3 animate-pulse" style={{ minHeight: '110px' }}>
-          <div className="flex justify-between mb-2">
-            <div className="h-4 bg-slate-200 rounded w-8" />
-            <div className="h-4 bg-slate-100 rounded-full w-12" />
-          </div>
-          <div className="h-3 bg-slate-100 rounded w-20 mb-1" />
-          <div className="h-3 bg-slate-100 rounded w-14" />
-        </div>
-      ))}
-    </div>
-  );
-}

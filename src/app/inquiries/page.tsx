@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, X, Check, Phone, Mail, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { Plus, Check, Phone, Mail, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { useScrollLock } from '@/lib/use-scroll-lock';
+import Modal from '@/components/Modal';
 import { getCached, setCached } from '@/lib/page-cache';
 
 type Inquiry = {
@@ -82,9 +82,6 @@ export default function InquiriesPage() {
     setToast({ message: '削除しました', kind: 'success' });
     load();
   };
-
-  // モーダル表示中は背景スクロールを止める（iOS Safari 対応）
-  useScrollLock(showForm);
 
   const filtered = inquiries.filter(i => filter === 'all' || i.status === filter);
 
@@ -247,42 +244,34 @@ export default function InquiriesPage() {
         })}
       </div>
 
-      {/* 追加フォーム */}
+      {/* 追加フォーム（Modalコンポーネントで統一） */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-4 sm:p-5 max-h-[90dvh] overflow-y-auto" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900">問い合わせを追加</h3>
-              <button onClick={() => setShowForm(false)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 w-10 h-10"><X size={19} /></button>
-            </div>
-            <div className="flex flex-col gap-3.5">
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">氏名 *</label>
-                <input className={inputCls} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="田中 太郎" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">電話番号</label>
-                <input className={inputCls} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} type="tel" placeholder="090-0000-0000" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">メール</label>
-                <input className={inputCls} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} type="email" placeholder="example@mail.com" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">問い合わせ内容 *</label>
-                <textarea className={inputCls} rows={3} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
-              </div>
-              <button
-                onClick={save}
-                disabled={loading || !form.name || !form.message}
-                className="bg-slate-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-700 disabled:opacity-50"
-                style={{ fontSize: '16px' }}
-              >
-                <Check size={17} /> 追加する
-              </button>
-            </div>
+        <Modal title="問い合わせを追加" onClose={() => setShowForm(false)}>
+          <div>
+            <label className="text-sm font-medium text-slate-700 mb-1.5 block">氏名 *</label>
+            <input className={inputCls} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="田中 太郎" />
           </div>
-        </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 mb-1.5 block">電話番号</label>
+            <input className={inputCls} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} type="tel" placeholder="090-0000-0000" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 mb-1.5 block">メール</label>
+            <input className={inputCls} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} type="email" placeholder="example@mail.com" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 mb-1.5 block">問い合わせ内容 *</label>
+            <textarea className={inputCls} rows={3} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
+          </div>
+          <button
+            onClick={save}
+            disabled={loading || !form.name || !form.message}
+            className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-700 disabled:opacity-50"
+            style={{ fontSize: '16px' }}
+          >
+            <Check size={17} /> 追加する
+          </button>
+        </Modal>
       )}
     </div>
   );
