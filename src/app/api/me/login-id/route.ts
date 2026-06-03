@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { NO_CACHE_HEADERS } from '@/lib/no-cache';
+
+// 攻撃者が狙いやすい予測可能IDを禁止（総当たり・なりすましリスク低減）
+const RESERVED_IDS = new Set([
+  'admin', 'administrator', 'root', 'superuser', 'sysadmin', 'sudo',
+  'support', 'help', 'info', 'contact', 'noreply', 'no-reply',
+  'system', 'sys', 'api', 'app', 'web', 'mail', 'email', 'ops',
+  'user', 'users', 'guest', 'test', 'demo', 'sample', 'default',
+  'owner', 'manager', 'staff', 'service', 'bot', 'null', 'undefined',
+  'parkledger', 'park-ledger', 'park_ledger',
+]);
 
 export async function GET() {
   const { supabase, user } = await requireAuth();
@@ -12,7 +23,7 @@ export async function GET() {
     .eq('user_id', user.id)
     .single();
 
-  return NextResponse.json({ login_id: data?.login_id ?? '' });
+  return NextResponse.json({ login_id: data?.login_id ?? '' }, { headers: NO_CACHE_HEADERS });
 }
 
 export async function PUT(req: NextRequest) {
@@ -33,6 +44,11 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({
       error: '3〜30文字の半角英数字・ハイフン(-)・アンダースコア(_)のみ使えます',
     }, { status: 400 });
+  }
+
+  // 予測可能・予約済みIDを拒否
+  if (RESERVED_IDS.has(id.toLowerCase())) {
+    return NextResponse.json({ error: 'このIDは使用できません。別のIDを選んでください' }, { status: 400 });
   }
 
   // 他のユーザーが使っていないか（admin経由で全テナントを確認）

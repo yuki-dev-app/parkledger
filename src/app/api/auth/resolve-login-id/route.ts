@@ -25,11 +25,11 @@ export async function POST(req: NextRequest) {
     .eq('login_id', login_id.trim())
     .maybeSingle();
 
-  // IDが存在しない場合もエラーの詳細を返さない（ユーザー列挙防止）
-  if (!member) return NextResponse.json({ error: 'IDまたはパスワードが正しくありません' }, { status: 404 });
+  // 401 に統一（404だとIDが存在しないことが分かってしまうため）
+  if (!member) return NextResponse.json({ error: 'IDまたはパスワードが正しくありません' }, { status: 401 });
 
   const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
-  if (error || !user?.email) return NextResponse.json({ error: 'IDまたはパスワードが正しくありません' }, { status: 500 });
+  if (error || !user?.email) return NextResponse.json({ error: 'IDまたはパスワードが正しくありません' }, { status: 401 });
 
   // メールアドレスを直接返すとユーザー列挙攻撃に使われるため、
   // ハッシュ化した形で返す（フロントエンド側でログインには使えない形）

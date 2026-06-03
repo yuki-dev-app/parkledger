@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
+import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 export async function POST(req: NextRequest) {
   const { supabase, user, orgId } = await requireAuth();
@@ -57,6 +58,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(
-    Array.from(latest.entries()).map(([contractor_id, v]) => ({ contractor_id, ...v }))
+    Array.from(latest.entries()).map(([contractor_id, v]) => ({ contractor_id, ...v })),
+    { headers: NO_CACHE_HEADERS }
   );
 }

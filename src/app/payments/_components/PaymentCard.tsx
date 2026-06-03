@@ -19,110 +19,125 @@ const Spinner = () => (
   </svg>
 );
 
-/** 入金チェック画面の1行カード */
 export default function PaymentCard({ row, busy, reminderInfo, onToggle, onReminder }: Props) {
   const paid = row.status === 'paid';
 
   return (
-    <div className={`bg-white rounded-2xl border-2 shadow-sm overflow-hidden ${paid ? 'border-emerald-300' : 'border-slate-200'}`}>
-      {/* 名前・金額 */}
-      <div className={`px-4 pt-3.5 pb-3 ${paid ? 'bg-emerald-50/50' : ''}`}>
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col ${
+      paid ? 'border-emerald-200' : 'border-red-200'
+    }`}>
+      {/* ステータス色帯 */}
+      <div className={`h-1.5 ${paid ? 'bg-emerald-400' : 'bg-red-400'}`} />
+
+      {/* メイン情報 */}
+      <div className="px-4 pt-3 pb-2 flex-1">
+        {/* 区画番号 + 名前 + ステータスバッジ */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold border border-slate-200">
+              <span className={`text-xs px-2 py-0.5 rounded-md font-black border shrink-0 ${
+                paid
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-slate-100 text-slate-600 border-slate-200'
+              }`}>
                 {row.garage_number}番
               </span>
-              <span className="font-bold text-slate-900 text-xl">{row.contractor_name} さん</span>
+              <span className="font-bold text-slate-900 text-lg leading-tight truncate">
+                {row.contractor_name}
+              </span>
             </div>
-            <p className="text-base text-slate-600 mt-1 font-medium">
-              ¥{row.amount.toLocaleString()}
-              {paid && row.paid_date && (
-                <span className="text-sm text-emerald-600 ml-2 font-normal">{row.paid_date} 入金</span>
-              )}
-            </p>
-            {/* 督促履歴 */}
-            {!paid && reminderInfo && (
-              <p className="text-sm text-amber-700 mt-1 flex items-center gap-1">
-                <Bell size={13} />
-                最終連絡: {reminderInfo.reminded_at}（{reminderInfo.count}回）
-              </p>
-            )}
           </div>
-          {paid && (
-            <span className="flex items-center gap-1 text-emerald-600 font-bold text-sm bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 shrink-0">
-              <Check size={15} strokeWidth={3} /> 済み
+          {paid ? (
+            <span className="flex items-center gap-1 text-emerald-600 font-bold text-xs bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 shrink-0">
+              <Check size={12} strokeWidth={3} /> 入金済み
+            </span>
+          ) : (
+            <span className="text-red-600 font-bold text-xs bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 shrink-0">
+              未入金
             </span>
           )}
         </div>
+
+        {/* 金額（大きく） */}
+        <p className="text-3xl font-black text-slate-900 tabular-nums leading-none mb-1">
+          ¥{row.amount.toLocaleString()}
+        </p>
+
+        {/* サブ情報 */}
+        {paid && row.paid_date && (
+          <p className="text-sm text-emerald-600 font-medium">
+            {row.paid_date} 入金確認
+          </p>
+        )}
+        {!paid && reminderInfo && (
+          <p className="text-xs text-amber-700 flex items-center gap-1 mt-1">
+            <Bell size={11} />
+            最終連絡: {reminderInfo.reminded_at}（{reminderInfo.count}回目）
+          </p>
+        )}
       </div>
 
       {/* アクション */}
-      <div className="px-3 pb-3">
+      <div className="px-3 pb-3 pt-1 flex flex-col gap-2">
         {!paid ? (
-          <div className="flex flex-col gap-2">
-            {/* 入金済みにする */}
+          <>
             <button
               type="button"
               onClick={() => onToggle(row, 'paid')}
               disabled={busy}
               className="w-full bg-emerald-600 text-white rounded-xl font-bold text-base hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ minHeight: '54px' }}
+              style={{ minHeight: '52px' }}
             >
               {busy ? <Spinner /> : <Check size={20} strokeWidth={3} />}
               入金済みにする
             </button>
-            {/* 督促 */}
             <button
               type="button"
               onClick={() => onReminder(row)}
-              className="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-600 py-3 rounded-xl text-sm font-medium hover:bg-slate-50"
+              className="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-600 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 active:bg-slate-100"
             >
-              <Bell size={15} /> 連絡する・督促文を送る
+              <Bell size={14} /> 連絡する・督促文を送る
             </button>
-          </div>
+          </>
         ) : (
-          <div className="flex flex-col gap-2">
-            {/* 領収書 */}
+          <>
             {row.payment_id && (
               <Link
                 href={`/print/receipt/${row.payment_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center gap-3 bg-slate-800 text-white py-3.5 px-4 rounded-xl font-bold text-base hover:bg-slate-700 active:bg-slate-900"
+                className="w-full flex items-center gap-3 bg-slate-800 text-white py-3 px-4 rounded-xl font-bold text-sm hover:bg-slate-700 active:bg-slate-900"
               >
-                <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
-                  <Printer size={18} />
+                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Printer size={16} />
                 </div>
                 <div className="text-left">
-                  <p className="text-base font-bold leading-tight">領収書を発行・印刷</p>
-                  <p className="text-xs text-white/70 mt-0.5">印鑑を押してお渡しください</p>
+                  <p className="font-bold leading-tight">領収書を発行・印刷</p>
+                  <p className="text-xs text-white/60 mt-0.5">印鑑を押してお渡しください</p>
                 </div>
               </Link>
             )}
-            {/* 車庫証明 */}
             <Link
               href={`/print/parking/${row.contractor_id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center gap-3 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl font-medium text-sm hover:bg-slate-50"
+              className="w-full flex items-center gap-2.5 border border-slate-200 text-slate-700 py-2.5 px-3.5 rounded-xl text-sm font-medium hover:bg-slate-50 active:bg-slate-100"
             >
-              <FileText size={16} className="text-slate-500 shrink-0" />
+              <FileText size={15} className="text-slate-400 shrink-0" />
               <div className="text-left">
-                <p className="text-sm font-bold">車庫証明（保管場所使用承諾証明書）</p>
-                <p className="text-xs text-slate-400 mt-0.5">陸運局・警察署への申請に使用</p>
+                <p className="text-sm font-bold">車庫証明書</p>
+                <p className="text-xs text-slate-400">陸運局・警察署への申請用</p>
               </div>
             </Link>
-            {/* 取消 */}
             <button
               type="button"
               onClick={() => onToggle(row, 'unpaid')}
               disabled={busy}
-              className="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-500 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-1.5 border border-slate-200 text-slate-400 py-2 rounded-xl text-xs font-medium hover:bg-slate-50 disabled:opacity-50"
             >
-              <Undo2 size={14} /> 未入金に戻す
+              <Undo2 size={13} /> 未入金に戻す
             </button>
-          </div>
+          </>
         )}
       </div>
     </div>

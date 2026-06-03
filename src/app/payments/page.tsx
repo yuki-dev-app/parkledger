@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { CreditCard, Download } from 'lucide-react';
+import { CreditCard, Download, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 import { useScrollLock } from '@/lib/use-scroll-lock';
@@ -24,9 +24,7 @@ export default function PaymentsPage() {
   const [toast,      setToast]      = useState<ToastType | null>(null);
   const [filter,     setFilter]     = useState<FilterType>('unpaid');
   const [reminder,   setReminder]   = useState<Row | null>(null);
-  // Settings の初期値はlib/settings.tsのデフォルト値に合わせる
   const [settings,   setSettings]   = useState<Settings>({ business_name: '', business_address: '', business_phone: '', parking_name: '', parking_address: '', receipt_no_prefix: 'R', cleaning_persons: '' });
-  // showPicker は YearMonthPicker コンポーネント内部で管理
   const [reminders,   setReminders]   = useState<Map<number, ReminderInfo>>(new Map());
 
   const ym = `${year}-${String(month).padStart(2, '0')}`;
@@ -96,11 +94,13 @@ export default function PaymentsPage() {
     }
   };
 
-  // 督促モーダル表示中のスクロールロック（ReminderModal 内部でも useScrollLock を呼ぶが念のため）
   useScrollLock(!!reminder);
 
   const paidCount   = rows.filter(r => r.status === 'paid').length;
   const unpaidCount = rows.length - paidCount;
+  const paidTotal   = rows.filter(r => r.status === 'paid').reduce((s, r) => s + r.amount, 0);
+  const unpaidTotal = rows.filter(r => r.status !== 'paid').reduce((s, r) => s + r.amount, 0);
+  const rate        = rows.length > 0 ? Math.round((paidCount / rows.length) * 100) : 0;
 
   const filteredRows = (
     filter === 'all'    ? rows :
@@ -108,42 +108,77 @@ export default function PaymentsPage() {
                           rows.filter(r => r.status === 'paid')
   ).filter(r => !search || r.contractor_name.includes(search) || r.garage_number.includes(search));
 
-  const TABS: { key: FilterType; label: string; count: number; color: string }[] = [
-    { key: 'unpaid', label: '未入金', count: unpaidCount, color: unpaidCount > 0 ? 'text-red-600' : 'text-slate-500' },
-    { key: 'paid',   label: '入金済み', count: paidCount,   color: 'text-emerald-600' },
-    { key: 'all',    label: '全て見る', count: rows.length,  color: 'text-slate-600' },
+  const TABS: { key: FilterType; label: string; count: number }[] = [
+    { key: 'unpaid', label: '未入金',   count: unpaidCount },
+    { key: 'paid',   label: '入金済み', count: paidCount   },
+    { key: 'all',    label: '全て',     count: rows.length  },
   ];
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl md:max-w-4xl mx-auto">
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      {/* ページヘッダー */}
       <div className="mb-3">
         <h1 className="text-2xl font-bold text-slate-900">入金チェック</h1>
       </div>
 
-      {/* 月ナビ（YearMonthPickerが月送り矢印・ピッカーを内包） */}
       <YearMonthPicker
         year={year}
         month={month}
         onChange={(y, m) => { setYear(y); setMonth(m); }}
       />
 
-      {/* ── 月次レポート（CSV）── 実務用に目立たせる */}
+      {/* ── サマリーパネル ── */}
       {rows.length > 0 && (
-        <a
-          href={`/api/payments/export?year_month=${ym}`}
-          className="flex items-center gap-3 bg-white border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-3 hover:border-slate-400 hover:bg-slate-50 shadow-sm transition-colors"
-        >
-          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
-            <Download size={20} className="text-slate-600" />
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-3">
+          {/* 進捗バー */}
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+              <TrendingUp size={15} className="text-slate-500" />
+              入金進捗
+            </span>
+            <span className="text-sm font-bold text-slate-600 tabular-nums">
+              {paidCount}<span className="font-normal text-slate-400">/{rows.length}件</span>
+              <span className="ml-2 text-emerald-600">{rate}%</span>
+            </span>
           </div>
-          <div className="min-w-0">
-            <p className="font-bold text-slate-800 text-base">{year}年{month}月　月次レポート</p>
-            <p className="text-sm text-slate-500 mt-0.5">CSV形式 · Excelで開けます · 経理・確定申告に利用可</p>
+          <div className="h-3 bg-slate-100 rounded-full overflow-hidden mb-4">
+            <div
+              className="h-full bg-emerald-500 rounded-full transition-all duration-700"
+              style={{ width: `${rate}%` }}
+            />
           </div>
-        </a>
+
+          {/* 入金済み・未入金 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+              <p className="text-xs font-bold text-emerald-600 mb-1">入金済み</p>
+              <p className="text-xl font-black text-emerald-700 tabular-nums leading-none">
+                ¥{paidTotal.toLocaleString()}
+              </p>
+              <p className="text-xs text-emerald-500 mt-1.5">{paidCount}件</p>
+            </div>
+            <div className={`border rounded-xl p-3 ${unpaidTotal > 0 ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
+              <p className={`text-xs font-bold mb-1 ${unpaidTotal > 0 ? 'text-red-600' : 'text-slate-400'}`}>未入金</p>
+              <p className={`text-xl font-black tabular-nums leading-none ${unpaidTotal > 0 ? 'text-red-600' : 'text-slate-300'}`}>
+                ¥{unpaidTotal.toLocaleString()}
+              </p>
+              <p className={`text-xs mt-1.5 ${unpaidTotal > 0 ? 'text-red-500' : 'text-slate-300'}`}>{unpaidCount}件</p>
+            </div>
+          </div>
+
+          {/* CSV ダウンロード */}
+          <a
+            href={`/api/payments/export?year_month=${ym}`}
+            className="mt-3 flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 hover:bg-slate-100 transition-colors"
+          >
+            <Download size={16} className="text-slate-500 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-700">{year}年{month}月　月次レポートをダウンロード</p>
+              <p className="text-xs text-slate-400 mt-0.5">CSV形式 · Excel・会計ソフトで使用可</p>
+            </div>
+          </a>
+        </div>
       )}
 
       {/* 検索 */}
@@ -159,44 +194,50 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {/* ── フィルタータブ ── */}
+      {/* フィルタータブ */}
       <div className="flex gap-1.5 mb-3 bg-slate-100 rounded-2xl p-1.5">
         {TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => setFilter(tab.key)}
-            className={`flex-1 flex flex-col items-center py-2 rounded-xl font-medium transition-all ${
+            className={`flex-1 flex flex-col items-center py-2.5 rounded-xl font-medium transition-all ${
               filter === tab.key
                 ? 'bg-white shadow-sm text-slate-900'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            <span className={`text-lg font-black tabular-nums leading-none ${filter === tab.key ? tab.color : ''}`}>
+            <span className={`text-xl font-black tabular-nums leading-none ${
+              filter === tab.key
+                ? tab.key === 'unpaid' && unpaidCount > 0 ? 'text-red-500'
+                : tab.key === 'paid'   ? 'text-emerald-600'
+                : 'text-slate-700'
+                : ''
+            }`}>
               {tab.count}
             </span>
-            <span className="text-sm mt-0.5">{tab.label}</span>
+            <span className="text-xs mt-1">{tab.label}</span>
           </button>
         ))}
       </div>
 
-      {/* ── カード一覧 ── */}
-      <div className="flex flex-col gap-3">
-        {rows.length === 0 && (
-          <div className="text-center py-14 bg-white rounded-2xl border border-slate-200 shadow-sm">
-            <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <CreditCard size={26} className="text-slate-400" />
-            </div>
-            <p className="text-slate-600 font-medium text-base mb-1">この月の対象者がいません</p>
-            <Link href="/contractors" className="text-sm text-blue-600 font-medium underline">契約者を登録する</Link>
+      {/* カード一覧 */}
+      {rows.length === 0 && (
+        <div className="text-center py-14 bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <CreditCard size={26} className="text-slate-400" />
           </div>
-        )}
+          <p className="text-slate-600 font-medium text-base mb-1">この月の対象者がいません</p>
+          <Link href="/contractors" className="text-sm text-blue-600 font-medium underline">契約者を登録する</Link>
+        </div>
+      )}
 
-        {filteredRows.length === 0 && rows.length > 0 && (
-          <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 text-slate-400 text-sm">
-            {filter === 'unpaid' ? '未入金の方はいません ✓' : '入金済みの方はいません'}
-          </div>
-        )}
+      {filteredRows.length === 0 && rows.length > 0 && (
+        <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 text-slate-400 text-sm">
+          {filter === 'unpaid' ? '未入金の方はいません ✓' : '入金済みの方はいません'}
+        </div>
+      )}
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {filteredRows.map(row => (
           <PaymentCard
             key={row.contractor_id}
@@ -209,7 +250,6 @@ export default function PaymentsPage() {
         ))}
       </div>
 
-      {/* 督促モーダル（ReminderModalコンポーネントに分離） */}
       {reminder && (
         <ReminderModal
           reminder={reminder}

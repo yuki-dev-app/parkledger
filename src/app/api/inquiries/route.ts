@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
+import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 export async function GET() {
   const { supabase, user } = await requireAuth();
@@ -11,7 +12,7 @@ export async function GET() {
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(data ?? [], { headers: NO_CACHE_HEADERS });
 }
 
 export async function POST(req: NextRequest) {

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireOwner } from '@/lib/supabase/server';
 import { getSettings, saveSettings } from '@/lib/settings';
+import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 export async function GET() {
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-  return NextResponse.json(await getSettings(supabase));
+  return NextResponse.json(await getSettings(supabase), { headers: NO_CACHE_HEADERS });
 }
 
 export async function PUT(req: NextRequest) {

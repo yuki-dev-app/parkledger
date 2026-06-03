@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { naturalSort } from '@/lib/sort-utils';
+import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 export async function GET() {
   const { supabase, user } = await requireAuth();
@@ -20,7 +21,8 @@ export async function GET() {
     (garages ?? []).sort((a, b) => naturalSort(a.number, b.number)).map(g => ({
       ...g,
       contractor_name: contractorMap.get(g.id) ?? null,
-    }))
+    })),
+    { headers: NO_CACHE_HEADERS }
   );
 }
 

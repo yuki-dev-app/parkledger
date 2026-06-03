@@ -32,8 +32,9 @@ type Props = {
 export default function AccountSection({ loginId, currentEmail, onToast, onLoginIdSaved }: Props) {
   const [newLoginId,  setNewLoginId]  = useState('');
   const [savingId,    setSavingId]    = useState(false);
-  const [newEmail,    setNewEmail]    = useState('');
-  const [savingEmail, setSavingEmail] = useState(false);
+  const [newEmail,      setNewEmail]      = useState('');
+  const [emailPass,     setEmailPass]     = useState('');
+  const [savingEmail,   setSavingEmail]   = useState(false);
   const [currentPass, setCurrentPass] = useState('');
   const [newPass,     setNewPass]     = useState('');
   const [confirmPass, setConfirmPass] = useState('');
@@ -59,13 +60,21 @@ export default function AccountSection({ loginId, currentEmail, onToast, onLogin
   };
 
   const changeEmail = async () => {
-    if (!newEmail || !newEmail.includes('@')) return;
+    if (!newEmail || !newEmail.includes('@') || !emailPass) return;
     setSavingEmail(true);
     const supabase = createClient();
+    // セッション奪取によるアカウント乗っ取りを防ぐため、メール変更前に現在のパスワードで再認証
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: currentEmail, password: emailPass });
+    if (signInError) {
+      setSavingEmail(false);
+      onToast({ message: '現在のパスワードが違います', kind: 'error' });
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ email: newEmail });
     setSavingEmail(false);
     if (error) { onToast({ message: toJaError(error.message), kind: 'error' }); return; }
     setNewEmail('');
+    setEmailPass('');
     onToast({ message: '確認メールを送りました。新しいメールアドレスを確認してください。', kind: 'success' });
   };
 
@@ -128,11 +137,13 @@ export default function AccountSection({ loginId, currentEmail, onToast, onLogin
         <div className="px-4 py-3.5">
           <label className="text-sm font-medium text-slate-600 block mb-1.5">新しいメールアドレス</label>
           <input type="email" className={inputCls} value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@example.com" />
+          <label className="text-sm font-medium text-slate-600 block mb-1.5 mt-3">現在のパスワード（確認）</label>
+          <input type="password" className={inputCls} value={emailPass} onChange={e => setEmailPass(e.target.value)} placeholder="現在のパスワードを入力" autoComplete="current-password" />
           <p className="text-xs text-slate-400 mt-1.5">変更するとSupabaseから確認メールが送られます</p>
           <button
             type="button"
             onClick={changeEmail}
-            disabled={savingEmail || !newEmail || !newEmail.includes('@')}
+            disabled={savingEmail || !newEmail || !newEmail.includes('@') || !emailPass}
             className="mt-2.5 w-full flex items-center justify-center gap-2 bg-slate-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-40"
           >
             <Mail size={15} />{savingEmail ? '送信中...' : '確認メールを送って変更する'}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { naturalSort } from '@/lib/sort-utils';
+import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 const MAX = { name:100, phone:20, email:200, address:300, vehicle_type:100, vehicle_number:50, vehicle_chassis:100, emergency_contact:100, notes:1000 };
 const t = (v: unknown, max: number) => (typeof v === 'string' ? v.trim() : '').slice(0, max);
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   if (!archived) rows.sort((a, b) => naturalSort(a.garage_number, b.garage_number));
 
-  return NextResponse.json(rows);
+  return NextResponse.json(rows, { headers: NO_CACHE_HEADERS });
 }
 
 export async function POST(req: NextRequest) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
+import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 function esc(v: string | number) {
   const s = String(v ?? '').replace(/"/g, '""');
@@ -92,6 +93,7 @@ export async function GET(req: NextRequest) {
     headers: {
       'Content-Type':        'text/csv; charset=utf-8',
       'Content-Disposition': `attachment; filename="parkledger_${year}.csv"`,
+      ...NO_CACHE_HEADERS,
     },
   });
 }

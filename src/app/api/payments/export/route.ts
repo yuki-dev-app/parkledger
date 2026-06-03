@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { getSettings } from '@/lib/settings';
+import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 export async function GET(req: NextRequest) {
   const { supabase, user } = await requireAuth();
@@ -90,6 +91,7 @@ export async function GET(req: NextRequest) {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
       'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
+      ...NO_CACHE_HEADERS,
     },
   });
 }

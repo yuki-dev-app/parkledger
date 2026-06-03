@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
+import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 export async function GET() {
   const { supabase, user } = await requireAuth();
@@ -10,7 +11,7 @@ export async function GET() {
     .select('*')
     .order('cleaned_date', { ascending: false });
 
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(data ?? [], { headers: NO_CACHE_HEADERS });
 }
 
 export async function POST(req: NextRequest) {

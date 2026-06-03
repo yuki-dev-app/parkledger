@@ -41,7 +41,11 @@ export default function LoginPage() {
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (signInError) {
-      setError('メールアドレス（またはID）またはパスワードが正しくありません');
+      if (signInError.message.toLowerCase().includes('email not confirmed')) {
+        setError('メールアドレスの確認が完了していません。登録時に届いたメール内のリンクをクリックしてください。\n届いていない場合は迷惑メールフォルダをご確認ください。');
+      } else {
+        setError('メールアドレス（またはID）またはパスワードが正しくありません');
+      }
       setLoading(false);
     } else {
       router.push('/');
@@ -120,6 +124,12 @@ export default function LoginPage() {
                   <p className="text-sm text-red-700 font-medium">{error}</p>
                 </div>
               )}
+
+              <div className="text-right -mt-2">
+                <Link href="/reset-password" className="text-sm text-slate-500 hover:text-slate-700 underline underline-offset-2">
+                  パスワードを忘れた方
+                </Link>
+              </div>
 
               <button
                 type="submit"
