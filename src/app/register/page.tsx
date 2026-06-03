@@ -36,12 +36,8 @@ export default function RegisterPage() {
       return;
     }
 
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) { router.push('/login'); return; }
-
+    // メール確認必須のため、登録後は確認メール待ち画面を表示
     setDone(true);
-    setTimeout(() => { router.push('/'); router.refresh(); }, 1500);
   };
 
   const canSubmit = email && password.length >= 8 && password === confirm;
@@ -77,8 +73,16 @@ export default function RegisterPage() {
                 <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4 border-2 border-slate-300">
                   <Check size={32} className="text-slate-700" />
                 </div>
-                <p className="text-xl font-bold text-slate-900">登録完了！</p>
-                <p className="text-slate-500 text-base mt-1">ホーム画面に移動します…</p>
+                <p className="text-xl font-bold text-slate-900">確認メールを送りました</p>
+                <p className="text-slate-600 text-base mt-2 leading-relaxed">
+                  <strong>{email}</strong> に<br />確認メールを送りました。
+                </p>
+                <p className="text-slate-600 text-base mt-2">
+                  メール内のリンクをクリックすると<br />ログインできるようになります。
+                </p>
+                <p className="text-sm text-slate-400 mt-3">
+                  ※ 届かない場合は迷惑メールをご確認ください
+                </p>
               </div>
             ) : (
               <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-3.5">

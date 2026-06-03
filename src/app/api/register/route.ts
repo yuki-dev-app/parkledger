@@ -1,28 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-
-// ── レート制限 ─────────────────────────────────────────────
-// 同一IPから10分間に5回まで登録試行を許可
-const registerAttempts = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now   = Date.now();
-  const entry = registerAttempts.get(ip);
-  if (!entry || entry.resetAt < now) {
-    registerAttempts.set(ip, { count: 1, resetAt: now + 10 * 60 * 1000 });
-    return true;
-  }
-  entry.count++;
-  return entry.count <= 5;
-}
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // ── メールアドレス検証 ──────────────────────────────────────
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export async function POST(req: NextRequest) {
-  // レート制限チェック
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  if (!checkRateLimit(ip)) {
+  // レート制限: 同一IPから10分間に5回まで（Upstash Redis で永続化）
+  const ip  = getClientIp(req);
+  const { allowed } = await checkRateLimit(`register:${ip}`, 5, 10 * 60 * 1000);
+  if (!allowed) {
     return NextResponse.json(
       { error: 'しばらく時間をおいてから再試行してください' },
       { status: 429 }
@@ -44,14 +31,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'パスワードは8文字以上にしてください' }, { status: 400 });
   }
 
-  // email_confirm: true でメール確認をスキップし、登録直後にログイン可能にする。
-  // メール確認アリに切り替える場合: email_confirm を false に変更し、
-  // Supabase Dashboard の Authentication > Settings で "Confirm email" を有効にするだけでOK。
-  // （確認メールが来るようになり、/auth/callback が処理する）
+  // email_confirm: false でメール確認を必須にする（スパム・偽登録防止）
+  // Supabase Dashboard → Authentication → Settings → "Confirm email" を ON にすること。
+  // 確認メールが届き、/auth/callback で処理される。
+  //
+  // ⚠️ 本番前に必ずSupabase側でも「Confirm email」を有効にすること。
+  //    有効にしないとこの設定は無効。
   const { data: userData, error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
+    email_confirm: false, // メール確認必須
   });
 
   if (error) {

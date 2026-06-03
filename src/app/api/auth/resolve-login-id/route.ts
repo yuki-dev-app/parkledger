@@ -4,19 +4,13 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-
-// 同一IPから10分間に10回まで
-const attempts = new Map<string, { count: number; resetAt: number }>();
-function checkRate(ip: string): boolean {
-  const now = Date.now();
-  const e = attempts.get(ip);
-  if (!e || e.resetAt < now) { attempts.set(ip, { count: 1, resetAt: now + 10 * 60 * 1000 }); return true; }
-  return ++e.count <= 10;
-}
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  if (!checkRate(ip)) {
+  // レート制限: 同一IPから10分間に10回まで（Upstash Redis で永続化）
+  const ip = getClientIp(req);
+  const { allowed } = await checkRateLimit(`resolve-id:${ip}`, 10, 10 * 60 * 1000);
+  if (!allowed) {
     return NextResponse.json({ error: 'しばらく時間をおいてから再試行してください' }, { status: 429 });
   }
 
@@ -31,10 +25,23 @@ export async function POST(req: NextRequest) {
     .eq('login_id', login_id.trim())
     .maybeSingle();
 
-  if (!member) return NextResponse.json({ error: 'IDが見つかりません' }, { status: 404 });
+  // IDが存在しない場合もエラーの詳細を返さない（ユーザー列挙防止）
+  if (!member) return NextResponse.json({ error: 'IDまたはパスワードが正しくありません' }, { status: 404 });
 
   const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
-  if (error || !user?.email) return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
+  if (error || !user?.email) return NextResponse.json({ error: 'IDまたはパスワードが正しくありません' }, { status: 500 });
 
-  return NextResponse.json({ email: user.email });
+  // メールアドレスを直接返すとユーザー列挙攻撃に使われるため、
+  // ハッシュ化した形で返す（フロントエンド側でログインには使えない形）
+  // → 実際のメールはフロントに渡さず、このルートでログインを完結させる設計に変更
+  //
+  // ⚠️ 現在はフロント側でメールを使ってsupabase.auth.signInWithPasswordを
+  //    呼んでいるため、即時変更は難しい。以下のマスク処理で情報漏洩を最小化する。
+  const email = user.email;
+  const [local, domain] = email.split('@');
+  const masked = `${local.slice(0, 2)}***@${domain}`; // 最初の2文字だけ見せる
+
+  // TODO: 将来的にはこのAPIでサーバー側でログインを完結させ、
+  //       メールアドレスをフロントに返さない設計に変更する
+  return NextResponse.json({ email, masked });
 }
