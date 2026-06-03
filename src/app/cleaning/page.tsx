@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, Sparkles } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
-import { getCached, setCached } from '@/lib/page-cache';
+import { useCachedFetch } from '@/lib/use-cached-fetch';
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import Modal from '@/components/Modal';
@@ -21,31 +21,37 @@ const emptyForm = { cleaned_date: '', person: '', notes: '', personSelect: '' };
 const today = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
 
 export default function CleaningPage() {
-  const [logs, setLogs] = useState<CleaningLog[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editTarget, setEditTarget] = useState<CleaningLog | null>(null);
-  const [form, setForm] = useState(emptyForm);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<ToastType | null>(null);
-  const [persons, setPersons] = useState<string[]>([]);
+  const { data: logs, reload: load } = useCachedFetch<CleaningLog[]>(
+    'cleaning',
+    async () => {
+      const res  = await fetch('/api/cleaning');
+      const json = await res.json().catch(() => []);
+      return Array.isArray(json) ? json : [];
+    },
+    [],
+  );
+
+  const [showForm,     setShowForm]     = useState(false);
+  const [editTarget,   setEditTarget]   = useState<CleaningLog | null>(null);
+  const [form,         setForm]         = useState(emptyForm);
+  const [loading,      setLoading]      = useState(false);
+  const [toast,        setToast]        = useState<ToastType | null>(null);
+  const [persons,      setPersons]      = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; date: string } | null>(null);
 
-  const load = useCallback(async () => {
-    const cachedLogs = getCached<CleaningLog[]>('cleaning');
-    if (cachedLogs) setLogs(cachedLogs);
-
-    const [cRes, sRes] = await Promise.all([fetch('/api/cleaning'), fetch('/api/settings')]);
-    const [cJson, settings] = await Promise.all([cRes.json().catch(() => []), sRes.json().catch(() => ({}))]);
-    const logs = Array.isArray(cJson) ? cJson : [];
-    setCached('cleaning', logs);
-    setLogs(logs);
-    const list = settings.cleaning_persons
-      ? settings.cleaning_persons.split(',').map((s: string) => s.trim()).filter(Boolean)
-      : [];
-    setPersons(list);
+  // 担当者リストは設定から取得（useCachedFetch と分離）
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .catch(() => ({}))
+      .then((s: { cleaning_persons?: string }) => {
+        setPersons(
+          s.cleaning_persons
+            ? s.cleaning_persons.split(',').map(p => p.trim()).filter(Boolean)
+            : []
+        );
+      });
   }, []);
-
-  useEffect(() => { load(); }, [load]);
 
   const openNew = () => {
     setForm({ ...emptyForm, cleaned_date: today() });

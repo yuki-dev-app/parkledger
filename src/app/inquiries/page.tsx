@@ -1,10 +1,11 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Plus, Check, Phone, Mail, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import Modal from '@/components/Modal';
-import { getCached, setCached } from '@/lib/page-cache';
+import { useCachedFetch } from '@/lib/use-cached-fetch';
+import { inputClsSm as inputCls } from '@/lib/styles';
 
 type Inquiry = {
   id: number;
@@ -26,10 +27,18 @@ const STATUS_COLOR = {
 
 const emptyForm = { name: '', phone: '', email: '', message: '' };
 
-const inputCls = 'border border-slate-300 rounded-xl px-3 py-3 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white';
 
 export default function InquiriesPage() {
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const { data: inquiries, reload: load } = useCachedFetch<Inquiry[]>(
+    'inquiries',
+    async () => {
+      const res  = await fetch('/api/inquiries');
+      const json = await res.json().catch(() => []);
+      return Array.isArray(json) ? json : [];
+    },
+    [],
+  );
+
   const [showForm, setShowForm] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [editNotes, setEditNotes] = useState<{ [id: number]: string }>({});
@@ -38,19 +47,6 @@ export default function InquiriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [filter, setFilter] = useState<'all' | 'in_progress' | 'resolved'>('all');
   const [toast, setToast] = useState<ToastType | null>(null);
-
-  const load = useCallback(async () => {
-    const cached = getCached<Inquiry[]>('inquiries');
-    if (cached) setInquiries(cached);
-
-    const res  = await fetch('/api/inquiries');
-    const json = await res.json().catch(() => []);
-    const data = Array.isArray(json) ? json : [];
-    setCached('inquiries', data);
-    setInquiries(data);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
 
   const save = async () => {
     setLoading(true);

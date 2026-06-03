@@ -1,4 +1,5 @@
 'use client';
+import type React from 'react';
 /**
  * キャッシュ付きデータ取得フック
  *
@@ -30,7 +31,8 @@ export function useCachedFetch<T>(
 ): {
   data: T;
   loading: boolean;
-  reload: () => Promise<void>;
+  reload:  () => Promise<void>;
+  setData: React.Dispatch<React.SetStateAction<T>>;
 } {
   const cached = getCached<T>(cacheKey);
   const [data, setData]       = useState<T>(cached ?? initialValue);
@@ -51,5 +53,5 @@ export function useCachedFetch<T>(
     reload();
   }, [reload]);
 
-  return { data, loading, reload };
+  return { data, loading, reload, setData };
 }

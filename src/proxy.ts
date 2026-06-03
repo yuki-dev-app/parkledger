@@ -20,7 +20,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // 認証不要なパス（ページ）
-const PUBLIC_PATHS = new Set(['/login', '/register', '/auth/callback', '/auth/confirm']);
+const PUBLIC_PATHS = new Set(['/login', '/register', '/auth/callback', '/auth/confirm', '/privacy']);
 
 function isPublicPath(path: string): boolean {
   if (PUBLIC_PATHS.has(path)) return true;

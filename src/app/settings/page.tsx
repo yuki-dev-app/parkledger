@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Check, Settings as SettingsIcon, Plus, X, Users, Building2, FileText, Car, KeyRound, Eye, EyeOff, Mail, ChevronLeft } from 'lucide-react';
+import { Check, Settings as SettingsIcon, Plus, X, Users, Building2, FileText, Car, ChevronLeft } from 'lucide-react';
 import Toast, { ToastType } from '@/components/Toast';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Settings } from '@/lib/settings';
-
-const inputCls = 'border border-slate-300 rounded-xl px-4 py-3.5 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white text-base';
+import AccountSection from './_components/AccountSection';
+import { inputCls } from '@/lib/styles';
 
 export default function SettingsPage() {
   const [form, setForm] = useState<Settings>({
@@ -17,21 +17,9 @@ export default function SettingsPage() {
   const [toast,     setToast]     = useState<ToastType | null>(null);
   const [newPerson, setNewPerson] = useState('');
 
-  // アカウント設定
+  // アカウント設定（AccountSection コンポーネントに委譲）
   const [currentEmail, setCurrentEmail] = useState('');
-  const [newEmail,     setNewEmail]     = useState('');
-  const [savingEmail,  setSavingEmail]  = useState(false);
-  const [currentPass,  setCurrentPass]  = useState('');
-  const [newPass,      setNewPass]      = useState('');
-  const [confirmPass,  setConfirmPass]  = useState('');
-  const [showCur,      setShowCur]      = useState(false);
-  const [showNew,      setShowNew]      = useState(false);
-  const [savingPass,   setSavingPass]   = useState(false);
-
-  // ログインID
   const [loginId,      setLoginId]      = useState('');
-  const [newLoginId,   setNewLoginId]   = useState('');
-  const [savingId,     setSavingId]     = useState(false);
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -75,65 +63,6 @@ export default function SettingsPage() {
     const updated = persons.filter(p => p !== name).join(',');
     setForm(f => ({ ...f, cleaning_persons: updated }));
     await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cleaning_persons: updated }) });
-  };
-
-  // Supabase のエラーメッセージを日本語に変換
-  const toJaError = (msg: string): string => {
-    const map: Record<string, string> = {
-      'Email rate limit exceeded': 'メール送信の上限に達しました。しばらく待ってから再試行してください。',
-      'User not found': 'ユーザーが見つかりません。',
-      'Invalid email': 'メールアドレスの形式が正しくありません。',
-      'Password should be at least 6 characters': 'パスワードは6文字以上にしてください。',
-      'New password should be different from the old password': '新しいパスワードは現在のパスワードと異なるものにしてください。',
-      'Invalid login credentials': 'パスワードが正しくありません。',
-    };
-    return map[msg] ?? 'エラーが発生しました。時間をおいて再試行してください。';
-  };
-
-  const changeEmail = async () => {
-    if (!newEmail || !newEmail.includes('@')) return;
-    setSavingEmail(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ email: newEmail });
-    setSavingEmail(false);
-    if (error) { setToast({ message: toJaError(error.message), kind: 'error' }); return; }
-    setNewEmail('');
-    setToast({ message: '確認メールを送りました。新しいメールアドレスを確認してください。', kind: 'success' });
-  };
-
-  const saveLoginId = async () => {
-    setSavingId(true);
-    const res = await fetch('/api/me/login-id', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login_id: newLoginId }),
-    });
-    setSavingId(false);
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      setToast({ message: d.error ?? '更新に失敗しました', kind: 'error' });
-      return;
-    }
-    setLoginId(newLoginId);
-    setNewLoginId('');
-    setToast({ message: 'ログインIDを設定しました', kind: 'success' });
-  };
-
-  const changePassword = async () => {
-    if (!currentPass || !newPass || newPass !== confirmPass || newPass.length < 8) return;
-    setSavingPass(true);
-    // Supabaseは現在のパスワードを先に確認してから変更
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: currentEmail, password: currentPass });
-    if (signInError) {
-      setSavingPass(false);
-      setToast({ message: '現在のパスワードが違います', kind: 'error' });
-      return;
-    }
-    const { error } = await supabase.auth.updateUser({ password: newPass });
-    setSavingPass(false);
-    if (error) { setToast({ message: toJaError(error.message), kind: 'error' }); return; }
-    setCurrentPass(''); setNewPass(''); setConfirmPass('');
-    setToast({ message: 'パスワードを変更しました', kind: 'success' });
   };
 
   return (
@@ -221,74 +150,13 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* アカウント設定 */}
-      <section className="mb-4">
-        <div className="flex items-center gap-2 mb-2 px-1"><KeyRound size={16} className="text-slate-600"/><h2 className="text-base font-bold text-slate-700">アカウント設定</h2></div>
-
-        {/* ログインID */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
-          <div className="px-4 py-3.5 border-b border-slate-100">
-            <p className="text-xs text-slate-400 mb-0.5">現在のログインID</p>
-            <p className="text-base font-bold text-slate-800">{loginId || '（未設定）'}</p>
-            <p className="text-xs text-slate-400 mt-1">メールアドレスの代わりにこのIDでログインできます</p>
-          </div>
-          <div className="px-4 py-3.5">
-            <label className="text-sm font-medium text-slate-600 block mb-1.5">新しいログインID</label>
-            <input
-              className={inputCls}
-              value={newLoginId}
-              onChange={e => setNewLoginId(e.target.value)}
-              placeholder="例: yamada123（半角英数字・ハイフン・_、3〜30文字）"
-            />
-            <button
-              onClick={saveLoginId}
-              disabled={savingId || !newLoginId.trim()}
-              className="mt-2.5 w-full flex items-center justify-center gap-2 bg-slate-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-40"
-            >
-              <Check size={15} />{savingId ? '保存中...' : 'ログインIDを設定する'}
-            </button>
-          </div>
-        </div>
-
-        {/* メール変更 */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
-          <div className="px-4 py-3.5 border-b border-slate-100">
-            <p className="text-xs text-slate-400 mb-0.5">現在のメールアドレス</p>
-            <p className="text-base font-bold text-slate-800">{currentEmail || '—'}</p>
-          </div>
-          <div className="px-4 py-3.5">
-            <label className="text-sm font-medium text-slate-600 block mb-1.5">新しいメールアドレス</label>
-            <input type="email" className={inputCls} value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder="new@example.com"/>
-            <p className="text-xs text-slate-400 mt-1.5">変更するとSupabaseから確認メールが送られます</p>
-            <button onClick={changeEmail} disabled={savingEmail||!newEmail||!newEmail.includes('@')}
-              className="mt-2.5 w-full flex items-center justify-center gap-2 bg-slate-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-40">
-              <Mail size={15}/>{savingEmail?'送信中...':'確認メールを送って変更する'}
-            </button>
-          </div>
-        </div>
-
-        {/* パスワード変更 */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-          <div className="px-4 py-3.5 flex flex-col gap-3">
-            <label className="text-sm font-medium text-slate-600">パスワードを変更する</label>
-            <div className="relative">
-              <input type={showCur?'text':'password'} className={inputCls+' pr-12'} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} placeholder="現在のパスワード" autoComplete="current-password"/>
-              <button type="button" onClick={()=>setShowCur(p=>!p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showCur ? <EyeOff size={16}/> : <Eye size={16}/>}</button>
-            </div>
-            <div className="relative">
-              <input type={showNew?'text':'password'} className={inputCls+' pr-12'} value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="新しいパスワード（8文字以上）" autoComplete="new-password"/>
-              <button type="button" onClick={()=>setShowNew(p=>!p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showNew ? <EyeOff size={16}/> : <Eye size={16}/>}</button>
-            </div>
-            <input type={showNew?'text':'password'} className={inputCls} value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="新しいパスワード（確認）" autoComplete="new-password"/>
-            {newPass&&confirmPass&&newPass!==confirmPass&&<p className="text-xs text-red-500">パスワードが一致しません</p>}
-            {newPass.length>0&&newPass.length<8&&<p className="text-xs text-red-500">8文字以上にしてください（今{newPass.length}文字）</p>}
-            <button onClick={changePassword} disabled={savingPass||!currentPass||newPass.length<8||newPass!==confirmPass}
-              className="w-full flex items-center justify-center gap-2 bg-slate-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-40">
-              <Check size={15}/>{savingPass?'変更中...':'パスワードを変更する'}
-            </button>
-          </div>
-        </div>
-      </section>
+      {/* アカウント設定（AccountSection コンポーネントに委譲） */}
+      <AccountSection
+        loginId={loginId}
+        currentEmail={currentEmail}
+        onToast={setToast}
+        onLoginIdSaved={id => setLoginId(id)}
+      />
 
       {/* 車庫証明の補足 */}
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 mb-4">

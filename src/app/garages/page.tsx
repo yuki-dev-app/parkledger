@@ -5,7 +5,8 @@ import Toast, { ToastType } from '@/components/Toast';
 import Modal from '@/components/Modal';
 import { SkeletonList } from '@/components/Skeleton';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { getCached, setCached } from '@/lib/page-cache';
+import { useCachedFetch } from '@/lib/use-cached-fetch';
+import { inputCls } from '@/lib/styles';
 
 type Garage = {
   id: number;
@@ -22,36 +23,25 @@ const STATUS_CONFIG = {
   maintenance: { label: '整備中', cardClass: 'border-amber-300  bg-amber-50',    badgeClass: 'bg-amber-500  text-white' },
 };
 
-const inputCls = 'border border-slate-300 rounded-xl px-4 py-3.5 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white text-base';
-
 export default function GaragesPage() {
-  const [garages,     setGarages]     = useState<Garage[]>([]);
+  const { data: garages, loading: dataLoading, reload: load, setData: setGarages } = useCachedFetch<Garage[]>(
+    'garages',
+    async () => {
+      const res  = await fetch('/api/garages');
+      const json = await res.json().catch(() => []);
+      return Array.isArray(json) ? json : [];
+    },
+    [],
+  );
+
   const [showForm,    setShowForm]    = useState(false);
   const [showBulk,    setShowBulk]    = useState(false);
   const [editTarget,  setEditTarget]  = useState<Garage | null>(null);
   const [form,        setForm]        = useState({ number: '', status: 'vacant', monthly_fee: '', notes: '' });
   const [bulk,        setBulk]        = useState({ start: '1', end: '10', monthly_fee: '', notes: '' });
   const [loading,     setLoading]     = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; number: string } | null>(null);
   const [toast,       setToast]       = useState<ToastType | null>(null);
-
-  const load = useCallback(async () => {
-    // キャッシュがあれば即座に表示（スケルトンなし）
-    const cached = getCached<Garage[]>('garages');
-    if (cached) { setGarages(cached); setDataLoading(false); }
-    else setDataLoading(true);
-
-    // 常にバックグラウンドで最新データを取得
-    const res  = await fetch('/api/garages');
-    const json = await res.json().catch(() => []);
-    const data = Array.isArray(json) ? json : [];
-    setCached('garages', data);
-    setGarages(data);
-    setDataLoading(false);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
 
   const openNew = () => {
     setForm({ number: '', status: 'vacant', monthly_fee: '', notes: '' });
