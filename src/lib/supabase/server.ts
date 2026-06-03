@@ -39,6 +39,14 @@ export async function getUser() {
  * app_metadata はユーザー自身では書き換え不可（admin API のみ書き込み可能）。
  * 一度キャッシュすると getUser() の返り値に含まれるため、
  * 次回から org_members DBクエリが不要になる。
+ *
+ * ─── org作成の二経路について ──────────────────────────────────
+ * 主経路: register/route.ts で登録時に確実に org + org_members を作成
+ * 副経路: requireAuth() → ensureOrg() が主経路の失敗時にフォールバック作成
+ *
+ * どちらの経路も同じ supabaseAdmin を使うため RLS をバイパスして安全に作成できる。
+ * 将来、主経路だけで十分と確認できた時点で ensureOrg() は削除して良い。
+ * ────────────────────────────────────────────────────────────────
  */
 function cacheOrgIdInMetadata(userId: string, orgId: string, currentMeta: Record<string, unknown>) {
   if (currentMeta?.org_id === orgId) return; // すでにキャッシュ済み

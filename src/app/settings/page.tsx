@@ -4,12 +4,7 @@ import { Check, Settings as SettingsIcon, Plus, X, Users, Building2, FileText, C
 import Toast, { ToastType } from '@/components/Toast';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-
-type Settings = {
-  business_name: string; business_address: string; business_phone: string;
-  parking_name: string; parking_address: string;
-  receipt_no_prefix: string; cleaning_persons: string;
-};
+import type { Settings } from '@/lib/settings';
 
 const inputCls = 'border border-slate-300 rounded-xl px-4 py-3.5 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white text-base';
 

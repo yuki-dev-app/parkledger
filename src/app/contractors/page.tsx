@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Pencil, Trash2, X, Check, Phone, Car, AlertTriangle, FileText, Archive, Users, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, Phone, Car, AlertTriangle, FileText, Archive, Users, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 import { SkeletonList } from '@/components/Skeleton';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { useScrollLock } from '@/lib/use-scroll-lock';
+import Modal from '@/components/Modal';
 import { getCached, setCached } from '@/lib/page-cache';
 
 type Contractor = {
@@ -133,8 +133,7 @@ export default function ContractorsPage() {
     load();
   };
 
-  // モーダル表示中は背景スクロールを止める（iOS Safari 対応）
-  useScrollLock(showForm || !!showArchiveModal);
+  // scrollLock は各 <Modal> コンポーネントが内部で管理するため不要
 
   const expiringCount = contractors.filter(c => {
     const d = daysUntil(c.contract_end);
@@ -358,136 +357,120 @@ export default function ContractorsPage() {
 
       {/* 解約モーダル */}
       {showArchiveModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900 text-lg">解約処理</h3>
-              <button onClick={() => setShowArchiveModal(null)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 w-11 h-11">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-              <p className="text-base text-amber-800 font-bold">{showArchiveModal.name} さんを解約します</p>
-              <p className="text-sm text-amber-700 mt-1">区画が「空き」に戻ります。入金履歴は保持されます。</p>
-            </div>
-            <div className="flex flex-col gap-3">
-              <div>
-                <label className="text-base font-bold text-slate-700 mb-2 block">解約理由（任意）</label>
-                <input
-                  className={inputCls}
-                  value={archiveReason}
-                  onChange={e => setArchiveReason(e.target.value)}
-                  placeholder="例: 引越し、車の売却"
-                />
-              </div>
-              <button
-                onClick={archive}
-                disabled={loading}
-                className="bg-amber-500 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-amber-600 disabled:opacity-50"
-              >
-                <Archive size={18} /> 解約処理を実行する
-              </button>
-            </div>
+        <Modal title="解約処理" onClose={() => setShowArchiveModal(null)}>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <p className="text-base text-amber-800 font-bold">{showArchiveModal.name} さんを解約します</p>
+            <p className="text-sm text-amber-700 mt-1">区画が「空き」に戻ります。入金履歴は保持されます。</p>
           </div>
-        </div>
+          <div>
+            <label className="text-base font-bold text-slate-700 mb-2 block">解約理由（任意）</label>
+            <input
+              className={inputCls}
+              value={archiveReason}
+              onChange={e => setArchiveReason(e.target.value)}
+              placeholder="例: 引越し、車の売却"
+            />
+          </div>
+          <button
+            onClick={archive}
+            disabled={loading}
+            className="w-full bg-amber-500 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-amber-600 disabled:opacity-50"
+          >
+            <Archive size={18} /> 解約処理を実行する
+          </button>
+        </Modal>
       )}
 
       {/* 契約者追加・編集フォーム */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md sm:mx-4 p-5 max-h-[92dvh] overflow-y-auto modal-scroll" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-bold text-slate-900 text-lg">
-                {editTarget ? `${editTarget.name} さんを編集` : '新しい契約者を追加'}
-              </h3>
-              <button onClick={() => setShowForm(false)} className="flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 w-11 h-11">
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              {!editTarget ? (
-                <div>
-                  <label className="text-base font-bold text-slate-700 mb-2 block">区画番号 <span className="text-red-500">*</span></label>
-                  <select className={inputCls} value={form.garage_id} onChange={e => setForm({ ...form, garage_id: e.target.value })}>
-                    <option value="">どの区画か選んでください</option>
-                    {vacantGarages.map(g => <option key={g.id} value={g.id}>{g.number}番区画</option>)}
-                  </select>
-                  {vacantGarages.length === 0 && (
-                    <p className="text-sm text-amber-600 mt-1">空き区画がありません。先に区画を登録してください。</p>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-600 font-medium">
-                  {editTarget.garage_number}番区画
-                </div>
+        <Modal
+          title={editTarget ? `${editTarget.name} さんを編集` : '新しい契約者を追加'}
+          onClose={() => setShowForm(false)}
+        >
+          {/* 区画選択 */}
+          {!editTarget ? (
+            <div>
+              <label className="text-base font-bold text-slate-700 mb-2 block">区画番号 <span className="text-red-500">*</span></label>
+              <select className={inputCls} value={form.garage_id} onChange={e => setForm({ ...form, garage_id: e.target.value })}>
+                <option value="">どの区画か選んでください</option>
+                {vacantGarages.map(g => <option key={g.id} value={g.id}>{g.number}番区画</option>)}
+              </select>
+              {vacantGarages.length === 0 && (
+                <p className="text-sm text-amber-600 mt-1">空き区画がありません。先に区画を登録してください。</p>
               )}
-
-              {[
-                { label: '氏名', key: 'name', placeholder: '例: 田中 太郎', required: true },
-                { label: '電話番号', key: 'phone', placeholder: '例: 090-0000-0000', type: 'tel' },
-                { label: '住所', key: 'address', placeholder: '例: 〇〇市〇〇町1-2-3' },
-                { label: '緊急連絡先', key: 'emergency_contact', placeholder: 'ご家族など（090-0000-0001）' },
-                { label: 'メールアドレス', key: 'email', placeholder: 'example@mail.com', type: 'email' },
-              ].map(({ label, key, placeholder, type, required }) => (
-                <div key={key}>
-                  <label className="text-base font-bold text-slate-700 mb-2 block">
-                    {label} {required && <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    className={inputCls}
-                    value={form[key as keyof typeof form]}
-                    onChange={e => setForm({ ...form, [key]: e.target.value })}
-                    placeholder={placeholder}
-                    type={type ?? 'text'}
-                  />
-                </div>
-              ))}
-
-              <div className="bg-slate-50 rounded-xl p-4 space-y-3">
-                <p className="text-sm font-bold text-slate-500">お車の情報（車庫証明に使用）</p>
-                {[
-                  { label: '車種・メーカー', key: 'vehicle_type', placeholder: '例: プリウス' },
-                  { label: '登録番号（ナンバー）', key: 'vehicle_number', placeholder: '例: 品川 300 あ 12-34' },
-                  { label: '車台番号（車検証に記載）', key: 'vehicle_chassis', placeholder: '例: ZVW30-XXXXXXX' },
-                ].map(({ label, key, placeholder }) => (
-                  <div key={key}>
-                    <label className="text-sm font-medium text-slate-600 mb-1.5 block">{label}</label>
-                    <input
-                      className="border border-slate-300 rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white text-base"
-                      value={form[key as keyof typeof form]}
-                      onChange={e => setForm({ ...form, [key]: e.target.value })}
-                      placeholder={placeholder}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <label className="text-base font-bold text-slate-700 mb-2 block">契約開始日 <span className="text-red-500">*</span></label>
-                <input className={inputCls} value={form.contract_start} onChange={e => setForm({ ...form, contract_start: e.target.value })} type="date" />
-              </div>
-              <div>
-                <label className="text-base font-bold text-slate-700 mb-2 block">契約終了日</label>
-                <input className={inputCls} value={form.contract_end} onChange={e => setForm({ ...form, contract_end: e.target.value })} type="date" />
-                <p className="text-sm text-slate-400 mt-1">※ 終了30日前に画面で警告が表示されます</p>
-              </div>
-              <div>
-                <label className="text-base font-bold text-slate-700 mb-2 block">メモ（任意）</label>
-                <textarea className={inputCls} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} />
-              </div>
-
-              <button
-                onClick={save}
-                disabled={loading || !form.name || !form.contract_start || (!editTarget && !form.garage_id)}
-                className="w-full bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ minHeight: '56px', fontSize: '16px' }}
-              >
-                <Check size={20} /> {editTarget ? '保存する' : '追加する'}
-              </button>
             </div>
+          ) : (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-600 font-medium">
+              {editTarget.garage_number}番区画
+            </div>
+          )}
+
+          {/* 基本情報 */}
+          {[
+            { label: '氏名', key: 'name', placeholder: '例: 田中 太郎', required: true },
+            { label: '電話番号', key: 'phone', placeholder: '例: 090-0000-0000', type: 'tel' },
+            { label: '住所', key: 'address', placeholder: '例: 〇〇市〇〇町1-2-3' },
+            { label: '緊急連絡先', key: 'emergency_contact', placeholder: 'ご家族など（090-0000-0001）' },
+            { label: 'メールアドレス', key: 'email', placeholder: 'example@mail.com', type: 'email' },
+          ].map(({ label, key, placeholder, type, required }) => (
+            <div key={key}>
+              <label className="text-base font-bold text-slate-700 mb-2 block">
+                {label} {required && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                className={inputCls}
+                value={form[key as keyof typeof form]}
+                onChange={e => setForm({ ...form, [key]: e.target.value })}
+                placeholder={placeholder}
+                type={type ?? 'text'}
+              />
+            </div>
+          ))}
+
+          {/* 車両情報 */}
+          <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+            <p className="text-sm font-bold text-slate-500">お車の情報（車庫証明に使用）</p>
+            {[
+              { label: '車種・メーカー', key: 'vehicle_type', placeholder: '例: プリウス' },
+              { label: '登録番号（ナンバー）', key: 'vehicle_number', placeholder: '例: 品川 300 あ 12-34' },
+              { label: '車台番号（車検証に記載）', key: 'vehicle_chassis', placeholder: '例: ZVW30-XXXXXXX' },
+            ].map(({ label, key, placeholder }) => (
+              <div key={key}>
+                <label className="text-sm font-medium text-slate-600 mb-1.5 block">{label}</label>
+                <input
+                  className="border border-slate-300 rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-slate-700 bg-white text-base"
+                  value={form[key as keyof typeof form]}
+                  onChange={e => setForm({ ...form, [key]: e.target.value })}
+                  placeholder={placeholder}
+                />
+              </div>
+            ))}
           </div>
-        </div>
+
+          {/* 契約期間 */}
+          <div>
+            <label className="text-base font-bold text-slate-700 mb-2 block">契約開始日 <span className="text-red-500">*</span></label>
+            <input className={inputCls} value={form.contract_start} onChange={e => setForm({ ...form, contract_start: e.target.value })} type="date" />
+          </div>
+          <div>
+            <label className="text-base font-bold text-slate-700 mb-2 block">契約終了日</label>
+            <input className={inputCls} value={form.contract_end} onChange={e => setForm({ ...form, contract_end: e.target.value })} type="date" />
+            <p className="text-sm text-slate-400 mt-1">※ 終了30日前に画面で警告が表示されます</p>
+          </div>
+          <div>
+            <label className="text-base font-bold text-slate-700 mb-2 block">メモ（任意）</label>
+            <textarea className={inputCls} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} />
+          </div>
+
+          <button
+            onClick={save}
+            disabled={loading || !form.name || !form.contract_start || (!editTarget && !form.garage_id)}
+            className="w-full bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ minHeight: '56px', fontSize: '16px' }}
+          >
+            <Check size={20} /> {editTarget ? '保存する' : '追加する'}
+          </button>
+        </Modal>
       )}
     </div>
   );

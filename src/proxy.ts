@@ -1,9 +1,20 @@
 /**
  * Next.js 16 Proxy（旧 Middleware）
- * Supabase SSR セッション更新 + ルート保護
+ * ページルートの保護 + セッション cookie の更新
  *
- * 重要: createServerClient と auth.getUser() の間に
- * ロジックを書いてはいけない（Supabase公式の注意事項）
+ * ─── セキュリティ設計の注意事項 ────────────────────────────────
+ *
+ * ここでは auth.getSession() を使う（cookie読み取りのみ・ネットワーク通信なし）。
+ * これはページ遷移を高速化するための意図的な設計。
+ *
+ * ただし getSession() はサーバー側 JWT 検証を行わないため、
+ * 実際のアクセス制御（認可）は必ず API ルート側の requireAuth() に任せること。
+ *
+ * NG: Proxy だけを信頼して API ルートの requireAuth() を省略する
+ * OK: Proxy はリダイレクト判定のみ、認可判定は API ルートで二重確認
+ *
+ * 参考: https://supabase.com/docs/guides/auth/server-side/nextjs
+ * ────────────────────────────────────────────────────────────────
  */
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
