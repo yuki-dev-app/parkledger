@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { CreditCard, Download, TrendingUp } from 'lucide-react';
+import { CreditCard, Download, TrendingUp, CheckCheck } from 'lucide-react';
 import Link from 'next/link';
+import { SkeletonList } from '@/components/Skeleton';
 import Toast, { ToastType } from '@/components/Toast';
 import { useScrollLock } from '@/lib/use-scroll-lock';
 import { getCached, setCached, invalidateCache } from '@/lib/page-cache';
@@ -24,6 +25,9 @@ export default function PaymentsPage() {
   const [toast,      setToast]      = useState<ToastType | null>(null);
   const [filter,     setFilter]     = useState<FilterType>('unpaid');
   const [reminder,   setReminder]   = useState<Row | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [showBulk,   setShowBulk]   = useState(false);
+  const [bulkBusy,   setBulkBusy]   = useState(false);
   const [settings,   setSettings]   = useState<Settings>({ business_name: '', business_address: '', business_phone: '', parking_name: '', parking_address: '', receipt_no_prefix: 'R', cleaning_persons: '' });
   const [reminders,   setReminders]   = useState<Map<number, ReminderInfo>>(new Map());
 
@@ -31,7 +35,7 @@ export default function PaymentsPage() {
 
   const load = useCallback(async () => {
     const cachedRows = getCached<Row[]>(`payments:${ym}`);
-    if (cachedRows) setRows(cachedRows);
+    if (cachedRows) { setRows(cachedRows); setDataLoading(false); }
 
     const [pRes, sRes, rRes] = await Promise.all([
       fetch(`/api/payments?year_month=${ym}`),
@@ -46,6 +50,7 @@ export default function PaymentsPage() {
     const rows = Array.isArray(pJson) ? pJson as Row[] : [];
     setCached(`payments:${ym}`, rows);
     setRows(rows);
+    setDataLoading(false);
     if (sJson.parking_name !== undefined) setSettings(sJson);
     if (Array.isArray(rJson)) {
       setReminders(new Map(rJson.map((r: ReminderInfo) => [r.contractor_id, r])));
@@ -94,7 +99,24 @@ export default function PaymentsPage() {
     }
   };
 
-  useScrollLock(!!reminder);
+  useScrollLock(!!reminder || showBulk);
+
+  const bulkPay = async () => {
+    const unpaidIds = rows.filter(r => r.status !== 'paid').map(r => r.contractor_id);
+    if (unpaidIds.length === 0) return;
+    setBulkBusy(true);
+    const res = await fetch('/api/payments/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year_month: ym, contractor_ids: unpaidIds }),
+    });
+    setBulkBusy(false);
+    setShowBulk(false);
+    if (!res.ok) { setToast({ message: '一括更新に失敗しました', kind: 'error' }); return; }
+    invalidateCache(`payments:${ym}`);
+    setToast({ message: `${unpaidIds.length}名を一括入金済みにしました`, kind: 'success' });
+    load();
+  };
 
   const paidCount   = rows.filter(r => r.status === 'paid').length;
   const unpaidCount = rows.length - paidCount;
@@ -220,8 +242,21 @@ export default function PaymentsPage() {
         ))}
       </div>
 
+      {/* 一括入金済みボタン */}
+      {unpaidCount > 1 && (
+        <button
+          onClick={() => setShowBulk(true)}
+          className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-3.5 rounded-2xl font-bold text-base hover:bg-emerald-700 active:bg-emerald-800 shadow-sm mb-3"
+        >
+          <CheckCheck size={20} /> 未入金{unpaidCount}名を全員入金済みにする
+        </button>
+      )}
+
+      {/* カード一覧（ローディング） */}
+      {dataLoading && <SkeletonList count={3} lines={3} />}
+
       {/* カード一覧 */}
-      {rows.length === 0 && (
+      {!dataLoading && rows.length === 0 && (
         <div className="text-center py-14 bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <CreditCard size={26} className="text-slate-400" />
@@ -231,7 +266,7 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {filteredRows.length === 0 && rows.length > 0 && (
+      {!dataLoading && filteredRows.length === 0 && rows.length > 0 && (
         <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 text-slate-400 text-sm">
           {filter === 'unpaid' ? '未入金の方はいません ✓' : '入金済みの方はいません'}
         </div>
@@ -249,6 +284,37 @@ export default function PaymentsPage() {
           />
         ))}
       </div>
+
+      {/* 一括入金確認モーダル */}
+      {showBulk && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm sm:mx-4 p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">一括入金済みにする</h3>
+            <p className="text-slate-600 text-base mb-1">
+              未入金の <strong>{unpaidCount}名</strong> を
+            </p>
+            <p className="text-slate-600 text-base mb-1">
+              合計 <strong className="text-emerald-700">¥{unpaidTotal.toLocaleString()}</strong> 入金済みにします。
+            </p>
+            <p className="text-sm text-slate-400 mt-2 mb-5">本日付で入金確認日が記録されます。</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowBulk(false)}
+                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={bulkPay}
+                disabled={bulkBusy}
+                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {bulkBusy ? '処理中...' : <><CheckCheck size={18} /> 確定する</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {reminder && (
         <ReminderModal

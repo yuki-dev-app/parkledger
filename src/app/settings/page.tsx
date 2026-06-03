@@ -18,8 +18,9 @@ export default function SettingsPage() {
   const [newPerson, setNewPerson] = useState('');
 
   // アカウント設定（AccountSection コンポーネントに委譲）
-  const [currentEmail, setCurrentEmail] = useState('');
-  const [loginId,      setLoginId]      = useState('');
+  const [currentEmail,   setCurrentEmail]   = useState('');
+  const [loginId,        setLoginId]        = useState('');
+  const [lastSignIn,     setLastSignIn]     = useState('');
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -32,6 +33,10 @@ export default function SettingsPage() {
     const idJson = await idRes.json().catch(() => ({}));
     setLoginId(idJson.login_id ?? '');
     setCurrentEmail(user?.email ?? '');
+    if (user?.last_sign_in_at) {
+      const d = new Date(user.last_sign_in_at);
+      setLastSignIn(`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -149,6 +154,14 @@ export default function SettingsPage() {
           </div>
         </div>
       </section>
+
+      {/* 最終ログイン */}
+      {lastSignIn && (
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 mb-4 flex items-center justify-between">
+          <p className="text-sm text-slate-500">最終ログイン日時</p>
+          <p className="text-sm font-bold text-slate-700 tabular-nums">{lastSignIn}</p>
+        </div>
+      )}
 
       {/* アカウント設定（AccountSection コンポーネントに委譲） */}
       <AccountSection
