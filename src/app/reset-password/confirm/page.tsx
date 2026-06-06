@@ -52,8 +52,8 @@ export default function ResetPasswordConfirmPage() {
 
   if (!validToken) {
     return (
-      <div className="flex flex-col" style={outerStyle}>
-        <div className="bg-slate-900 px-8 py-10">
+      <div className="flex flex-col lg:flex-row" style={outerStyle}>
+        <div className="bg-slate-900 px-8 py-6 lg:w-1/2 lg:py-0 lg:px-16 lg:flex lg:flex-col lg:justify-center">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
               <Car size={28} className="text-white" />
@@ -63,8 +63,8 @@ export default function ResetPasswordConfirmPage() {
             </p>
           </div>
         </div>
-        <div className="flex-1 bg-white flex items-center justify-center px-6">
-          <div className="text-center">
+        <div className="flex-1 bg-white lg:w-1/2 lg:flex lg:flex-col lg:justify-center lg:items-center lg:px-16">
+          <div className="w-full px-6 py-10 lg:px-0 lg:max-w-[420px] text-center">
             <p className="text-xl font-bold text-slate-900 mb-2">リンクを確認中...</p>
             <p className="text-slate-500 text-base">しばらくお待ちください</p>
           </div>
@@ -74,9 +74,9 @@ export default function ResetPasswordConfirmPage() {
   }
 
   return (
-    <div className="flex flex-col" style={outerStyle}>
-      {/* 上部ダーク */}
-      <div className="bg-slate-900 px-8 py-10">
+    <div className="flex flex-col lg:flex-row" style={outerStyle}>
+      {/* 上部ダーク / 左パネル(lg) */}
+      <div className="bg-slate-900 px-8 py-6 lg:w-1/2 lg:py-0 lg:px-16 lg:flex lg:flex-col lg:justify-center">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
             <Car size={28} className="text-white" />
@@ -92,9 +92,9 @@ export default function ResetPasswordConfirmPage() {
         <p className="text-slate-400 text-base mt-2">8文字以上のパスワードを入力してください。</p>
       </div>
 
-      {/* 下部ホワイト */}
-      <div className="flex-1 bg-white">
-        <div className="w-full px-6 py-10">
+      {/* 下部ホワイト / 右パネル(lg) */}
+      <div className="flex-1 bg-white lg:w-1/2 lg:flex lg:flex-col lg:justify-center lg:items-center lg:px-16">
+        <div className="w-full px-6 py-10 lg:px-0 lg:max-w-[420px]">
           {done ? (
             <div className="text-center py-6">
               <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
