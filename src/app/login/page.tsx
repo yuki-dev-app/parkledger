@@ -52,9 +52,9 @@ export default function LoginPage() {
       }}
     >
       {/* ══ ブランド上部（モバイル）/ 左パネル（PC） ══ */}
-      <div className="bg-slate-900 flex flex-col justify-center px-8 py-10 lg:w-1/2 lg:py-0 lg:px-16">
+      <div className="bg-slate-900 flex flex-col justify-center px-8 py-6 lg:w-1/2 lg:py-0 lg:px-16">
         {/* ロゴ */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-4 lg:mb-6">
           <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
             <Car size={28} className="text-white" />
           </div>
@@ -70,7 +70,7 @@ export default function LoginPage() {
           月極駐車場の管理を、<br />
           <span className="text-emerald-400">スマホ一台で。</span>
         </h1>
-        <p className="text-slate-400 text-base leading-relaxed lg:mb-10">
+        <p className="hidden lg:block text-slate-400 text-base leading-relaxed lg:mb-10">
           入金・領収書・契約者情報をまとめて管理できます。
         </p>
 
