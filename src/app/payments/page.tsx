@@ -61,11 +61,16 @@ export default function PaymentsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const toggle = async (row: Row, next: 'paid' | 'unpaid') => {
+  const toggle = async (row: Row, next: 'paid' | 'unpaid', paidDate?: string) => {
     setBusyIds(prev => new Set(prev).add(row.contractor_id));
     const res = await fetch('/api/payments', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contractor_id: row.contractor_id, year_month: ym, status: next }),
+      body: JSON.stringify({
+        contractor_id: row.contractor_id,
+        year_month: ym,
+        status: next,
+        paid_date: paidDate, // 指定された入金日（未指定ならサーバーで今日の日付を使用）
+      }),
     });
     setBusyIds(prev => { const s = new Set(prev); s.delete(row.contractor_id); return s; });
     if (!res.ok) { setToast({ message: '更新に失敗しました', kind: 'error' }); return; }

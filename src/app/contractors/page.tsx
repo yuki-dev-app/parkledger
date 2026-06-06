@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
-import { Plus, Check, Archive, Users, Search } from 'lucide-react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Plus, Check, Archive, Users, Search, Camera, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Toast, { ToastType } from '@/components/Toast';
 import { SkeletonList } from '@/components/Skeleton';
@@ -37,6 +37,8 @@ export default function ContractorsPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [toast, setToast] = useState<ToastType | null>(null);
   const [search, setSearch] = useState('');
+  const [carPhoto, setCarPhoto] = useState<{ url: string; path?: string; preview?: string; uploading?: boolean } | null>(null);
+  const carPhotoRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     const cachedC = getCached<Contractor[]>('contractors');
@@ -60,7 +62,12 @@ export default function ContractorsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const openNew = () => { setForm(emptyForm); setEditTarget(null); setShowForm(true); };
+  const openNew = () => {
+    setForm(emptyForm);
+    setEditTarget(null);
+    setCarPhoto(null);
+    setShowForm(true);
+  };
   const openEdit = (c: Contractor) => {
     setForm({
       garage_id: String(c.garage_id), name: c.name, phone: c.phone, email: c.email,
@@ -69,13 +76,55 @@ export default function ContractorsPage() {
       emergency_contact: c.emergency_contact ?? '',
       contract_start: c.contract_start, contract_end: c.contract_end, notes: c.notes,
     });
+    // 既存の車写真をセット
+    setCarPhoto(c.car_photo_url ? { url: c.car_photo_url } : null);
     setEditTarget(c);
     setShowForm(true);
   };
 
+  // 車写真のアップロード
+  const handleCarPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { setToast({ message: 'ファイルサイズは10MB以下にしてください', kind: 'error' }); return; }
+    const preview = URL.createObjectURL(file);
+    setCarPhoto({ url: preview, preview, uploading: true });
+    const fd = new FormData();
+    fd.append('photo', file);
+    const res = await fetch('/api/contractors/upload', { method: 'POST', body: fd });
+    if (!res.ok) {
+      URL.revokeObjectURL(preview);
+      setCarPhoto(null);
+      setToast({ message: 'アップロードに失敗しました', kind: 'error' });
+      return;
+    }
+    const { url, path } = await res.json();
+    URL.revokeObjectURL(preview);
+    setCarPhoto({ url, path, uploading: false });
+    if (carPhotoRef.current) carPhotoRef.current.value = '';
+  };
+
+  const removeCarPhoto = async () => {
+    if (carPhoto?.path) {
+      fetch('/api/contractors/upload', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: carPhoto.path }),
+      }).catch(() => {});
+    }
+    if (carPhoto?.preview) URL.revokeObjectURL(carPhoto.preview);
+    setCarPhoto(null);
+  };
+
   const save = async () => {
+    if (carPhoto?.uploading) { setToast({ message: '写真のアップロードが完了するまでお待ちください', kind: 'error' }); return; }
     setLoading(true);
-    const body = { ...form, garage_id: Number(form.garage_id) };
+    const body = {
+      ...form,
+      garage_id: Number(form.garage_id),
+      // 編集時のみ car_photo_url を送る（新規追加時は後でPUTで設定）
+      ...(editTarget ? { car_photo_url: carPhoto?.url ?? null } : {}),
+    };
     const res = editTarget
       ? await fetch(`/api/contractors/${editTarget.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       : await fetch('/api/contractors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -321,6 +370,33 @@ export default function ContractorsPage() {
           {/* 車両情報 */}
           <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 space-y-3">
             <p className="text-sm font-bold text-slate-500 dark:text-slate-400">お車の情報（車庫証明に使用）</p>
+            {/* 車の写真 */}
+            <div>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">お車の写真（任意）</p>
+              <input ref={carPhotoRef} type="file" accept="image/*" className="hidden" onChange={handleCarPhotoChange} />
+              {carPhoto ? (
+                <div className="relative inline-block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={carPhoto.url} alt="車" className="w-32 h-24 object-cover rounded-xl border-2 border-slate-200 dark:border-slate-600" />
+                  {carPhoto.uploading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                      <Loader2 size={20} className="text-white animate-spin" />
+                    </div>
+                  )}
+                  {!carPhoto.uploading && (
+                    <button type="button" onClick={removeCarPhoto}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button type="button" onClick={() => carPhotoRef.current?.click()}
+                  className="flex items-center gap-2 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 px-4 py-3 rounded-xl hover:border-slate-400 text-sm font-medium">
+                  <Camera size={16} /> 写真を追加する
+                </button>
+              )}
+            </div>
             {[
               { label: '車種・メーカー', key: 'vehicle_type', placeholder: '例: プリウス' },
               { label: '登録番号（ナンバー）', key: 'vehicle_number', placeholder: '例: 品川 300 あ 12-34' },

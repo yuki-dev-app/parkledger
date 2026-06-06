@@ -15,7 +15,11 @@ export default function YearMonthPicker({ year, month, onChange }: Props) {
 
   const now         = new Date();
   const currentYear = now.getFullYear();
-  const isCurrentOrFuture = year > currentYear || (year === currentYear && month >= now.getMonth() + 1);
+
+  // 来月まで選択可能（例: 今6月なら7月まで）
+  const nextMonthDate   = new Date(currentYear, now.getMonth() + 1); // 来月1日
+  const selectedDate    = new Date(year, month - 1);                  // 選択中の月1日
+  const isBeyondNext    = selectedDate > nextMonthDate;               // 来月より先はNG
 
   const prevMonth = () => { if (month === 1) onChange(year - 1, 12); else onChange(year, month - 1); };
   const nextMonth = () => { if (month === 12) onChange(year + 1, 1); else onChange(year, month + 1); };
@@ -37,7 +41,7 @@ export default function YearMonthPicker({ year, month, onChange }: Props) {
         </button>
         <button
           type="button" onClick={nextMonth} aria-label="次の月"
-          disabled={isCurrentOrFuture}
+          disabled={isBeyondNext}
           className="flex items-center justify-center w-12 h-12 rounded-xl transition-colors disabled:opacity-30 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
         >
           <ChevronRight size={26} />
@@ -49,12 +53,12 @@ export default function YearMonthPicker({ year, month, onChange }: Props) {
           <div className="bg-white dark:bg-slate-800 w-full rounded-t-2xl sm:rounded-2xl sm:max-w-xs sm:mx-4 p-5" onClick={e => e.stopPropagation()}>
             <p className="font-bold text-slate-900 dark:text-slate-100 text-lg mb-4 text-center">年月を選ぶ</p>
             <div className="flex gap-2 mb-4">
-              {[currentYear, currentYear - 1, currentYear - 2].map(y => (
+              {[currentYear + 1, currentYear, currentYear - 1].map(y => (
                 <button key={y} type="button" onClick={() => {
-                  // Bug14修正: 現在年に戻したとき、未来月が選択中なら現在月に補正する
-                  const safeMonth = (y === currentYear && month > now.getMonth() + 1)
-                    ? now.getMonth() + 1
-                    : month;
+                  // 現在年に戻した際に来月より先の月を選んでいたら補正
+                  const selDate = new Date(y, month - 1);
+                  const maxDate = new Date(currentYear, now.getMonth() + 1);
+                  const safeMonth = selDate > maxDate ? now.getMonth() + 1 : month;
                   onChange(y, safeMonth);
                 }}
                   className={`flex-1 py-3 rounded-xl font-bold text-base transition-colors ${
@@ -67,14 +71,15 @@ export default function YearMonthPicker({ year, month, onChange }: Props) {
             </div>
             <div className="grid grid-cols-4 gap-2">
               {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => {
-                const isFuture = year > currentYear || (year === currentYear && m > now.getMonth() + 1);
-                const isSelected = m === month;
+                const selDate = new Date(year, m - 1);
+                const isTooFuture = selDate > nextMonthDate;
+                const isSelected  = m === month;
                 return (
-                  <button key={m} type="button" disabled={isFuture}
+                  <button key={m} type="button" disabled={isTooFuture}
                     onClick={() => { onChange(year, m); setShowPicker(false); }}
                     className={`py-3 rounded-xl font-bold text-base transition-colors ${
-                      isSelected ? 'bg-emerald-600 text-white'
-                      : isFuture ? 'bg-slate-50 dark:bg-slate-700 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                      isSelected   ? 'bg-emerald-600 text-white'
+                      : isTooFuture ? 'bg-slate-50 dark:bg-slate-700 text-slate-300 dark:text-slate-600 cursor-not-allowed'
                       : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                     }`}
                   >

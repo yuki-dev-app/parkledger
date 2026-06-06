@@ -63,6 +63,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     notes:             t(body.notes, 1000),
   };
   if (garageChanged) updates.garage_id = newGarageId;
+  // 車の写真URL（null で削除、文字列で更新、未指定は変更しない）
+  if ('car_photo_url' in body) {
+    updates.car_photo_url = body.car_photo_url === null ? null : t(body.car_photo_url, 500);
+  }
 
   const { data, error } = await supabase
     .from('contractors')

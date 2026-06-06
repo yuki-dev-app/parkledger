@@ -71,8 +71,13 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (!contractor) return NextResponse.json({ error: '契約者が見つかりません' }, { status: 404 });
-  const amount   = (contractor.garages as unknown as { monthly_fee: number }).monthly_fee;
-  const paidDate = status === 'paid' ? new Date().toISOString().slice(0, 10) : '';
+  const amount = (contractor.garages as unknown as { monthly_fee: number }).monthly_fee;
+
+  // 入金日: リクエストで指定された日付 or 今日（YYYY-MM-DD 形式のみ受け付ける）
+  const rawDate  = typeof body.paid_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.paid_date)
+    ? body.paid_date
+    : new Date().toISOString().slice(0, 10);
+  const paidDate = status === 'paid' ? rawDate : '';
 
   const { error } = await supabase
     .from('payments')

@@ -1,5 +1,6 @@
 'use client';
-import { Check, Bell, Undo2, FileText, Printer } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Bell, Undo2, FileText, Printer, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import type { Row, ReminderInfo } from '../_types';
 
@@ -7,7 +8,7 @@ type Props = {
   row:          Row;
   busy:         boolean;
   reminderInfo: ReminderInfo | undefined;
-  onToggle:     (row: Row, next: 'paid' | 'unpaid') => void;
+  onToggle:     (row: Row, next: 'paid' | 'unpaid', paidDate?: string) => void;
   onReminder:   (row: Row) => void;
 };
 
@@ -18,8 +19,12 @@ const Spinner = () => (
   </svg>
 );
 
+// 今日の日付（日本時間）
+const todayJST = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+
 export default function PaymentCard({ row, busy, reminderInfo, onToggle, onReminder }: Props) {
   const paid = row.status === 'paid';
+  const [paidDate, setPaidDate] = useState(todayJST);
 
   return (
     <div className={`bg-white dark:bg-slate-800 rounded-2xl border shadow-sm overflow-hidden flex flex-col ${
@@ -77,10 +82,24 @@ export default function PaymentCard({ row, busy, reminderInfo, onToggle, onRemin
       <div className="px-3 pb-3 pt-1 flex flex-col gap-2">
         {!paid ? (
           <>
+            {/* 入金日選択 */}
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 rounded-xl px-3 py-2">
+              <CalendarDays size={15} className="text-slate-500 dark:text-slate-400 shrink-0" />
+              <label className="text-sm text-slate-500 dark:text-slate-400 shrink-0">入金日</label>
+              <input
+                type="date"
+                value={paidDate}
+                max={todayJST()}
+                onChange={e => setPaidDate(e.target.value)}
+                className="flex-1 bg-transparent text-sm font-bold text-slate-700 dark:text-slate-300 focus:outline-none min-w-0"
+                style={{ fontSize: '15px' }}
+              />
+            </div>
+
             <button
               type="button"
-              onClick={() => onToggle(row, 'paid')}
-              disabled={busy}
+              onClick={() => onToggle(row, 'paid', paidDate)}
+              disabled={busy || !paidDate}
               className="w-full bg-emerald-600 text-white rounded-xl font-bold text-base hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 flex items-center justify-center gap-2"
               style={{ minHeight: '52px' }}
             >
