@@ -257,22 +257,44 @@ export default function ContractorsPage() {
           onClose={() => setShowForm(false)}
         >
           {/* 区画選択 */}
-          {!editTarget ? (
-            <div>
-              <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">区画番号 <span className="text-red-500">*</span></label>
-              <select className={inputCls} value={form.garage_id} onChange={e => setForm({ ...form, garage_id: e.target.value })}>
-                <option value="">どの区画か選んでください</option>
-                {vacantGarages.map(g => <option key={g.id} value={g.id}>{g.number}番区画</option>)}
-              </select>
-              {vacantGarages.length === 0 && (
-                <p className="text-sm text-amber-600 mt-1">空き区画がありません。先に区画を登録してください。</p>
+          <div>
+            <label className="text-base font-bold text-slate-700 dark:text-slate-300 mb-2 block">
+              区画番号 <span className="text-red-500">*</span>
+            </label>
+            <select
+              className={inputCls}
+              value={form.garage_id}
+              onChange={e => setForm({ ...form, garage_id: e.target.value })}
+            >
+              {!editTarget && <option value="">どの区画か選んでください</option>}
+
+              {/* 編集時：現在の区画を先頭に表示 */}
+              {editTarget && (
+                <option value={String(editTarget.garage_id)}>
+                  {editTarget.garage_number}番区画（現在）
+                </option>
               )}
-            </div>
-          ) : (
-            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-base text-slate-600 dark:text-slate-400 font-medium">
-              {editTarget.garage_number}番区画
-            </div>
-          )}
+
+              {/* 空き区画（現在の区画は除外して重複を防ぐ） */}
+              {vacantGarages
+                .filter(g => !editTarget || g.id !== editTarget.garage_id)
+                .map(g => (
+                  <option key={g.id} value={g.id}>{g.number}番区画（空き）</option>
+                ))
+              }
+            </select>
+
+            {!editTarget && vacantGarages.length === 0 && (
+              <p className="text-sm text-amber-600 dark:text-amber-400 mt-1.5">
+                空き区画がありません。先に区画を登録してください。
+              </p>
+            )}
+            {editTarget && form.garage_id !== String(editTarget.garage_id) && (
+              <p className="text-sm text-amber-700 dark:text-amber-400 mt-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+                ⚠️ 区画を変更します。旧区画「{editTarget.garage_number}番」は空きに戻ります。
+              </p>
+            )}
+          </div>
 
           {/* 基本情報 */}
           {[

@@ -6,14 +6,50 @@ const t = (v: unknown, max: number) => (typeof v === 'string' ? v.trim() : '').s
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-  // Bug7修正: DELETEと同様にPUTもオーナー権限を要求（設計の一貫性）
   const perm = await requireOwner();
   if (!perm.ok) return perm.response;
 
   const { id } = await params;
   const body   = await req.json();
 
-  const updates = {
+  // 現在の契約者情報を取得（garage_id 変更の判定に使う）
+  const { data: current, error: fetchErr } = await supabase
+    .from('contractors')
+    .select('garage_id')
+    .eq('id', Number(id))
+    .single();
+
+  if (fetchErr || !current) return NextResponse.json({ error: '契約者が見つかりません' }, { status: 404 });
+
+  const newGarageId   = body.garage_id ? Number(body.garage_id) : current.garage_id;
+  const garageChanged = newGarageId !== current.garage_id;
+
+  // 区画が変わる場合は移動先が空きかチェック
+  if (garageChanged) {
+    const { data: newGarage } = await supabase
+      .from('garages')
+      .select('status, number')
+      .eq('id', newGarageId)
+      .single();
+
+    if (!newGarage) {
+      return NextResponse.json({ error: '移動先の区画が見つかりません' }, { status: 404 });
+    }
+    if (newGarage.status !== 'vacant') {
+      return NextResponse.json(
+        { error: `${newGarage.number}番区画はすでに使用中です` },
+        { status: 409 }
+      );
+    }
+
+    // 旧区画 → 空き、新区画 → 使用中
+    await Promise.all([
+      supabase.from('garages').update({ status: 'vacant'   }).eq('id', current.garage_id),
+      supabase.from('garages').update({ status: 'occupied' }).eq('id', newGarageId),
+    ]);
+  }
+
+  const updates: Record<string, unknown> = {
     name:              t(body.name, 100),
     phone:             t(body.phone, 20),
     email:             t(body.email, 200),
@@ -26,6 +62,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     contract_end:      t(body.contract_end, 10),
     notes:             t(body.notes, 1000),
   };
+  if (garageChanged) updates.garage_id = newGarageId;
 
   const { data, error } = await supabase
     .from('contractors')
@@ -34,8 +71,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     .select()
     .single();
 
-  if (error || !data) return NextResponse.json({ error: '契約者が見つかりません' }, { status: 404 });
-  return NextResponse.json({ ok: true });
+  if (error || !data) return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
+  return NextResponse.json({ ok: true, garage_changed: garageChanged });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -54,11 +91,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   if (!contractor) return NextResponse.json({ error: '見つかりません' }, { status: 404 });
 
-  // 契約者削除（失敗したら中断）→ 関連データ削除 → 区画を空きに
   const { error } = await supabase.from('contractors').delete().eq('id', Number(id));
   if (error) return NextResponse.json({ error: '削除に失敗しました' }, { status: 500 });
 
-  // 関連レコードを並行削除（エラーは無視 — 親レコード削除済みのため孤立しても問題ない）
   await Promise.all([
     supabase.from('payments').delete().eq('contractor_id', Number(id)),
     supabase.from('reminder_logs').delete().eq('contractor_id', Number(id)),
