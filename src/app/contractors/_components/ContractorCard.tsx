@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Pencil, Trash2, Phone, Car, AlertTriangle, FileText, Archive, ChevronDown, ChevronUp, Image, X } from 'lucide-react';
-import Link from 'next/link';
+import { Pencil, Trash2, Phone, Car, AlertTriangle, Archive, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
 
 export type Contractor = {
@@ -20,7 +19,7 @@ export type Contractor = {
   notes:            string;
   garage_number:    string;
   monthly_fee:      number;
-  car_photo_url?:   string | null;
+  car_photo_urls?:  string[] | null;
 };
 
 type Props = {
@@ -36,25 +35,26 @@ type Props = {
 export default function ContractorCard({ contractor: c, days, isOpen, onToggle, onEdit, onArchive, onDelete }: Props) {
   const expiringSoon = days !== null && days >= 0 && days <= 30;
   const expired      = days !== null && days < 0;
-  const [photoOpen,  setPhotoOpen]  = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const carPhotos = c.car_photo_urls ?? [];
 
   return (
     <>
       {/* 車写真ライトボックス */}
-      {photoOpen && c.car_photo_url && (
+      {lightboxUrl && (
         <div
           className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4"
-          onClick={() => setPhotoOpen(false)}
+          onClick={() => setLightboxUrl(null)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={c.car_photo_url}
+            src={lightboxUrl}
             alt={`${c.name}さんのお車`}
             className="max-w-full max-h-full rounded-xl object-contain"
             onClick={e => e.stopPropagation()}
           />
           <button
-            onClick={() => setPhotoOpen(false)}
+            onClick={() => setLightboxUrl(null)}
             className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2"
           >
             <X size={24} />
@@ -113,38 +113,35 @@ export default function ContractorCard({ contractor: c, days, isOpen, onToggle, 
                 </div>
               </div>
 
-              {/* 車両情報 + 写真 */}
-              {(c.vehicle_type || c.vehicle_number || c.car_photo_url) && (
+              {/* 車両情報 + 写真（複数） */}
+              {(c.vehicle_type || c.vehicle_number || carPhotos.length > 0) && (
                 <div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-1.5">お車</p>
-                  <div className="flex items-start gap-3">
-                    {/* 車写真サムネイル */}
-                    {c.car_photo_url && (
-                      <button
-                        onClick={() => setPhotoOpen(true)}
-                        className="w-20 h-20 rounded-xl overflow-hidden border-2 border-slate-200 dark:border-slate-600 hover:border-slate-400 shrink-0"
-                        title="写真を拡大"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={c.car_photo_url}
-                          alt="車"
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      {(c.vehicle_type || c.vehicle_number) && (
-                        <p className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                          <Car size={14} className="text-slate-400 shrink-0" />
-                          {[c.vehicle_type, c.vehicle_number].filter(Boolean).join('　')}
-                        </p>
-                      )}
-                      {c.vehicle_chassis && (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">車台: {c.vehicle_chassis}</p>
-                      )}
+                  {(c.vehicle_type || c.vehicle_number) && (
+                    <p className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-2">
+                      <Car size={14} className="text-slate-400 shrink-0" />
+                      {[c.vehicle_type, c.vehicle_number].filter(Boolean).join('　')}
+                    </p>
+                  )}
+                  {c.vehicle_chassis && (
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">車台: {c.vehicle_chassis}</p>
+                  )}
+                  {/* 複数写真サムネイル */}
+                  {carPhotos.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      {carPhotos.map((url, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setLightboxUrl(url)}
+                          className="w-20 h-20 rounded-xl overflow-hidden border-2 border-slate-200 dark:border-slate-600 hover:border-slate-400 shrink-0"
+                          title="写真を拡大"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt={`車 ${i + 1}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
@@ -181,17 +178,6 @@ export default function ContractorCard({ contractor: c, days, isOpen, onToggle, 
               >
                 <Pencil size={15} /> 編集する
               </button>
-              <Link
-                href={`/print/parking/${c.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
-              >
-                {c.car_photo_url
-                  ? <><Image size={15} /> 写真あり</>
-                  : <><FileText size={15} /> 車庫証明</>
-                }
-              </Link>
               <button
                 type="button"
                 onClick={() => onArchive(c.id, c.name)}

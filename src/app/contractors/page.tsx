@@ -37,7 +37,8 @@ export default function ContractorsPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [toast, setToast] = useState<ToastType | null>(null);
   const [search, setSearch] = useState('');
-  const [carPhoto, setCarPhoto] = useState<{ url: string; path?: string; preview?: string; uploading?: boolean } | null>(null);
+  type CarPhotoItem = { url: string; path?: string; preview?: string; uploading?: boolean };
+  const [carPhotos, setCarPhotos] = useState<CarPhotoItem[]>([]);
   const carPhotoRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -65,7 +66,7 @@ export default function ContractorsPage() {
   const openNew = () => {
     setForm(emptyForm);
     setEditTarget(null);
-    setCarPhoto(null);
+    setCarPhotos([]);
     setShowForm(true);
   };
   const openEdit = (c: Contractor) => {
@@ -76,54 +77,58 @@ export default function ContractorsPage() {
       emergency_contact: c.emergency_contact ?? '',
       contract_start: c.contract_start, contract_end: c.contract_end, notes: c.notes,
     });
-    // 既存の車写真をセット
-    setCarPhoto(c.car_photo_url ? { url: c.car_photo_url } : null);
+    setCarPhotos((c.car_photo_urls ?? []).map(url => ({ url })));
     setEditTarget(c);
     setShowForm(true);
   };
 
-  // 車写真のアップロード
+  // 車写真のアップロード（複数対応・最大5枚）
   const handleCarPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { setToast({ message: 'ファイルサイズは10MB以下にしてください', kind: 'error' }); return; }
-    const preview = URL.createObjectURL(file);
-    setCarPhoto({ url: preview, preview, uploading: true });
-    const fd = new FormData();
-    fd.append('photo', file);
-    const res = await fetch('/api/contractors/upload', { method: 'POST', body: fd });
-    if (!res.ok) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    const remain = 5 - carPhotos.length;
+    const targets = files.slice(0, remain);
+    if (targets.length === 0) { setToast({ message: '写真は最大5枚まで追加できます', kind: 'error' }); return; }
+    for (const file of targets) {
+      if (file.size > 10 * 1024 * 1024) { setToast({ message: 'ファイルサイズは10MB以下にしてください', kind: 'error' }); continue; }
+      const preview = URL.createObjectURL(file);
+      setCarPhotos(prev => [...prev, { url: preview, preview, uploading: true }]);
+      const fd = new FormData();
+      fd.append('photo', file);
+      const res = await fetch('/api/contractors/upload', { method: 'POST', body: fd });
+      if (!res.ok) {
+        URL.revokeObjectURL(preview);
+        setCarPhotos(prev => prev.filter(p => p.preview !== preview));
+        setToast({ message: 'アップロードに失敗しました', kind: 'error' });
+        continue;
+      }
+      const { url, path } = await res.json();
       URL.revokeObjectURL(preview);
-      setCarPhoto(null);
-      setToast({ message: 'アップロードに失敗しました', kind: 'error' });
-      return;
+      setCarPhotos(prev => prev.map(p => p.preview === preview ? { url, path, uploading: false } : p));
     }
-    const { url, path } = await res.json();
-    URL.revokeObjectURL(preview);
-    setCarPhoto({ url, path, uploading: false });
     if (carPhotoRef.current) carPhotoRef.current.value = '';
   };
 
-  const removeCarPhoto = async () => {
-    if (carPhoto?.path) {
+  const removeCarPhoto = async (index: number) => {
+    const photo = carPhotos[index];
+    if (photo.uploading) return;
+    setCarPhotos(prev => prev.filter((_, i) => i !== index));
+    if (photo.preview) URL.revokeObjectURL(photo.preview);
+    if (photo.path) {
       fetch('/api/contractors/upload', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: carPhoto.path }),
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: photo.path }),
       }).catch(() => {});
     }
-    if (carPhoto?.preview) URL.revokeObjectURL(carPhoto.preview);
-    setCarPhoto(null);
   };
 
   const save = async () => {
-    if (carPhoto?.uploading) { setToast({ message: '写真のアップロードが完了するまでお待ちください', kind: 'error' }); return; }
+    if (carPhotos.some(p => p.uploading)) { setToast({ message: '写真のアップロードが完了するまでお待ちください', kind: 'error' }); return; }
     setLoading(true);
     const body = {
       ...form,
       garage_id: Number(form.garage_id),
-      // 編集時のみ car_photo_url を送る（新規追加時は後でPUTで設定）
-      ...(editTarget ? { car_photo_url: carPhoto?.url ?? null } : {}),
+      car_photo_urls: carPhotos.filter(p => !p.uploading).map(p => p.url),
     };
     const res = editTarget
       ? await fetch(`/api/contractors/${editTarget.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -370,31 +375,38 @@ export default function ContractorsPage() {
           {/* 車両情報 */}
           <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 space-y-3">
             <p className="text-sm font-bold text-slate-500 dark:text-slate-400">お車の情報（車庫証明に使用）</p>
-            {/* 車の写真 */}
+            {/* 車の写真（最大5枚） */}
             <div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">お車の写真（任意）</p>
-              <input ref={carPhotoRef} type="file" accept="image/*" className="hidden" onChange={handleCarPhotoChange} />
-              {carPhoto ? (
-                <div className="relative inline-block">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={carPhoto.url} alt="車" className="w-32 h-24 object-cover rounded-xl border-2 border-slate-200 dark:border-slate-600" />
-                  {carPhoto.uploading && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
-                      <Loader2 size={20} className="text-white animate-spin" />
-                    </div>
-                  )}
-                  {!carPhoto.uploading && (
-                    <button type="button" onClick={removeCarPhoto}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
-                      <X size={12} />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <button type="button" onClick={() => carPhotoRef.current?.click()}
-                  className="flex items-center gap-2 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 px-4 py-3 rounded-xl hover:border-slate-400 text-sm font-medium">
-                  <Camera size={16} /> 写真を追加する
-                </button>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">お車の写真（最大5枚・任意）</p>
+              <input ref={carPhotoRef} type="file" accept="image/*" multiple className="hidden" onChange={handleCarPhotoChange} />
+              <div className="flex gap-2 flex-wrap">
+                {carPhotos.map((photo, i) => (
+                  <div key={i} className="relative shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo.url} alt={`車 ${i + 1}`} className="w-20 h-20 object-cover rounded-xl border-2 border-slate-200 dark:border-slate-600" />
+                    {photo.uploading && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                        <Loader2 size={16} className="text-white animate-spin" />
+                      </div>
+                    )}
+                    {!photo.uploading && (
+                      <button type="button" onClick={() => removeCarPhoto(i)}
+                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600">
+                        <X size={10} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {carPhotos.length < 5 && (
+                  <button type="button" onClick={() => carPhotoRef.current?.click()}
+                    className="w-20 h-20 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 rounded-xl hover:border-slate-400 text-xs shrink-0">
+                    <Camera size={16} />
+                    <span>追加</span>
+                  </button>
+                )}
+              </div>
+              {carPhotos.length >= 5 && (
+                <p className="text-xs text-slate-400 mt-1">写真は最大5枚までです</p>
               )}
             </div>
             {[

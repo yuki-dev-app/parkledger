@@ -63,9 +63,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     notes:             t(body.notes, 1000),
   };
   if (garageChanged) updates.garage_id = newGarageId;
-  // 車の写真URL（null で削除、文字列で更新、未指定は変更しない）
-  if ('car_photo_url' in body) {
-    updates.car_photo_url = body.car_photo_url === null ? null : t(body.car_photo_url, 500);
+  // 車の写真URL配列（空配列で全削除、未指定は変更しない）
+  if ('car_photo_urls' in body) {
+    updates.car_photo_urls = Array.isArray(body.car_photo_urls)
+      ? body.car_photo_urls.map((u: unknown) => t(u, 500)).filter(Boolean)
+      : null;
   }
 
   const { data, error } = await supabase

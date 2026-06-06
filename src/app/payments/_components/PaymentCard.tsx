@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Check, Bell, Undo2, FileText, Printer, CalendarDays } from 'lucide-react';
+import { Check, Bell, Undo2, Printer, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import type { Row, ReminderInfo } from '../_types';
 
@@ -116,34 +116,17 @@ export default function PaymentCard({ row, busy, reminderInfo, onToggle, onRemin
           </>
         ) : (
           <>
+            {/* 領収書：小さめのリンクボタン */}
             {row.payment_id && (
               <Link
                 href={`/print/receipt/${row.payment_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center gap-3 bg-slate-800 dark:bg-slate-700 text-white py-3 px-4 rounded-xl font-bold text-sm hover:bg-slate-700 dark:hover:bg-slate-600"
+                className="flex items-center justify-center gap-1 text-slate-400 dark:text-slate-500 py-1 text-xs hover:text-slate-600 dark:hover:text-slate-300"
               >
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
-                  <Printer size={16} />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold leading-tight">領収書を発行・印刷</p>
-                  <p className="text-xs text-white/60 mt-0.5">印鑑を押してお渡しください</p>
-                </div>
+                <Printer size={11} /> 領収書を発行する
               </Link>
             )}
-            <Link
-              href={`/print/parking/${row.contractor_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center gap-2.5 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 py-2.5 px-3.5 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
-            >
-              <FileText size={15} className="text-slate-400 dark:text-slate-500 shrink-0" />
-              <div className="text-left">
-                <p className="text-sm font-bold">車庫証明書</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">陸運局・警察署への申請用</p>
-              </div>
-            </Link>
             <button
               type="button"
               onClick={() => onToggle(row, 'unpaid')}

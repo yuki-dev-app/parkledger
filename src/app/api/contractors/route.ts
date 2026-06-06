@@ -52,13 +52,16 @@ export async function POST(req: NextRequest) {
   const contract_start    = t(body.contract_start,    10);
   const contract_end      = t(body.contract_end,      10);
   const notes             = t(body.notes,             MAX.notes);
+  const car_photo_urls    = Array.isArray(body.car_photo_urls)
+    ? body.car_photo_urls.map((u: unknown) => t(u, 500)).filter(Boolean)
+    : [];
 
   if (!garage_id || !name || !contract_start)
     return NextResponse.json({ error: '区画・氏名・契約開始日は必須です' }, { status: 400 });
 
   const { data: contractor, error: cErr } = await supabase
     .from('contractors')
-    .insert({ garage_id, name, phone, email, address, vehicle_type, vehicle_number, vehicle_chassis, emergency_contact, contract_start, contract_end, notes, org_id: orgId })
+    .insert({ garage_id, name, phone, email, address, vehicle_type, vehicle_number, vehicle_chassis, emergency_contact, contract_start, contract_end, notes, org_id: orgId, car_photo_urls })
     .select()
     .single();
 
