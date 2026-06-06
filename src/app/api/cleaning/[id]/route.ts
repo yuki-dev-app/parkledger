@@ -22,21 +22,32 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: '日付と担当者は必須です' }, { status: 400 });
   }
 
+  const baseUpdate   = { cleaned_date, person, notes };
+  const fullUpdate   = photo_urls.length > 0
+    ? { ...baseUpdate, photo_urls }
+    : baseUpdate;
+
   const { error } = await supabase
     .from('cleaning_logs')
-    .update({ cleaned_date, person, notes, photo_urls })
+    .update(fullUpdate)
     .eq('id', Number(id));
 
   if (error) {
-    // photo_urlsカラム未作成の場合は後方互換で保存
-    if (error.code === '42703') {
+    // photo_urls カラム未作成の場合は写真なしで再試行
+    const isColumnMissing = error.code === '42703'
+      || error.message?.includes('photo_urls')
+      || error.message?.includes('column');
+
+    if (photo_urls.length > 0 && isColumnMissing) {
       const { error: e2 } = await supabase
         .from('cleaning_logs')
-        .update({ cleaned_date, person, notes })
+        .update(baseUpdate)
         .eq('id', Number(id));
       if (e2) return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true, photos_skipped: true });
     }
+
+    console.error('[cleaning PUT] error:', error);
     return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
   }
   return NextResponse.json({ ok: true });
@@ -48,7 +59,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
 
-  // 写真パスを取得してStorageからも削除
   const { data: log } = await supabase
     .from('cleaning_logs')
     .select('photo_urls')
@@ -58,17 +68,16 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { error } = await supabase.from('cleaning_logs').delete().eq('id', Number(id));
   if (error) return NextResponse.json({ error: '削除に失敗しました' }, { status: 500 });
 
-  // Storage の写真を非同期で削除（失敗しても記録削除は成功扱い）
+  // Storage の写真を非同期で削除
   const urls: string[] = log?.photo_urls ?? [];
   if (urls.length > 0) {
     const paths = urls
       .map((url: string) => {
-        // URL から storage path を抽出（/object/public/cleaning-photos/ 以降）
         const m = url.match(/cleaning-photos\/(.+)$/);
         return m ? m[1] : null;
       })
       .filter((p): p is string => p !== null)
-      .filter(p => p.startsWith(`${orgId}/`)); // 自orgのみ
+      .filter(p => p.startsWith(`${orgId}/`));
 
     if (paths.length > 0) {
       supabaseAdmin.storage.from(BUCKET).remove(paths).catch(() => {});
