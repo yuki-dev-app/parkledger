@@ -28,11 +28,20 @@ const fallbackStore = new Map<string, { count: number; resetAt: number }>();
  * IPアドレスを取得する（プロキシ経由も考慮）
  */
 export function getClientIp(req: NextRequest): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown'
-  );
+  // Bug5修正: Vercel環境では x-vercel-forwarded-for が信頼できる実クライアントIP。
+  // x-forwarded-for はクライアントが偽装可能（末尾がプロキシ追加分のため最後を使う）。
+  // Vercel以外の環境では x-real-ip にフォールバック。
+  const vercelIp = req.headers.get('x-vercel-forwarded-for');
+  if (vercelIp) return vercelIp.split(',')[0].trim();
+
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    // 信頼できるプロキシ経由の場合、最後のIPが実クライアント
+    const ips = forwarded.split(',').map(s => s.trim());
+    return ips[ips.length - 1] ?? 'unknown';
+  }
+
+  return req.headers.get('x-real-ip') ?? 'unknown';
 }
 
 /**

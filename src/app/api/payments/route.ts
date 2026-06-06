@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
   const eligible = (contractors ?? []).filter(c => {
     const start = c.contract_start?.slice(0, 7);
     const end   = c.contract_end?.slice(0, 7) || '';
+    // Bug10修正: contract_start が null の場合を明示的に除外
+    if (!start) return false;
     return start <= ym && (!end || end >= ym);
   });
 

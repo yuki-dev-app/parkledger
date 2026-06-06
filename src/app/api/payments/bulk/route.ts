@@ -22,14 +22,19 @@ export async function POST(req: NextRequest) {
   if (!contractors || contractors.length === 0)
     return NextResponse.json({ error: '対象の契約者が見つかりません' }, { status: 404 });
 
-  const records = contractors.map(c => ({
-    contractor_id: c.id,
-    year_month,
-    amount: (c.garages as unknown as { monthly_fee: number }).monthly_fee,
-    status: 'paid',
-    paid_date: today,
-    org_id: orgId,
-  }));
+  const records = contractors.map(c => {
+    // Bug13修正: garagesはSupabaseのリレーションで配列になる場合があるため防御的アクセス
+    const garages = c.garages as unknown as { monthly_fee: number } | { monthly_fee: number }[];
+    const monthly_fee = Array.isArray(garages) ? garages[0]?.monthly_fee : garages?.monthly_fee;
+    return {
+      contractor_id: c.id,
+      year_month,
+      amount: monthly_fee ?? 0,
+      status: 'paid',
+      paid_date: today,
+      org_id: orgId,
+    };
+  });
 
   const { error } = await supabase
     .from('payments')

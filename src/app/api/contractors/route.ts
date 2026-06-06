@@ -70,8 +70,13 @@ export async function POST(req: NextRequest) {
     .eq('id', garage_id);
 
   if (garageErr) {
-    // 契約者登録は成功しているが区画ステータス更新に失敗 → ロールバック
-    await supabase.from('contractors').delete().eq('id', contractor.id);
+    // Bug11修正: 補償削除のエラーを確認してログに記録
+    const { error: rollbackErr } = await supabase.from('contractors').delete().eq('id', contractor.id);
+    if (rollbackErr) {
+      console.error('[contractors POST] ロールバック失敗 - 手動確認が必要:', {
+        contractor_id: contractor.id, rollbackErr,
+      });
+    }
     return NextResponse.json({ error: '区画ステータスの更新に失敗しました。再度お試しください。' }, { status: 500 });
   }
 

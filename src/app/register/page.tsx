@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Check, Eye, EyeOff } from 'lucide-react';
+import { Shield, Check, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
   const [done,     setDone]     = useState(false);
+  const [resent,   setResent]   = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +37,15 @@ export default function RegisterPage() {
       return;
     }
 
-    // メール確認必須のため、登録後は確認メール待ち画面を表示
     setDone(true);
+  };
+
+  // Bug23修正: 確認メールを再送する機能を追加
+  const resendEmail = async () => {
+    const supabase = createClient();
+    await supabase.auth.resend({ type: 'signup', email });
+    setResent(true);
+    setTimeout(() => setResent(false), 5000);
   };
 
   const canSubmit = email && password.length >= 8 && password === confirm;
@@ -81,8 +89,17 @@ export default function RegisterPage() {
                   メール内のリンクをクリックすると<br />ログインできるようになります。
                 </p>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mt-3">
-                  ※ 届かない場合は迷惑メールをご確認ください
+                  ※ 届かない場合は迷惑メールフォルダをご確認ください
                 </p>
+                <button
+                  type="button"
+                  onClick={resendEmail}
+                  disabled={resent}
+                  className="mt-4 flex items-center justify-center gap-2 w-full border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                >
+                  <RefreshCw size={14} />
+                  {resent ? '送信しました' : '確認メールを再送する'}
+                </button>
               </div>
             ) : (
               <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-3.5">

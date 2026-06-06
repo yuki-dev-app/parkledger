@@ -41,6 +41,7 @@ export default async function HomePage() {
   const activeConts = (contractors ?? []).filter(c => {
     const s = c.contract_start?.slice(0, 7);
     const e = c.contract_end?.slice(0, 7) || '';
+    if (!s) return false; // Bug19修正: contract_start null を明示的に除外
     return s <= ym && (!e || e >= ym);
   });
 

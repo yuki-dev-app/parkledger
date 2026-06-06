@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   const [local, domain] = email.split('@');
   const masked = `${local.slice(0, 2)}***@${domain}`; // 最初の2文字だけ見せる
 
-  // TODO: 将来的にはこのAPIでサーバー側でログインを完結させ、
-  //       メールアドレスをフロントに返さない設計に変更する
-  return NextResponse.json({ email, masked });
+  // /api/auth/login がサーバーサイドでログインを完結させるようになったため、
+  // このエンドポイントはマスク済みメールのみ返す（UI表示用途のみ）
+  return NextResponse.json({ masked });
 }

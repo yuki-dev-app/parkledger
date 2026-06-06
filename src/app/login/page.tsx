@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Shield, Eye, EyeOff, Check, Car, TrendingUp, FileText } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -21,30 +20,19 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    let email = identifier.trim().toLowerCase();
+    // サーバーサイドログイン（メールアドレスをクライアントに渡さない設計）
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: identifier.trim(), password }),
+    });
 
-    if (!email.includes('@')) {
-      const res = await fetch('/api/auth/resolve-login-id', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login_id: identifier.trim() }),
-      });
-      if (!res.ok) {
-        setError('メールアドレスまたはIDが正しくありません');
-        setLoading(false);
-        return;
-      }
-      email = (await res.json()).email;
-    }
-
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (signInError) {
-      if (signInError.message.toLowerCase().includes('email not confirmed')) {
-        setError('メールアドレスの確認が完了していません。\n登録時に届いたメール内のリンクをクリックしてから再度お試しください。');
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      if (d.error === 'email_not_confirmed') {
+        setError('メールアドレスの確認が完了していません。\n登録時に届いたメール内のリンクをクリックしてからログインしてください。\n届いていない場合は迷惑メールフォルダをご確認ください。');
       } else {
-        setError('メールアドレス（またはID）またはパスワードが正しくありません');
+        setError(d.error ?? 'メールアドレス（またはID）またはパスワードが正しくありません');
       }
       setLoading(false);
     } else {
@@ -65,7 +53,6 @@ export default function LoginPage() {
     >
       {/* ══ ブランドセクション ══ */}
       <div className="lg:w-1/2 flex flex-col justify-center px-8 py-10 lg:py-16 lg:px-16">
-        {/* ロゴ */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
             <Car size={24} className="text-white" />
@@ -87,7 +74,6 @@ export default function LoginPage() {
           スマートフォン一台で完結します。
         </p>
 
-        {/* 機能一覧（デスクトップのみ） */}
         <div className="hidden lg:flex flex-col gap-3 mb-10">
           {FEATURES.map(({ icon: Icon, text }) => (
             <div key={text} className="flex items-center gap-3 text-slate-300">
@@ -99,7 +85,6 @@ export default function LoginPage() {
           ))}
         </div>
 
-        {/* 信頼バッジ */}
         <div className="flex items-center gap-4 flex-wrap">
           {[
             { icon: Shield, label: 'SSL暗号化通信' },
@@ -117,17 +102,15 @@ export default function LoginPage() {
       {/* ══ フォームセクション ══ */}
       <div className="lg:w-1/2 flex items-center justify-center px-5 pb-10 lg:py-0">
         <div className="w-full max-w-[420px]">
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-            {/* カードヘッダー */}
-            <div className="bg-slate-50 border-b border-slate-100 px-7 py-5">
-              <h2 className="text-xl font-bold text-slate-900">ログイン</h2>
-              <p className="text-slate-500 text-sm mt-0.5">IDまたはメールアドレスでログイン</p>
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="bg-slate-50 dark:bg-slate-700 border-b border-slate-100 dark:border-slate-600 px-7 py-5">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">ログイン</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">IDまたはメールアドレスでログイン</p>
             </div>
 
-            {/* フォーム */}
             <form onSubmit={login} className="px-7 py-6 flex flex-col gap-4">
               <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1.5">
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
                   メールアドレス または ID
                 </label>
                 <input
@@ -137,13 +120,13 @@ export default function LoginPage() {
                   value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
                   placeholder="例: yamada@example.com"
-                  className="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-300 focus:outline-none focus:border-emerald-500 transition-colors bg-slate-50 focus:bg-white"
+                  className="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 focus:bg-white dark:focus:bg-slate-600"
                   style={{ fontSize: '16px' }}
                 />
               </div>
 
               <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1.5">パスワード</label>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block mb-1.5">パスワード</label>
                 <div className="relative">
                   <input
                     type={showPass ? 'text' : 'password'}
@@ -152,7 +135,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="パスワードを入力"
-                    className="w-full px-4 py-3.5 pr-14 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-300 focus:outline-none focus:border-emerald-500 transition-colors bg-slate-50 focus:bg-white"
+                    className="w-full px-4 py-3.5 pr-14 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 focus:bg-white dark:focus:bg-slate-600"
                     style={{ fontSize: '16px' }}
                   />
                   <button
@@ -172,8 +155,8 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                  <p className="text-sm text-red-700 font-medium whitespace-pre-line">{error}</p>
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
+                  <p className="text-sm text-red-700 dark:text-red-400 font-medium whitespace-pre-line">{error}</p>
                 </div>
               )}
 
@@ -195,9 +178,8 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* フッター */}
-            <div className="border-t border-slate-100 px-7 py-4 bg-slate-50 flex items-center justify-between">
-              <p className="text-sm text-slate-500">
+            <div className="border-t border-slate-100 dark:border-slate-700 px-7 py-4 bg-slate-50 dark:bg-slate-700 flex items-center justify-between">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 はじめての方は{' '}
                 <Link href="/register" className="text-emerald-600 font-bold hover:text-emerald-700 underline underline-offset-2">
                   新規登録
@@ -205,7 +187,7 @@ export default function LoginPage() {
               </p>
               <div className="flex items-center gap-2">
                 <a href="/privacy" className="text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2">プライバシー</a>
-                <span className="text-slate-200">·</span>
+                <span className="text-slate-200 dark:text-slate-600">·</span>
                 <a href="/terms" className="text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2">利用規約</a>
               </div>
             </div>

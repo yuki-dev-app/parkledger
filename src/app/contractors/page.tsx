@@ -107,11 +107,17 @@ export default function ContractorsPage() {
   };
 
   const remove = async (id: number) => {
-    const res = await fetch(`/api/contractors/${id}`, { method: 'DELETE' });
-    setDeleteTarget(null);
-    if (!res.ok) { setToast({ message: '削除に失敗しました', kind: 'error' }); return; }
-    setToast({ message: '削除しました', kind: 'success' });
-    load();
+    // Bug18修正: 削除中のローディング状態を設定して連打を防ぐ
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/contractors/${id}`, { method: 'DELETE' });
+      setDeleteTarget(null);
+      if (!res.ok) { setToast({ message: '削除に失敗しました', kind: 'error' }); return; }
+      setToast({ message: '削除しました', kind: 'success' });
+      load();
+    } finally {
+      setLoading(false);
+    }
   };
 
   // scrollLock は各 <Modal> コンポーネントが内部で管理するため不要

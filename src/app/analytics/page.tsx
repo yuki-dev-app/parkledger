@@ -19,7 +19,9 @@ export default function AnalyticsPage() {
   const maxTotal = Math.max(...months.map(m => m.total), 1);
   const totalPaid   = months.reduce((s, m) => s + m.paid, 0);
   const totalUnpaid = months.reduce((s, m) => s + m.unpaid, 0);
-  const avgMonthly  = months.length > 0 ? Math.round(totalPaid / months.filter(m => m.paid > 0).length || 0) : 0;
+  // Bug6修正: 演算子優先順位バグ → 変数に切り出してゼロ除算を明示的に回避
+  const paidMonthCount = months.filter(m => m.paid > 0).length;
+  const avgMonthly     = paidMonthCount > 0 ? Math.round(totalPaid / paidMonthCount) : 0;
 
   // 前月比
   const last = months[months.length - 1];
@@ -95,17 +97,18 @@ export default function AnalyticsPage() {
                 return (
                   <div key={m.ym} className="flex-1 flex flex-col items-center gap-1">
                     <div className="w-full flex flex-col justify-end gap-px" style={{ height: '120px' }}>
+                      {/* Bug22修正: 丸みは一番上の棒のみに付ける */}
                       {m.unpaid > 0 && (
                         <div
                           className="w-full bg-red-200 rounded-t-sm"
-                          style={{ height: `${unpaidH}%`, minHeight: m.unpaid > 0 ? '3px' : 0 }}
+                          style={{ height: `${unpaidH}%`, minHeight: '3px' }}
                           title={`未入金: ¥${m.unpaid.toLocaleString()}`}
                         />
                       )}
                       {m.paid > 0 && (
                         <div
-                          className={`w-full rounded-t-sm ${isCurrentMonth ? 'bg-emerald-600' : 'bg-emerald-400'}`}
-                          style={{ height: `${paidH}%`, minHeight: m.paid > 0 ? '3px' : 0 }}
+                          className={`w-full ${m.unpaid > 0 ? '' : 'rounded-t-sm'} ${isCurrentMonth ? 'bg-emerald-600' : 'bg-emerald-400'}`}
+                          style={{ height: `${paidH}%`, minHeight: '3px' }}
                           title={`入金済: ¥${m.paid.toLocaleString()}`}
                         />
                       )}

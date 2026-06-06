@@ -6,6 +6,9 @@ const t = (v: unknown, max: number) => (typeof v === 'string' ? v.trim() : '').s
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  // Bug7修正: DELETEと同様にPUTもオーナー権限を要求（設計の一貫性）
+  const perm = await requireOwner();
+  if (!perm.ok) return perm.response;
 
   const { id } = await params;
   const body   = await req.json();

@@ -40,7 +40,10 @@ export async function POST(req: NextRequest) {
   const { data: userData, error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    email_confirm: false, // メール確認必須
+    // Bug9修正: email_confirm: false = メール「未確認」状態でアカウントを作成する
+    // （Supabase Dashboard の "Confirm email" 設定が ON の場合に確認メールが送信される）
+    // ※ true にすると「確認済み」として即ログイン可能になるため false が正しい
+    email_confirm: false,
   });
 
   if (error) {

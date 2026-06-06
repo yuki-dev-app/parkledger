@@ -34,7 +34,13 @@ export default function PaymentsPage() {
 
   const load = useCallback(async () => {
     const cachedRows = getCached<Row[]>(`payments:${ym}`);
-    if (cachedRows) { setRows(cachedRows); setDataLoading(false); }
+    if (cachedRows) {
+      setRows(cachedRows);
+      setDataLoading(false);
+    } else {
+      // Bug16修正: キャッシュなし（月切替直後）はスケルトンを表示する
+      setDataLoading(true);
+    }
     const [pRes, sRes, rRes] = await Promise.all([
       fetch(`/api/payments?year_month=${ym}`),
       fetch('/api/settings'),
@@ -90,15 +96,23 @@ export default function PaymentsPage() {
     const unpaidIds = rows.filter(r => r.status !== 'paid').map(r => r.contractor_id);
     if (unpaidIds.length === 0) return;
     setBulkBusy(true);
-    const res = await fetch('/api/payments/bulk', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ year_month: ym, contractor_ids: unpaidIds }),
-    });
-    setBulkBusy(false); setShowBulk(false);
-    if (!res.ok) { setToast({ message: '一括更新に失敗しました', kind: 'error' }); return; }
-    invalidateCache(`payments:${ym}`);
-    setToast({ message: `${unpaidIds.length}名を一括入金済みにしました`, kind: 'success' });
-    load();
+    try {
+      // Bug4修正: ネットワークエラー時でもfinallyでUIを解放する
+      const res = await fetch('/api/payments/bulk', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year_month: ym, contractor_ids: unpaidIds }),
+      });
+      setShowBulk(false);
+      if (!res.ok) { setToast({ message: '一括更新に失敗しました', kind: 'error' }); return; }
+      invalidateCache(`payments:${ym}`);
+      setToast({ message: `${unpaidIds.length}名を一括入金済みにしました`, kind: 'success' });
+      load();
+    } catch {
+      setShowBulk(false);
+      setToast({ message: 'ネットワークエラーが発生しました。再度お試しください', kind: 'error' });
+    } finally {
+      setBulkBusy(false);
+    }
   };
 
   const paidCount   = rows.filter(r => r.status === 'paid').length;

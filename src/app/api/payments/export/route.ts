@@ -62,10 +62,11 @@ export async function GET(req: NextRequest) {
   const paidTotal  = paidRows.reduce((s, r) => s + r.amount, 0);
   const unpaidTotal= unpaidRows.reduce((s, r) => s + r.amount, 0);
 
+  // Bug12修正: ヘッダー行もq()でエスケープ（parking_name等にカンマ・改行が入る可能性）
   const lines: string[] = [
     `ParkLedger　入金管理レポート`,
-    `駐車場名：${settings.parking_name || '（未設定）'}`,
-    `管理者：${settings.business_name || '（未設定）'}`,
+    `駐車場名：${q(settings.parking_name || '（未設定）')}`,
+    `管理者：${q(settings.business_name || '（未設定）')}`,
     `対象月：${year}年${Number(month)}月`,
     `作成日：${today}`,
     '',

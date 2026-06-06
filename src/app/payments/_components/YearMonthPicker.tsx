@@ -50,7 +50,13 @@ export default function YearMonthPicker({ year, month, onChange }: Props) {
             <p className="font-bold text-slate-900 dark:text-slate-100 text-lg mb-4 text-center">年月を選ぶ</p>
             <div className="flex gap-2 mb-4">
               {[currentYear, currentYear - 1, currentYear - 2].map(y => (
-                <button key={y} type="button" onClick={() => onChange(y, month)}
+                <button key={y} type="button" onClick={() => {
+                  // Bug14修正: 現在年に戻したとき、未来月が選択中なら現在月に補正する
+                  const safeMonth = (y === currentYear && month > now.getMonth() + 1)
+                    ? now.getMonth() + 1
+                    : month;
+                  onChange(y, safeMonth);
+                }}
                   className={`flex-1 py-3 rounded-xl font-bold text-base transition-colors ${
                     y === year ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                   }`}
