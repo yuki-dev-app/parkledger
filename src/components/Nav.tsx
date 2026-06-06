@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Car, Users, CreditCard, MessageSquare, LogOut, Settings, Sparkles, BarChart2, HelpCircle } from 'lucide-react';
+import { Home, Car, Users, CreditCard, MessageSquare, LogOut, Settings, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
@@ -19,10 +19,8 @@ const TOP_NAV = [
   { href: '/garages',     label: '空き状況',   icon: Car },
   { href: '/contractors', label: '契約者',     icon: Users },
   { href: '/payments',    label: '入金',       icon: CreditCard },
-  { href: '/analytics',   label: '年間分析',   icon: BarChart2 },
   { href: '/inquiries',   label: '問い合わせ', icon: MessageSquare },
   { href: '/cleaning',    label: '清掃',       icon: Sparkles },
-  { href: '/help',        label: 'ヘルプ',     icon: HelpCircle },
 ];
 
 export default function Nav() {
@@ -91,7 +89,7 @@ export default function Nav() {
                   <li key={href}>
                     <Link
                       href={href}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                         active ? 'bg-white text-slate-900' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                       }`}
                     >
