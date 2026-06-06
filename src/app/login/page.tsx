@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Shield, Eye, EyeOff, Car } from 'lucide-react';
 import Link from 'next/link';
@@ -10,6 +10,12 @@ export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
   const [password,   setPassword]   = useState('');
   const [showPass,   setShowPass]   = useState(false);
+
+  // 設定画面で保存したログインIDを自動入力
+  useEffect(() => {
+    const saved = localStorage.getItem('saved_login_id');
+    if (saved) setIdentifier(saved);
+  }, []);
   const [error,      setError]      = useState(
     searchParams.get('error') === 'auth_callback' ? 'ログインリンクが無効または期限切れです' : ''
   );

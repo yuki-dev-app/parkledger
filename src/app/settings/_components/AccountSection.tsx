@@ -54,6 +54,8 @@ export default function AccountSection({ loginId, currentEmail, onToast, onLogin
       onToast({ message: d.error ?? '更新に失敗しました', kind: 'error' });
       return;
     }
+    // ログイン画面で自動入力できるよう端末に保存
+    localStorage.setItem('saved_login_id', newLoginId);
     onLoginIdSaved(newLoginId);
     setNewLoginId('');
     onToast({ message: 'ログインIDを設定しました', kind: 'success' });
