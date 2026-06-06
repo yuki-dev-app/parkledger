@@ -7,11 +7,11 @@ import { createClient } from '@/lib/supabase/client';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 const BOTTOM_NAV = [
-  { href: '/',            label: 'ホーム',     icon: Home },
-  { href: '/garages',     label: '区画',       icon: Car },
-  { href: '/contractors', label: '契約者',     icon: Users },
-  { href: '/payments',    label: '入金',       icon: CreditCard },
-  { href: '/inquiries',   label: '問い合わせ', icon: MessageSquare },
+  { href: '/',            label: 'ホーム',   icon: Home },
+  { href: '/contractors', label: '契約者',   icon: Users },
+  { href: '/payments',    label: '入金',     icon: CreditCard },
+  { href: '/cleaning',    label: '清掃',     icon: Sparkles },
+  { href: '/inquiries',   label: '問合せ',   icon: MessageSquare },
 ];
 
 const TOP_NAV = [
