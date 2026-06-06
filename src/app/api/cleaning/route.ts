@@ -22,7 +22,11 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const cleaned_date = typeof body.cleaned_date === 'string' ? body.cleaned_date.trim() : '';
   const person       = typeof body.person === 'string' ? body.person.trim().slice(0, 50) : '';
-  const notes        = typeof body.notes  === 'string' ? body.notes.trim().slice(0, 500) : '';
+  const notes        = typeof body.notes  === 'string' ? body.notes.trim().slice(0, 1000) : '';
+  // photo_urls: 最大5枚まで受け付ける（URLの配列）
+  const photo_urls   = Array.isArray(body.photo_urls)
+    ? body.photo_urls.filter((u: unknown) => typeof u === 'string').slice(0, 5)
+    : [];
 
   if (!cleaned_date || !person)
     return NextResponse.json({ error: '日付と担当者は必須です' }, { status: 400 });
@@ -32,9 +36,20 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('cleaning_logs')
-    .insert({ cleaned_date, person, notes, org_id: orgId })
+    .insert({ cleaned_date, person, notes, photo_urls, org_id: orgId })
     .select().single();
 
-  if (error) return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+  if (error) {
+    // photo_urlsカラムが存在しない場合はなしで再試行（後方互換）
+    if (error.code === '42703') {
+      const { data: d2, error: e2 } = await supabase
+        .from('cleaning_logs')
+        .insert({ cleaned_date, person, notes, org_id: orgId })
+        .select().single();
+      if (e2) return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+      return NextResponse.json({ id: d2.id });
+    }
+    return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+  }
   return NextResponse.json({ id: data.id });
 }

@@ -28,6 +28,7 @@ export function getSupabaseAdmin(): SupabaseClient {
 
 // 後方互換のため named export も提供（実際には getSupabaseAdmin() を推奨）
 export const supabaseAdmin = {
-  get auth() { return getSupabaseAdmin().auth; },
+  get auth()    { return getSupabaseAdmin().auth; },
+  get storage() { return getSupabaseAdmin().storage; },
   from: (...args: Parameters<SupabaseClient['from']>) => getSupabaseAdmin().from(...args),
 };
