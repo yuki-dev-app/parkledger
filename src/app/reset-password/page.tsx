@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Shield, ArrowLeft } from 'lucide-react';
+import { Car, ArrowLeft, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
@@ -26,111 +26,109 @@ export default function ResetPasswordPage() {
 
     setLoading(false);
     if (err) {
-      // エラーの詳細を返さない（メールアドレス列挙防止）
       console.error('reset password error:', err.message);
     }
-    // 成功・失敗にかかわらず同じメッセージを表示（列挙防止）
     setSent(true);
   };
 
   return (
     <div
-      className="h-[100dvh] overflow-hidden bg-slate-100 flex flex-col"
+      className="flex flex-col"
       style={{
-        paddingTop:    'env(safe-area-inset-top)',
+        position: 'fixed', inset: 0, zIndex: 50, overflowY: 'auto',
+        paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      {/* ヘッダー帯 */}
-      <div className="bg-slate-800 text-white text-center py-4 shrink-0">
-        <p className="text-xs tracking-widest text-slate-300 mb-0.5">PARK LEDGER</p>
-        <p className="text-lg font-bold tracking-wide">駐車場管理システム</p>
-      </div>
-
-      <div className="flex-1 flex items-center justify-center px-5">
-        <div className="w-full max-w-[400px]">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4">
-              <h1 className="text-xl font-bold text-slate-900">パスワードを忘れた方</h1>
-              <p className="text-slate-500 text-sm mt-0.5">
-                登録済みのメールアドレスを入力してください
-              </p>
-            </div>
-
-            {sent ? (
-              <div className="px-6 py-8 text-center">
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield size={28} className="text-emerald-600" />
-                </div>
-                <p className="text-lg font-bold text-slate-900 mb-2">
-                  メールを送信しました
-                </p>
-                <p className="text-slate-600 text-base leading-relaxed">
-                  入力されたメールアドレスに<br />
-                  パスワード再設定用のリンクを<br />
-                  送信しました。
-                </p>
-                <p className="text-sm text-slate-400 mt-3">
-                  ※ 届かない場合は迷惑メールフォルダをご確認ください
-                </p>
-                <Link
-                  href="/login"
-                  className="mt-6 inline-block text-slate-600 underline underline-offset-2 text-sm"
-                >
-                  ログイン画面に戻る
-                </Link>
-              </div>
-            ) : (
-              <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-4">
-                <div>
-                  <label className="text-sm font-bold text-slate-700 block mb-1.5">
-                    メールアドレス
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="例: yamada@example.com"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-600 transition-colors"
-                    style={{ fontSize: '16px' }}
-                  />
-                </div>
-
-                {error && (
-                  <div className="bg-red-50 border border-red-300 rounded-xl px-4 py-3">
-                    <p className="text-sm text-red-700 font-medium">{error}</p>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading || !email}
-                  className="w-full bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 disabled:opacity-40 flex items-center justify-center gap-2 transition-colors"
-                  style={{ minHeight: '54px', fontSize: '17px' }}
-                >
-                  {loading ? '送信中...' : '再設定メールを送る'}
-                </button>
-              </form>
-            )}
+      {/* 上部ダーク */}
+      <div className="bg-slate-900 px-8 py-10">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
+            <Car size={28} className="text-white" />
           </div>
-
-          <div className="text-center mt-4">
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 text-base font-medium"
-            >
-              <ArrowLeft size={16} />
-              ログイン画面に戻る
-            </Link>
+          <div>
+            <p className="text-white text-3xl font-black tracking-tight leading-none">
+              Park<span className="text-emerald-400">Ledger</span>
+            </p>
+            <p className="text-slate-400 text-sm mt-1 tracking-widest">駐車場管理システム</p>
           </div>
         </div>
+        <h1 className="text-white text-2xl font-bold leading-snug">
+          パスワードを<br />お忘れの方へ
+        </h1>
+        <p className="text-slate-400 text-base mt-2">
+          登録済みのメールアドレスに再設定リンクをお送りします。
+        </p>
       </div>
 
-      <div className="shrink-0 pb-4 text-center text-xs text-slate-400">
-        <Shield size={12} className="inline mr-1" />
-        SSL暗号化通信で保護されています · ParkLedger © 2026
+      {/* 下部ホワイト */}
+      <div className="flex-1 bg-white px-6 py-10">
+        <div className="max-w-[420px]">
+          {sent ? (
+            <div className="text-center py-6">
+              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Mail size={36} className="text-emerald-600" />
+              </div>
+              <p className="text-2xl font-bold text-slate-900 mb-3">メールを送信しました</p>
+              <p className="text-slate-600 text-base leading-relaxed mb-2">
+                入力されたメールアドレスに<br />パスワード再設定用のリンクを送りました。
+              </p>
+              <p className="text-sm text-slate-400 mb-8">
+                届かない場合は迷惑メールフォルダをご確認ください
+              </p>
+              <Link
+                href="/login"
+                className="flex items-center justify-center gap-2 text-slate-600 font-medium text-base underline underline-offset-2"
+              >
+                <ArrowLeft size={16} /> ログイン画面に戻る
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={submit} className="flex flex-col gap-5">
+              <div>
+                <label className="text-base font-bold text-slate-700 block mb-2">
+                  メールアドレス
+                </label>
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="例: yamada@example.com"
+                  className="w-full px-4 py-4 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-300 focus:outline-none focus:border-emerald-500 transition-colors bg-slate-50 focus:bg-white"
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || !email}
+                className="w-full bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-40 flex items-center justify-center gap-2 transition-colors shadow-md"
+                style={{ minHeight: '60px', fontSize: '18px' }}
+              >
+                {loading ? '送信中...' : '再設定メールを送る'}
+              </button>
+
+              <div className="pt-2">
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 text-slate-500 font-medium text-base hover:text-slate-700"
+                >
+                  <ArrowLeft size={16} /> ログイン画面に戻る
+                </Link>
+              </div>
+            </form>
+          )}
+
+          <p className="text-center text-xs text-slate-400 mt-10">© 2026 ParkLedger</p>
+        </div>
       </div>
     </div>
   );
