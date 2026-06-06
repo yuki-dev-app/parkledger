@@ -62,8 +62,8 @@ export default function ResetPasswordPage() {
       </div>
 
       {/* 下部ホワイト */}
-      <div className="flex-1 bg-white px-6 py-10">
-        <div className="max-w-[420px]">
+      <div className="flex-1 bg-white">
+        <div className="w-full px-6 py-10">
           {sent ? (
             <div className="text-center py-6">
               <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
