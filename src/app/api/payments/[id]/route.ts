@@ -14,9 +14,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: '無効なステータスです' }, { status: 400 });
   }
 
+  // 金額改ざん防止: 0以上1,000万円以下の整数のみ受け付ける
+  const safeAmount = Number(amount);
+  if (!Number.isFinite(safeAmount) || safeAmount < 0 || safeAmount > 10_000_000) {
+    return NextResponse.json({ error: '金額が不正です' }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from('payments')
-    .update({ status, paid_date: paid_date ?? '', amount: Number(amount) || 0, notes: notes ?? '' })
+    .update({ status, paid_date: paid_date ?? '', amount: Math.floor(safeAmount), notes: notes ?? '' })
     .eq('id', Number(id))
     .select().single();
 

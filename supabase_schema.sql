@@ -142,12 +142,13 @@ AS $$
 $$;
 
 -- 現在のユーザーがシステム管理者かどうか
+-- ⚠️ user_metadata はユーザー自身が書き換え可能なため app_metadata を参照すること
 CREATE OR REPLACE FUNCTION is_system_admin()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE
 AS $$
   SELECT COALESCE(
-    (auth.jwt() -> 'user_metadata' ->> 'is_admin')::boolean,
+    (auth.jwt() -> 'app_metadata' ->> 'is_admin')::boolean,
     false
   );
 $$;

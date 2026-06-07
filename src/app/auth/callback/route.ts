@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get('token_hash');
   const type      = searchParams.get('type') as 'magiclink' | 'recovery' | 'email' | null;
   const code      = searchParams.get('code');
-  const next      = searchParams.get('next') ?? '/';
+  // オープンリダイレクト対策: 相対パス（/始まり）のみ許可
+  const rawNext = searchParams.get('next') ?? '/';
+  const next    = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/';
 
   const cookieStore = await cookies();
 

@@ -13,6 +13,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     .delete()
     .eq('id', id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[admin/organizations DELETE]', error.message);
+    return NextResponse.json({ error: '削除に失敗しました' }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

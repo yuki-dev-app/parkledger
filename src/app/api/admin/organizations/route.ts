@@ -14,7 +14,10 @@ export async function GET() {
     `)
     .order('created_at', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[admin/organizations GET]', error.message);
+    return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
+  }
 
   return NextResponse.json(
     orgs?.map(o => ({

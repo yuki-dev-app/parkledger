@@ -47,9 +47,12 @@ export async function POST(req: NextRequest) {
   });
 
   if (error) {
+    // ユーザー列挙対策: 登録済みメールか否かに関わらず同じ200レスポンスを返す
+    // （攻撃者がメールアドレスの存在確認に使えないようにする）
     if (error.message.toLowerCase().includes('already registered')) {
-      return NextResponse.json({ error: 'このメールアドレスはすでに登録されています' }, { status: 409 });
+      return NextResponse.json({ ok: true });
     }
+    console.error('[register] createUser error:', error.message);
     return NextResponse.json({ error: '登録に失敗しました。しばらく時間をおいて再試行してください' }, { status: 500 });
   }
 
