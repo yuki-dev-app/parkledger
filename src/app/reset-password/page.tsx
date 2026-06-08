@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { Car, ArrowLeft, Mail } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 export default function ResetPasswordPage() {
@@ -19,14 +18,18 @@ export default function ResetPasswordPage() {
     setLoading(true);
     setError('');
 
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${location.origin}/reset-password/confirm`,
+    // サーバーサイドAPIを経由してレート制限を適用
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     });
 
     setLoading(false);
-    if (err) {
-      console.error('reset password error:', err.message);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error ?? 'エラーが発生しました');
+      return;
     }
     setSent(true);
   };

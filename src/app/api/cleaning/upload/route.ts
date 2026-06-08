@@ -8,10 +8,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { validateImageMagicBytes, isAllowedMimeType } from '@/lib/validate-image';
 
-const BUCKET      = 'cleaning-photos';
-const MAX_SIZE    = 10 * 1024 * 1024; // 10MB
-const ALLOWED_MIME = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+const BUCKET   = 'cleaning-photos';
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(req: NextRequest) {
   const { user, orgId } = await requireAuth();
@@ -30,19 +30,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'ファイルサイズは10MB以下にしてください' }, { status: 400 });
   }
 
-  // MIMEタイプ検証（サーバーサイドで必ず実施）
-  const mime = file.type.toLowerCase();
-  if (!ALLOWED_MIME.some(a => mime.includes(a.split('/')[1]))) {
+  // MIMEタイプ完全一致チェック（部分一致による偽装防止）
+  if (!isAllowedMimeType(file.type)) {
     return NextResponse.json({ error: 'JPEG・PNG・WebP・HEIC形式のみ対応しています' }, { status: 400 });
   }
 
-  const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
-  const filename = `${orgId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  // マジックバイト検証（拡張子・Content-Type の偽装を防ぐ）
+  const detectedExt = await validateImageMagicBytes(file);
+  if (!detectedExt) {
+    return NextResponse.json({ error: '不正なファイル形式です' }, { status: 400 });
+  }
+
+  const filename = `${orgId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${detectedExt}`;
   const buffer   = Buffer.from(await file.arrayBuffer());
 
   const { data, error } = await supabaseAdmin.storage
     .from(BUCKET)
-    .upload(filename, buffer, { contentType: `image/${ext}`, upsert: false });
+    .upload(filename, buffer, { contentType: `image/${detectedExt}`, upsert: false });
 
   if (error) {
     console.error('[cleaning/upload] Storage error:', error.message);
