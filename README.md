@@ -1,20 +1,30 @@
 # ParkLedger
 
-A full-stack SaaS web application for managing parking lot operations — built solo by a university student as a real-world engineering project.
+ParkLedger is a full-stack SaaS platform designed for small and medium-sized parking lot operators in Japan.
 
-> Handles payment tracking, tenant contracts, cleaning schedules, and inquiries for small-to-medium parking lot operators in Japan.
+Built to replace paper-based workflows, it manages contracts, payments, parking slots, cleaning records, and tenant inquiries in one place.
+
+Built and maintained independently as a real-world SaaS project.
 
 ---
 
 ## Live Demo
 
-> [parkledger.vercel.app](https://parkledger.vercel.app) *(request access for a demo account)*
+> [parkledger.vercel.app](https://parkledger.vercel.app)
+
+*(Screenshots below — login required to access the app)*
+
+---
+
+## Screenshots
+
+*Coming soon — dashboard, payment tracking, tenant management, and parking slot views*
 
 ---
 
 ## What It Does
 
-Parking lot operators in Japan typically manage everything in spreadsheets. ParkLedger replaces that with a purpose-built web app.
+Parking lot operators in Japan typically manage everything in spreadsheets or paper ledgers. ParkLedger replaces that with a purpose-built web app.
 
 | Feature | Details |
 |---|---|
@@ -43,30 +53,47 @@ Parking lot operators in Japan typically manage everything in spreadsheets. Park
 
 ---
 
-## Architecture Highlights
+## Architecture
+
+```
+Browser
+   │
+   ▼
+Next.js (Vercel) ── Server-side rendering + API Routes
+   │
+   ▼
+Supabase (PostgreSQL)
+   │
+   ├── Row-Level Security ── Each org sees only its own data
+   └── Auth ── Session management + custom login ID resolution
+   │
+   ▼
+Upstash Redis ── Persistent rate limiting across serverless instances
+```
 
 **Multi-tenant isolation via RLS**
-Every database query is automatically scoped to the logged-in user's organization — no manual filtering needed. Supabase Row-Level Security policies enforce this at the database level.
+Every database query is automatically scoped to the logged-in user's organization. Supabase Row-Level Security policies enforce this at the database level — no manual filtering required.
 
 **Custom login ID system**
-Users log in with a short alphanumeric ID (not their email address), improving UX for non-technical operators. The server resolves the ID to an email internally, keeping the email hidden from clients.
+Users log in with a short alphanumeric ID instead of their email address, improving UX for non-technical operators. The server resolves the ID internally; email addresses are never exposed to the client.
 
 **Persistent rate limiting**
-Login and registration endpoints are rate-limited using Upstash Redis, which maintains state across Vercel serverless function instances — something in-memory solutions cannot do.
+Auth endpoints are rate-limited using Upstash Redis, which maintains state across Vercel serverless function instances — something in-memory solutions cannot do.
 
 **Server-first rendering**
 All data fetching happens on the server. The client receives rendered HTML with no loading spinners on the main views.
 
 ---
 
-## Security Measures
+## Security
 
 - Passwords hashed via bcrypt
 - Email addresses never exposed to the client
-- Rate limiting on auth endpoints (prevents brute-force)
+- Rate limiting on all auth endpoints (brute-force protection)
 - Row-Level Security prevents cross-tenant data access
-- Image upload validation (type + size checks)
+- Image upload validation (magic byte check + MIME type verification)
 - Input sanitization on all API routes
+- CSV injection protection on all export endpoints
 
 ---
 
@@ -125,6 +152,4 @@ UPSTASH_REDIS_REST_TOKEN=
 
 ## About
 
-Built by a 3rd-year university student with no prior web development experience. Started from zero — first line of code to production SaaS in one semester.
-
-The problem came from a real need: a family member managing a parking lot was still using paper ledgers. ParkLedger digitizes the entire workflow.
+The problem came from a real need: a family member managing a parking lot was still using paper ledgers. ParkLedger digitizes the entire workflow — from contract registration to monthly payment tracking to receipt generation.
