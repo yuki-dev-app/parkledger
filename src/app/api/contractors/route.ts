@@ -67,7 +67,10 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (cErr) return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+  if (cErr) {
+    console.error('[contractors POST] insert error:', cErr.code, cErr.message);
+    return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+  }
 
   const { error: garageErr } = await supabase
     .from('garages')
