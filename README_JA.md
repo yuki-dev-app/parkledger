@@ -2,11 +2,17 @@
 
 小規模駐車場オーナー向けの、業務をまるごとデジタル化するSaaSアプリケーションです。
 
-紙台帳・スプレッドシートによる管理を、AIを活用しながら独力で開発したWebアプリに置き換えました。
+紙台帳・スプレッドシートによる管理を、AIコーディングツールも活用しながら開発したWebアプリに置き換えました。
 
 **技術スタック：** Next.js · TypeScript · Supabase · Vercel · Upstash Redis
 
 🇺🇸 English version → [README.md](README.md)
+
+---
+
+## 開発期間
+
+2026年6月（個人開発 / AI-assisted development）
 
 ---
 
@@ -20,7 +26,7 @@
 
 ## なぜ作ったか
 
-日本の小規模駐車場オーナーの多くは、月次の入金管理を手書きの台帳で行い、未払いテナントには一件ずつ電話をかけているのが実情です。知人がまさにそういった状況でした。
+知人の駐車場管理では、入金確認や未払い対応、契約管理の多くが紙台帳と手作業に依存していました。
 
 ParkLedger はその業務をまるごと置き換えます。ターゲットユーザーは60代のIT未経験者。文字を大きく・コントラストを強く・操作を極力シンプルに設計し、スマートフォンでの現場利用を想定しています。
 
@@ -89,12 +95,12 @@ ParkLedger はその業務をまるごと置き換えます。ターゲットユ
 
 問題定義・機能設計・UX設計・改善サイクルを自分で担い、実装の加速にAIを活用するスタイルで進めました。
 
-このプロジェクトを通じて、フルスタックWebアプリケーションの設計・実装・本番運用に至るまでの一連の流れを実践的に習得しました。
+このプロジェクトを通じて、フルスタックWebアプリケーションの設計、データベース構築、デプロイ、本番運用までの一連の流れを実践的に学びました。
 
 ---
 
 <details>
-<summary>アーキテクチャ詳細（エンジニア向け）</summary>
+<summary>アーキテクチャ詳細（興味のある方向け）</summary>
 
 ```
 ブラウザ
@@ -113,35 +119,3 @@ Upstash Redis ── サーバーレス環境を跨いだ永続的なレート�
 ```
 
 </details>
-
----
-
-## ローカル開発
-
-```bash
-# 1. リポジトリをクローン
-git clone https://github.com/yuki-dev-app/parkledger.git
-cd parkledger
-
-# 2. 依存パッケージをインストール
-npm install
-
-# 3. 環境変数を設定
-cp .env.local.example .env.local
-# SupabaseとUpstashの認証情報を入力
-
-# 4. 開発サーバーを起動
-npm run dev
-```
-
-[http://localhost:3000](http://localhost:3000) をブラウザで開く。
-
-**必要な環境変数：**
-
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-```
