@@ -6,6 +6,8 @@ const VALID_STATUSES = ['paid', 'unpaid', 'late'] as const;
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const perm = await requireOwner();
+  if (!perm.ok) return perm.response;
 
   const { id } = await params;
   const { status, paid_date, amount, notes } = await req.json();

@@ -52,11 +52,9 @@ export async function GET(req: NextRequest) {
 
   // CSVインジェクション対策: =,+,-,@で始まる値は強制クォート
   const q = (v: string | number | null | undefined) => {
-    const s = String(v ?? '');
-    if (/^[=+\-@\t]/.test(s) || /[",\n\r]/.test(s)) {
-      return `"${s.replace(/"/g, '""')}"`;
-    }
-    return s;
+    const s    = String(v ?? '').replace(/"/g, '""');
+    const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+    return `"${safe}"`;
   };
 
   const paidRows   = rows.filter(r => r.status === 'paid');

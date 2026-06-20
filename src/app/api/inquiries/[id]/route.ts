@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/supabase/server';
+import { requireAuth, requireOwner } from '@/lib/supabase/server';
 
 const VALID_STATUSES = ['in_progress', 'resolved'] as const;
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const perm = await requireOwner();
+  if (!perm.ok) return perm.response;
 
   const { id }            = await params;
   const { status, notes } = await req.json();
@@ -26,6 +28,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const perm = await requireOwner();
+  if (!perm.ok) return perm.response;
 
   const { id } = await params;
   const { error } = await supabase.from('inquiries').delete().eq('id', Number(id));
