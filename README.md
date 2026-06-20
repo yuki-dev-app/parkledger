@@ -63,7 +63,6 @@ ParkLedger replaces that entire workflow. The target users are operators in thei
 | **Inquiries** | Manage tenant inquiries with status tracking |
 | **Receipts & Documents** | Print-ready parking permit and receipt PDFs |
 | **Multi-tenant** | Each business sees only their own data |
-| **PWA** | Installable on mobile |
 
 ---
 
