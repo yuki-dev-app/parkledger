@@ -20,7 +20,7 @@ Built independently with AI-assisted development to replace paper-based workflow
 
 ## Project Timeline
 
-June 2026 — Individual project (AI-assisted development)
+May 2026 – Present — Individual project (AI-assisted development)
 
 ---
 

@@ -12,7 +12,7 @@
 
 ## 開発期間
 
-2026年6月（個人開発 / AI-assisted development）
+2026年5月〜現在（個人開発 / AI-assisted development）
 
 ---
 
