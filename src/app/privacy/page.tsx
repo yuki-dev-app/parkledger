@@ -115,7 +115,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-3">第11条　準拠法・管轄裁判所</h2>
-          <p>本ポリシーは日本法に準拠します。本ポリシーに関する紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
+          <p>本ポリシーは日本法に準拠します。本ポリシーに関する紛争については、京都地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
         </section>
 
         <section>

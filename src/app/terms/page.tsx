@@ -96,7 +96,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-3">第10条　準拠法・管轄</h2>
-          <p>本規約は日本法に準拠します。紛争については東京地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
+          <p>本規約は日本法に準拠します。紛争については京都地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
         </section>
 
         <section>

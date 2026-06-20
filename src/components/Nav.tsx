@@ -34,6 +34,7 @@ export default function Nav() {
     pathname === '/login' ||
     pathname === '/register' ||
     pathname === '/privacy' ||
+    pathname === '/terms' ||
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/print') ||
     pathname.startsWith('/setup') ||
