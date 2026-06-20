@@ -14,20 +14,28 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
-  // レート制限: 10分間に10回まで
+  // IPベースのレート制限: 10分間に10回まで
   const ip = getClientIp(req);
-  const { allowed } = await checkRateLimit(`login:${ip}`, 10, 10 * 60 * 1000);
-  if (!allowed) {
+  const { allowed: ipAllowed } = await checkRateLimit(`login:${ip}`, 10, 10 * 60 * 1000);
+  if (!ipAllowed) {
     return NextResponse.json({ error: 'しばらく時間をおいてから再試行してください' }, { status: 429 });
   }
 
   const body = await req.json().catch(() => ({}));
   const { identifier, password } = body;
+
   if (!identifier || !password || typeof identifier !== 'string' || typeof password !== 'string') {
     return NextResponse.json({ error: 'IDとパスワードを入力してください' }, { status: 400 });
   }
 
-  let email = identifier.trim().toLowerCase();
+  // ログインIDベースのレート制限: 15分間に5回まで（分散辞書攻撃対策）
+  const normalizedId = identifier.trim().toLowerCase();
+  const { allowed: idAllowed } = await checkRateLimit(`login-id:${normalizedId}`, 5, 15 * 60 * 1000);
+  if (!idAllowed) {
+    return NextResponse.json({ error: 'しばらく時間をおいてから再試行してください' }, { status: 429 });
+  }
+
+  let email = normalizedId;
 
   // ログインIDの場合はサーバー内部でメールに変換（クライアントに返さない）
   if (!email.includes('@')) {
