@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Claude Code設定（ローカル開発ツールの設定のみ）
+.claude/
+
 # データベースファイル（絶対にGitHubに上げない）
 /data/
 *.db
