@@ -7,6 +7,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(id)) return NextResponse.json({ error: '不正なIDです' }, { status: 400 });
+
   // CASCADE設定により、所属メンバー・全データが自動削除される
   const { error } = await supabaseAdmin
     .from('organizations')

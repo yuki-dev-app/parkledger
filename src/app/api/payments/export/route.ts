@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/supabase/server';
+import { requireAuth, requireOwner } from '@/lib/supabase/server';
 import { getSettings } from '@/lib/settings';
 import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 export async function GET(req: NextRequest) {
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const ownerCheck = await requireOwner();
+  if (!ownerCheck.ok) return ownerCheck.response;
 
   const ym = new URL(req.url).searchParams.get('year_month');
   if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return NextResponse.json({ error: 'year_month の形式が正しくありません' }, { status: 400 });

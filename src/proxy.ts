@@ -30,6 +30,20 @@ function isPublicPath(path: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  // APIルート（/api/auth/ 以外）: セッションCookieの存在をファストチェック
+  // 完全な認証検証は各 Route Handler の requireAuth() が担う
+  if (path.startsWith('/api/') && !path.startsWith('/api/auth/')) {
+    const hasCookie = request.cookies.getAll().some(
+      c => c.name.startsWith('sb-') && c.name.includes('-auth-token')
+    );
+    if (!hasCookie) {
+      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -57,8 +71,6 @@ export async function proxy(request: NextRequest) {
   // セキュリティの検証はAPIルートのrequireAuth()が担当
   const { data: { session } } = await supabase.auth.getSession();
   const hasSession = !!session;
-
-  const path = request.nextUrl.pathname;
 
   // 未認証 + 保護されたページ → ログインにリダイレクト
   if (!hasSession && !isPublicPath(path)) {
@@ -88,6 +100,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // /api/ を除外 → APIルートは自前でrequireAuth()するので二重チェック不要
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

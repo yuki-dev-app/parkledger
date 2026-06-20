@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/supabase/server';
+import { requireAuth, requireOwner } from '@/lib/supabase/server';
 import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 function esc(v: string | number) {
   const s = String(v ?? '').replace(/"/g, '""');
-  // CSVインジェクション対策: 数式として解釈される文字をエスケープ
-  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
-  return `"${safe}"`;
+  // CSVインジェクション対策: payments/export と同じ強制クォート方式に統一
+  if (/^[=+\-@\t\r]/.test(s) || /[",\n\r]/.test(s)) return `"${s}"`;
+  return `"${s}"`;
 }
 function row(...vals: (string | number)[]) {
   return vals.map(esc).join(',');
@@ -15,6 +15,8 @@ function row(...vals: (string | number)[]) {
 export async function GET(req: NextRequest) {
   const { supabase, user } = await requireAuth();
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const ownerCheck = await requireOwner();
+  if (!ownerCheck.ok) return ownerCheck.response;
 
   const year = new URL(req.url).searchParams.get('year') ?? String(new Date().getFullYear());
   const months = Array.from({ length: 12 }, (_, i) =>

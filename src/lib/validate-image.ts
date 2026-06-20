@@ -8,8 +8,8 @@
 const MAGIC: { bytes: number[]; offset: number; ext: string }[] = [
   { bytes: [0xFF, 0xD8, 0xFF],                   offset: 0, ext: 'jpg'  }, // JPEG
   { bytes: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A], offset: 0, ext: 'png'  }, // PNG
-  { bytes: [0x47, 0x49, 0x46, 0x38],             offset: 0, ext: 'gif'  }, // GIF87a / GIF89a
   { bytes: [0x57, 0x45, 0x42, 0x50],             offset: 8, ext: 'webp' }, // WebP (RIFF????WEBP)
+  // GIF は JavaScript埋め込みポリグロットによるXSSリスクがあるため除外
 ];
 
 // HEIC/HEIF は先頭4バイトがサイズ、5〜8バイトが ftyp
@@ -45,8 +45,9 @@ export async function validateImageMagicBytes(file: File): Promise<string | null
 /** MIME タイプの完全一致チェック（部分一致による偽装を防ぐ） */
 const ALLOWED_EXACT_MIME = new Set([
   'image/jpeg', 'image/jpg', 'image/png',
-  'image/webp', 'image/gif',
+  'image/webp',
   'image/heic', 'image/heif',
+  // image/gif は除外（XSSリスク）
 ]);
 
 export function isAllowedMimeType(mime: string): boolean {

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '不正なファイル形式です' }, { status: 400 });
   }
 
-  const filename = `${orgId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${detectedExt}`;
+  const filename = `${orgId}/${crypto.randomUUID()}.${detectedExt}`;
   const buffer   = Buffer.from(await file.arrayBuffer());
 
   const { data, error } = await supabaseAdmin.storage

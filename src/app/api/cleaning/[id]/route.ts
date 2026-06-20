@@ -47,7 +47,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ ok: true, photos_skipped: true });
     }
 
-    console.error('[cleaning PUT] error:', error);
+    console.error('[cleaning PUT] error:', error.message);
     return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
   }
   return NextResponse.json({ ok: true });

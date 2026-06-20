@@ -7,14 +7,16 @@ const MAX = { name:100, phone:20, email:200, address:300, vehicle_type:100, vehi
 const t = (v: unknown, max: number) => (typeof v === 'string' ? v.trim() : '').slice(0, max);
 
 export async function GET(req: NextRequest) {
-  const { supabase, user } = await requireAuth();
-  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const { supabase, user, orgId } = await requireAuth();
+  if (!user)  return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  if (!orgId) return NextResponse.json({ error: '初期設定が完了していません' }, { status: 403 });
 
   const archived = new URL(req.url).searchParams.get('archived') === '1';
 
   const query = supabase
     .from('contractors')
-    .select('*, garages!inner(number, monthly_fee)');
+    .select('*, garages!inner(number, monthly_fee)')
+    .eq('org_id', orgId); // RLS単独依存を避けるための明示フィルタ
 
   const { data, error } = archived
     ? await query.neq('archived_at', '').order('archived_at', { ascending: false })
@@ -76,9 +78,7 @@ export async function POST(req: NextRequest) {
     // Bug11修正: 補償削除のエラーを確認してログに記録
     const { error: rollbackErr } = await supabase.from('contractors').delete().eq('id', contractor.id);
     if (rollbackErr) {
-      console.error('[contractors POST] ロールバック失敗 - 手動確認が必要:', {
-        contractor_id: contractor.id, rollbackErr,
-      });
+      console.error('[contractors POST] ロールバック失敗 - 手動確認が必要:', rollbackErr.message);
     }
     return NextResponse.json({ error: '区画ステータスの更新に失敗しました。再度お試しください。' }, { status: 500 });
   }

@@ -28,20 +28,10 @@ export async function POST(req: NextRequest) {
   // 401 に統一（404だとIDが存在しないことが分かってしまうため）
   if (!member) return NextResponse.json({ error: 'IDまたはパスワードが正しくありません' }, { status: 401 });
 
-  const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
-  if (error || !user?.email) return NextResponse.json({ error: 'IDまたはパスワードが正しくありません' }, { status: 401 });
+  const { error } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
+  if (error) return NextResponse.json({ error: 'IDまたはパスワードが正しくありません' }, { status: 401 });
 
-  // メールアドレスを直接返すとユーザー列挙攻撃に使われるため、
-  // ハッシュ化した形で返す（フロントエンド側でログインには使えない形）
-  // → 実際のメールはフロントに渡さず、このルートでログインを完結させる設計に変更
-  //
-  // ⚠️ 現在はフロント側でメールを使ってsupabase.auth.signInWithPasswordを
-  //    呼んでいるため、即時変更は難しい。以下のマスク処理で情報漏洩を最小化する。
-  const email = user.email;
-  const [local, domain] = email.split('@');
-  const masked = `${local.slice(0, 2)}***@${domain}`; // 最初の2文字だけ見せる
-
-  // /api/auth/login がサーバーサイドでログインを完結させるようになったため、
-  // このエンドポイントはマスク済みメールのみ返す（UI表示用途のみ）
-  return NextResponse.json({ masked });
+  // ログインは /api/auth/login がサーバーサイドで完結するため、
+  // このエンドポイントはIDの存在確認のみ行い、メール情報は一切返さない
+  return NextResponse.json({ ok: true });
 }

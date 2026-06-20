@@ -21,6 +21,10 @@ const UPSTASH_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const USE_UPSTASH   = !!(UPSTASH_URL && UPSTASH_TOKEN);
 
+if (!USE_UPSTASH && process.env.NODE_ENV === 'production') {
+  console.warn('[rate-limit] UPSTASH_REDIS_REST_URL / TOKEN が未設定です。本番環境ではレート制限が無効になっています。');
+}
+
 // ── フォールバック用 in-memory（開発環境のみ） ──────────────
 const fallbackStore = new Map<string, { count: number; resetAt: number }>();
 

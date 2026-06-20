@@ -61,13 +61,13 @@ export async function POST(req: NextRequest) {
         .insert(baseData)
         .select('id').single();
       if (e2) {
-        console.error('[cleaning POST] fallback error:', e2);
+        console.error('[cleaning POST] fallback error:', e2.message);
         return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
       }
       return NextResponse.json({ id: d2.id, photos_skipped: true });
     }
 
-    console.error('[cleaning POST] error:', error);
+    console.error('[cleaning POST] error:', error.message);
     return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
   }
 
