@@ -4,9 +4,9 @@ import { NO_CACHE_HEADERS } from '@/lib/no-cache';
 
 function esc(v: string | number) {
   const s = String(v ?? '').replace(/"/g, '""');
-  // CSVインジェクション対策: payments/export と同じ強制クォート方式に統一
-  if (/^[=+\-@\t\r]/.test(s) || /[",\n\r]/.test(s)) return `"${s}"`;
-  return `"${s}"`;
+  // CSVインジェクション対策: =,+,-,@ で始まる値には ' プレフィックスを付けて数式解釈を防ぐ
+  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+  return `"${safe}"`;
 }
 function row(...vals: (string | number)[]) {
   return vals.map(esc).join(',');

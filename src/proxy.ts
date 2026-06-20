@@ -34,11 +34,12 @@ export async function proxy(request: NextRequest) {
 
   // APIルートは全てここで早期リターン（ページリダイレクトロジックに入らせない）
   if (path.startsWith('/api/')) {
-    // /api/auth/ は認証不要（ログイン・パスワードリセット等）
-    if (path.startsWith('/api/auth/')) {
+    // 認証不要な公開APIは Cookie チェックをスキップ
+    const PUBLIC_API_PREFIXES = ['/api/auth/', '/api/register'];
+    if (PUBLIC_API_PREFIXES.some(p => path.startsWith(p))) {
       return NextResponse.next();
     }
-    // その他のAPIルート: セッションCookieの存在をファストチェック
+    // 認証が必要なAPIルート: セッションCookieの存在をファストチェック
     // 完全な認証検証は各 Route Handler の requireAuth() が担う
     const hasCookie = request.cookies.getAll().some(
       c => c.name.startsWith('sb-') && c.name.includes('-auth-token')
