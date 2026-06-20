@@ -29,16 +29,19 @@ ParkLedger はその業務をまるごと置き換えます。ターゲットユ
 ## スクリーンショット
 
 ### ダッシュボード — 今月の入金状況を一目で把握
-![ダッシュボード](public/screenshots/dash.png)
+![ダッシュボード](public/screenshots/dashboard.png)
 
 ### 入金チェック — 入金登録・月次レポートのダウンロード
-![入金](public/screenshots/manage.png)
+![入金](public/screenshots/payments.png)
 
 ### 契約者管理 — 契約情報・車両情報の一元管理
-![契約者](public/screenshots/user.png)
+![契約者](public/screenshots/contractors.png)
 
 ### 駐車区画 — 空き・使用中の状況をひと目で確認
-![区画](public/screenshots/block.webp)
+![区画](public/screenshots/garages.webp)
+
+### モバイル表示 — 現場での利用を想定したUI
+![モバイル](public/screenshots/mobile.png)
 
 ---
 

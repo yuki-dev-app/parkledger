@@ -29,16 +29,19 @@ ParkLedger replaces that entire workflow. The target users are operators in thei
 ## Screenshots
 
 ### Dashboard — monthly payment status at a glance
-![Dashboard](public/screenshots/dash.png)
+![Dashboard](public/screenshots/dashboard.png)
 
 ### Payment Tracking — mark payments, download monthly reports
-![Payments](public/screenshots/manage.png)
+![Payments](public/screenshots/payments.png)
 
 ### Tenant Management — contracts and vehicle info
-![Contractors](public/screenshots/user.png)
+![Contractors](public/screenshots/contractors.png)
 
 ### Parking Slots — vacancy status across all spaces
-![Garages](public/screenshots/block.webp)
+![Garages](public/screenshots/garages.webp)
+
+### Mobile View — optimized for on-site use
+![Mobile](public/screenshots/mobile.png)
 
 ---
 
