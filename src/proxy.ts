@@ -32,9 +32,14 @@ function isPublicPath(path: string): boolean {
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // APIルート（/api/auth/ 以外）: セッションCookieの存在をファストチェック
-  // 完全な認証検証は各 Route Handler の requireAuth() が担う
-  if (path.startsWith('/api/') && !path.startsWith('/api/auth/')) {
+  // APIルートは全てここで早期リターン（ページリダイレクトロジックに入らせない）
+  if (path.startsWith('/api/')) {
+    // /api/auth/ は認証不要（ログイン・パスワードリセット等）
+    if (path.startsWith('/api/auth/')) {
+      return NextResponse.next();
+    }
+    // その他のAPIルート: セッションCookieの存在をファストチェック
+    // 完全な認証検証は各 Route Handler の requireAuth() が担う
     const hasCookie = request.cookies.getAll().some(
       c => c.name.startsWith('sb-') && c.name.includes('-auth-token')
     );
