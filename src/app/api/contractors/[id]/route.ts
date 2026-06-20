@@ -77,7 +77,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     .select()
     .single();
 
-  if (error || !data) return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
+  if (error) {
+    // car_photo_urls カラムが未作成の場合は写真なしで再試行
+    const isColumnMissing = error.code === '42703' || error.message?.includes('car_photo_urls');
+    if ('car_photo_urls' in updates && isColumnMissing) {
+      const { car_photo_urls: _, ...updatesWithoutPhotos } = updates;
+      const { error: error2 } = await supabase
+        .from('contractors')
+        .update(updatesWithoutPhotos)
+        .eq('id', Number(id));
+      if (error2) return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
+      return NextResponse.json({ ok: true, garage_changed: garageChanged });
+    }
+    return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
+  }
+
+  if (!data) return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 });
   return NextResponse.json({ ok: true, garage_changed: garageChanged });
 }
 
