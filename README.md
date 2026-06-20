@@ -1,10 +1,10 @@
 # ParkLedger
 
-ParkLedger is a full-stack SaaS platform designed for small and medium-sized parking lot operators in Japan.
+A multi-tenant SaaS platform that digitizes parking lot operations for small operators in Japan.
 
-Built to replace paper-based workflows, it manages contracts, payments, parking slots, cleaning records, and tenant inquiries in one place.
+Built independently with AI-assisted development to replace paper-based workflows with a modern web application.
 
-Built and maintained independently as a real-world SaaS project.
+**Tech Stack:** Next.js · TypeScript · Supabase · Vercel · Upstash Redis
 
 ---
 
@@ -12,7 +12,15 @@ Built and maintained independently as a real-world SaaS project.
 
 > [parkledger.vercel.app](https://parkledger.vercel.app)
 
-*(Screenshots below — login required to access the app)*
+*(Login required — screenshots below)*
+
+---
+
+## Why I Built This
+
+Parking lot operators in Japan typically manage everything with paper ledgers or spreadsheets. An acquaintance who runs a small parking lot was doing exactly that — tracking monthly payments by hand, calling tenants one by one to chase overdue fees, and keeping contracts in a binder.
+
+ParkLedger replaces that entire workflow. The target users are operators in their 60s with limited tech experience, so the UI is designed with large text, high contrast, and minimal complexity — optimized for mobile use in the field.
 
 ---
 
@@ -34,19 +42,17 @@ Built and maintained independently as a real-world SaaS project.
 
 ## What It Does
 
-Parking lot operators in Japan typically manage everything in spreadsheets or paper ledgers. ParkLedger replaces that with a purpose-built web app.
-
 | Feature | Details |
 |---|---|
 | **Dashboard** | Real-time monthly payment status, vacancy rate, expiring contracts |
-| **Payment Tracking** | Mark payments, bulk import via CSV, export reports |
-| **Tenant Management** | Contract start/end dates, archiving, vehicle info |
-| **Parking Slots** | Bulk registration, status management (vacant / occupied / maintenance) |
+| **Payment Tracking** | Mark payments, export monthly reports as CSV |
+| **Tenant Management** | Contract dates, vehicle info, archiving |
+| **Parking Slots** | Bulk registration, vacancy / occupied status |
 | **Cleaning Records** | Log cleaning history with photo uploads |
 | **Inquiries** | Manage tenant inquiries with status tracking |
 | **Receipts & Documents** | Print-ready parking permit and receipt PDFs |
-| **Multi-tenant SaaS** | Each business sees only their own data (row-level security) |
-| **PWA** | Installable on mobile, works offline-first |
+| **Multi-tenant** | Each business sees only their own data |
+| **PWA** | Installable on mobile |
 
 ---
 
@@ -54,16 +60,36 @@ Parking lot operators in Japan typically manage everything in spreadsheets or pa
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4 |
-| **Backend** | Next.js API Routes (serverless), server-side rendering |
-| **Database** | Supabase (PostgreSQL) with Row-Level Security |
-| **Auth** | Supabase Auth — email/password + custom login ID system |
-| **Rate Limiting** | Upstash Redis — persistent across serverless instances |
-| **Deployment** | Vercel |
+| **Frontend** | Next.js / TypeScript / Tailwind CSS |
+| **Backend** | Serverless API routes (Next.js) |
+| **Database** | Supabase (PostgreSQL) |
+| **Auth** | Supabase Auth |
+| **Infrastructure** | Vercel / Upstash Redis |
 
 ---
 
-## Architecture
+## Security
+
+- Row-Level Security — data isolation between tenants at the database level
+- Rate limiting on all auth endpoints
+- bcrypt password hashing
+- CSV injection protection on all exports
+- Image upload validation
+
+---
+
+## Development Process
+
+This project was developed with AI-assisted coding tools.
+
+I focused on problem definition, feature design, user experience, and iterative improvement — while leveraging AI to accelerate implementation.
+
+Through this project, I learned how modern full-stack applications are structured, deployed, and secured at a production level.
+
+---
+
+<details>
+<summary>Architecture details</summary>
 
 ```
 Browser
@@ -82,28 +108,18 @@ Upstash Redis ── Persistent rate limiting across serverless instances
 ```
 
 **Multi-tenant isolation via RLS**
-Every database query is automatically scoped to the logged-in user's organization. Supabase Row-Level Security policies enforce this at the database level — no manual filtering required.
+Every database query is automatically scoped to the logged-in user's organization. Supabase Row-Level Security policies enforce this at the database level.
 
 **Custom login ID system**
-Users log in with a short alphanumeric ID instead of their email address, improving UX for non-technical operators. The server resolves the ID internally; email addresses are never exposed to the client.
+Users log in with a short alphanumeric ID instead of their email address, improving UX for non-technical operators.
 
 **Persistent rate limiting**
-Auth endpoints are rate-limited using Upstash Redis, which maintains state across Vercel serverless function instances — something in-memory solutions cannot do.
+Auth endpoints are rate-limited using Upstash Redis, which maintains state across serverless function instances.
 
 **Server-first rendering**
 All data fetching happens on the server. The client receives rendered HTML with no loading spinners on the main views.
 
----
-
-## Security
-
-- Passwords hashed via bcrypt
-- Email addresses never exposed to the client
-- Rate limiting on all auth endpoints (brute-force protection)
-- Row-Level Security prevents cross-tenant data access
-- Image upload validation (magic byte check + MIME type verification)
-- Input sanitization on all API routes
-- CSV injection protection on all export endpoints
+</details>
 
 ---
 
@@ -121,7 +137,7 @@ src/
 │   └── print/        # Receipt & permit print views
 ├── lib/
 │   ├── supabase/     # Server / client / admin Supabase clients
-│   ├── rate-limit.ts # Upstash Redis rate limiter
+│   ├── rate-limit.ts # Rate limiter
 │   └── validate-image.ts
 └── components/       # Shared UI components
 ```
@@ -157,11 +173,3 @@ SUPABASE_SERVICE_ROLE_KEY=
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 ```
-
----
-
-## About
-
-The problem came from a real need: an acquaintance managing a parking lot was still using paper ledgers. ParkLedger digitizes the entire workflow — from contract registration to monthly payment tracking to receipt generation.
-
-The target users are operators in their 60s with limited tech experience. The UI is intentionally designed with large text, high contrast, and minimal complexity — optimized for mobile use in the field.
