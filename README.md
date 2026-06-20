@@ -18,9 +18,15 @@ Built independently with AI-assisted development to replace paper-based workflow
 
 ---
 
+## Project Timeline
+
+June 2026 — Individual project (AI-assisted development)
+
+---
+
 ## Why I Built This
 
-Parking lot operators in Japan typically manage everything with paper ledgers or spreadsheets. An acquaintance who runs a small parking lot was doing exactly that — tracking monthly payments by hand, calling tenants one by one to chase overdue fees, and keeping contracts in a binder.
+An acquaintance who runs a small parking lot still relied heavily on paper ledgers and spreadsheets for managing contracts and monthly payments.
 
 ParkLedger replaces that entire workflow. The target users are operators in their 60s with limited tech experience, so the UI is designed with large text, high contrast, and minimal complexity — optimized for mobile use in the field.
 
@@ -75,11 +81,11 @@ ParkLedger replaces that entire workflow. The target users are operators in thei
 
 ## Security
 
-- Row-Level Security — data isolation between tenants at the database level
-- Rate limiting on all auth endpoints
+- Row-Level Security for tenant isolation
+- Rate limiting on auth endpoints
 - bcrypt password hashing
-- CSV injection protection on all exports
-- Image upload validation
+- Input validation and sanitization
+- CSV injection protection
 
 ---
 
@@ -89,7 +95,7 @@ This project was developed with AI-assisted coding tools.
 
 I focused on problem definition, feature design, user experience, and iterative improvement — while leveraging AI to accelerate implementation.
 
-Through this project, I learned how modern full-stack applications are structured, deployed, and secured at a production level.
+Through this project, I gained hands-on experience with modern full-stack application design, deployment, and operational considerations.
 
 ---
 
@@ -98,31 +104,17 @@ Through this project, I learned how modern full-stack applications are structure
 
 ```
 Browser
-   │
-   ▼
-Next.js (Vercel) ── Server-side rendering + API Routes
-   │
-   ▼
+   ↓
+Next.js (Vercel)
+   ↓
 Supabase (PostgreSQL)
-   │
-   ├── Row-Level Security ── Each org sees only its own data
-   └── Auth ── Session management + custom login ID resolution
-   │
-   ▼
-Upstash Redis ── Persistent rate limiting across serverless instances
+   ↓
+Upstash Redis
 ```
 
-**Multi-tenant isolation via RLS**
-Every database query is automatically scoped to the logged-in user's organization. Supabase Row-Level Security policies enforce this at the database level.
-
-**Custom login ID system**
-Users log in with a short alphanumeric ID instead of their email address, improving UX for non-technical operators.
-
-**Persistent rate limiting**
-Auth endpoints are rate-limited using Upstash Redis, which maintains state across serverless function instances.
-
-**Server-first rendering**
-All data fetching happens on the server. The client receives rendered HTML with no loading spinners on the main views.
+- Row-Level Security for tenant data isolation
+- Custom login ID system
+- Rate limiting with Redis
 
 </details>
 
