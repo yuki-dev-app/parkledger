@@ -18,7 +18,17 @@ Built and maintained independently as a real-world SaaS project.
 
 ## Screenshots
 
-*Coming soon — dashboard, payment tracking, tenant management, and parking slot views*
+### Dashboard — monthly payment status at a glance
+![Dashboard](public/screenshots/dash.png)
+
+### Payment Tracking — mark payments, download monthly reports
+![Payments](public/screenshots/manage.png)
+
+### Tenant Management — contracts and vehicle info
+![Contractors](public/screenshots/user.png)
+
+### Parking Slots — vacancy status across all spaces
+![Garages](public/screenshots/block.webp)
 
 ---
 
