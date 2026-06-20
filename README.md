@@ -152,4 +152,6 @@ UPSTASH_REDIS_REST_TOKEN=
 
 ## About
 
-The problem came from a real need: a family member managing a parking lot was still using paper ledgers. ParkLedger digitizes the entire workflow — from contract registration to monthly payment tracking to receipt generation.
+The problem came from a real need: an acquaintance managing a parking lot was still using paper ledgers. ParkLedger digitizes the entire workflow — from contract registration to monthly payment tracking to receipt generation.
+
+The target users are operators in their 60s with limited tech experience. The UI is intentionally designed with large text, high contrast, and minimal complexity — optimized for mobile use in the field.
