@@ -6,6 +6,8 @@ Built independently with AI-assisted development to replace paper-based workflow
 
 **Tech Stack:** Next.js · TypeScript · Supabase · Vercel · Upstash Redis
 
+🇯🇵 日本語版 → [README_JA.md](README_JA.md)
+
 ---
 
 ## Live Demo
