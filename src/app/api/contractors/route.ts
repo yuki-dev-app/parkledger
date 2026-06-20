@@ -61,15 +61,37 @@ export async function POST(req: NextRequest) {
   if (!garage_id || !name || !contract_start)
     return NextResponse.json({ error: '区画・氏名・契約開始日は必須です' }, { status: 400 });
 
-  const { data: contractor, error: cErr } = await supabase
+  const baseData = { garage_id, name, phone, email, address, vehicle_type, vehicle_number, vehicle_chassis, emergency_contact, contract_start, contract_end, notes, org_id: orgId };
+  const insertData = car_photo_urls.length > 0 ? { ...baseData, car_photo_urls } : baseData;
+
+  let contractor: { id: number } | null = null;
+
+  const { data: d1, error: cErr } = await supabase
     .from('contractors')
-    .insert({ garage_id, name, phone, email, address, vehicle_type, vehicle_number, vehicle_chassis, emergency_contact, contract_start, contract_end, notes, org_id: orgId, car_photo_urls })
-    .select()
+    .insert(insertData)
+    .select('id')
     .single();
 
   if (cErr) {
-    console.error('[contractors POST] insert error:', cErr.code, cErr.message);
-    return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+    // car_photo_urls カラムが未作成の場合は写真なしで再試行
+    const isColumnMissing = cErr.code === '42703' || cErr.message?.includes('car_photo_urls');
+    if (car_photo_urls.length > 0 && isColumnMissing) {
+      const { data: d2, error: cErr2 } = await supabase
+        .from('contractors')
+        .insert(baseData)
+        .select('id')
+        .single();
+      if (cErr2) {
+        console.error('[contractors POST] insert error:', cErr2.code, cErr2.message);
+        return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+      }
+      contractor = d2;
+    } else {
+      console.error('[contractors POST] insert error:', cErr.code, cErr.message);
+      return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+    }
+  } else {
+    contractor = d1;
   }
 
   const { error: garageErr } = await supabase
