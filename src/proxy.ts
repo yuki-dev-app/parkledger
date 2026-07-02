@@ -51,7 +51,8 @@ export async function proxy(request: NextRequest) {
     }
 
     // 認証不要な公開APIは Cookie チェックをスキップ
-    const PUBLIC_API_PREFIXES = ['/api/auth/', '/api/register'];
+    // （/api/demo/reset は Vercel Cron 用。CRON_SECRET でルート側が認証する）
+    const PUBLIC_API_PREFIXES = ['/api/auth/', '/api/register', '/api/demo/reset'];
     if (PUBLIC_API_PREFIXES.some(p => path.startsWith(p))) {
       return NextResponse.next();
     }
