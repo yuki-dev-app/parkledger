@@ -1,8 +1,10 @@
 # ParkLedger
 
+[![CI](https://github.com/yuki-dev-app/parkledger/actions/workflows/ci.yml/badge.svg)](https://github.com/yuki-dev-app/parkledger/actions/workflows/ci.yml)
+
 A multi-tenant SaaS platform that digitizes parking lot operations for small operators in Japan.
 
-Built independently with AI-assisted development to replace paper-based workflows with a modern web application.
+It replaced a paper-ledger workflow entirely — and **is actively used today by a real parking lot operator for daily work.**
 
 **Tech Stack:** Next.js · TypeScript · Supabase · Vercel · Upstash Redis
 
@@ -10,25 +12,27 @@ Built independently with AI-assisted development to replace paper-based workflow
 
 ---
 
-## Live Demo
+## 🚀 Try It in 3 Minutes
 
-> [parkledger.vercel.app](https://parkledger.vercel.app)
+**[parkledger.vercel.app](https://parkledger.vercel.app)**
 
-*(Login required — screenshots below)*
+| Login ID | Password |
+|----------|----------|
+| `demo` | `demo2026` |
 
----
-
-## Project Timeline
-
-May 2026 – Present — Individual project (AI-assisted development)
+Works great on mobile. All demo data is fictional — **feel free to click around and change things** (the demo resets automatically every night).
 
 ---
 
 ## Why I Built This
 
-An acquaintance who runs a small parking lot still relied heavily on paper ledgers and spreadsheets for managing contracts and monthly payments.
+An acquaintance who runs a small monthly parking lot relied on paper ledgers and manual work for payment tracking, overdue follow-ups, and contract management. **ParkLedger turned hours of monthly paperwork into a few minutes on a smartphone.**
 
-ParkLedger replaces that entire workflow. The target users are operators in their 60s with limited tech experience, so the UI is designed with large text, high contrast, and minimal complexity — optimized for mobile use in the field.
+The user is in their 60s with no IT background, so the design priority was not "more features" but "never getting lost on site":
+
+- Large text and high contrast
+- Today's action items (unpaid tenants, expiring contracts) shown the moment the app opens
+- A one-tap call button next to every unpaid tenant
 
 ---
 
@@ -66,106 +70,53 @@ ParkLedger replaces that entire workflow. The target users are operators in thei
 
 ---
 
-## Tech Stack
+## How I Work — Using AI as My Engineer
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | Next.js / TypeScript / Tailwind CSS |
-| **Backend** | Serverless API routes (Next.js) |
-| **Database** | Supabase (PostgreSQL) |
-| **Auth** | Supabase Auth |
-| **Infrastructure** | Vercel / Upstash Redis |
+The implementation code in this project is written by AI (Claude). My work is everything before and after that:
+
+- **Finding and defining the problem** — interviewing the actual operator and prioritizing features by "what is most painful"
+- **Owning the spec and UX decisions** — every instruction to the AI is grounded in "can a 60-year-old first-time user navigate this?"
+- **Running the feedback loop** — shipping, watching real usage, and folding feedback into the next iteration
+- **Taking responsibility for quality** — having the AI audit its own code for security issues, then verifying and shipping the fixes (the history is visible in the commit log)
+
+The core experience wasn't "having AI build an app" — it was **planning, improving, and operating a service that a real user depends on.**
 
 ---
 
 ## Security
 
-- Row-Level Security for tenant isolation
-- Rate limiting on auth endpoints
+The app handles real personal data (tenant names, phone numbers, vehicle info), so it implements:
+
+- Row-Level Security for complete tenant isolation at the database level
+- Rate limiting against brute-force login attempts
 - bcrypt password hashing
-- Input validation and sanitization
-- CSV injection protection
+- CSV injection protection on exports
+- Upload validation and signed URLs for photos
 
 ---
 
-## Development Process
+## Architecture
 
-This project was developed with AI-assisted coding tools.
+```mermaid
+flowchart LR
+    A["Phone / PC<br>(Browser)"] --> B["Next.js<br>on Vercel"]
+    B --> C["Supabase<br>Database + Auth"]
+    B --> D["Upstash Redis<br>Rate Limiting"]
+    C --- E["Row-Level Security<br>isolates each business"]
+```
 
-I focused on problem definition, feature design, user experience, and iterative improvement — while leveraging AI to accelerate implementation.
-
-Through this project, I gained hands-on experience with modern full-stack application design, deployment, and operational considerations.
+Built entirely on managed services — **near-zero running cost and minimal maintenance**, sustainable for a solo developer operating in production.
 
 ---
 
-<details>
-<summary>Architecture details</summary>
+## Roadmap
 
-```
-Browser
-   ↓
-Next.js (Vercel)
-   ↓
-Supabase (PostgreSQL)
-   ↓
-Upstash Redis
-```
-
-- Row-Level Security for tenant data isolation
-- Custom login ID system
-- Rate limiting with Redis
-
-</details>
+- Automated payment reminders
+- Annual income reports
+- Multi-location support
 
 ---
 
-## Project Structure
+## Project Timeline
 
-```
-src/
-├── app/
-│   ├── api/          # API routes (auth, payments, contractors, …)
-│   ├── payments/     # Payment tracking UI
-│   ├── contractors/  # Tenant management UI
-│   ├── garages/      # Parking slot management UI
-│   ├── cleaning/     # Cleaning log UI
-│   ├── inquiries/    # Inquiry management UI
-│   └── print/        # Receipt & permit print views
-├── lib/
-│   ├── supabase/     # Server / client / admin Supabase clients
-│   ├── rate-limit.ts # Rate limiter
-│   └── validate-image.ts
-└── components/       # Shared UI components
-```
-
----
-
-## Local Development
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/yuki-dev-app/parkledger.git
-cd parkledger
-
-# 2. Install dependencies
-npm install
-
-# 3. Set up environment variables
-cp .env.local.example .env.local
-# Fill in your Supabase and Upstash credentials
-
-# 4. Run the dev server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-**Required environment variables:**
-
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-```
+May 2026 – Present — Individual project (AI-assisted development)
