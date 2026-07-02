@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Pencil, Trash2, Check, Sparkles, Camera, X, Image, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, Sparkles, Camera, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/format-date';
 import { useCachedFetch } from '@/lib/use-cached-fetch';
 import Toast, { ToastType } from '@/components/Toast';
@@ -292,7 +292,7 @@ export default function CleaningPage() {
                       </span>
                       {photoUrls.length > 0 && (
                         <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
-                          <Image size={12} /> {photoUrls.length}枚
+                          <ImageIcon size={12} /> {photoUrls.length}枚
                         </span>
                       )}
                     </div>

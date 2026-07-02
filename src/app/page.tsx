@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Phone, MessageSquare, AlertTriangle, CheckCircle2, ChevronRight, Car, Users, CreditCard, Settings, ArrowRight } from 'lucide-react';
+import { Phone, MessageSquare, AlertTriangle, CheckCircle2, ChevronRight, Car, Users, CreditCard, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getSettings } from '@/lib/settings';
 
