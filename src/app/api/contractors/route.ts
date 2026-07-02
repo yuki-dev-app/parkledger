@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { naturalSort } from '@/lib/sort-utils';
 import { NO_CACHE_HEADERS } from '@/lib/no-cache';
+import { toStoragePath, sanitizeOrgPhotoPaths, signPathMap } from '@/lib/storage-paths';
 
 const MAX = { name:100, phone:20, email:200, address:300, vehicle_type:100, vehicle_number:50, vehicle_chassis:100, emergency_contact:100, notes:1000 };
 const t = (v: unknown, max: number) => (typeof v === 'string' ? v.trim() : '').slice(0, max);
+
+const PHOTO_BUCKET = 'contractor-photos';
+const MAX_PHOTOS   = 10;
 
 export async function GET(req: NextRequest) {
   const { supabase, user, orgId } = await requireAuth();
@@ -24,8 +28,21 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
 
+  // 写真は非公開バケット保存のため、表示用の署名URLに変換して返す
+  // （全契約者分のパスをまとめて1回のAPI呼び出しで署名する）
+  const allPaths = (data ?? []).flatMap(c =>
+    ((c.car_photo_urls as string[] | null) ?? [])
+      .map(v => toStoragePath(PHOTO_BUCKET, v))
+      .filter((p): p is string => p !== null)
+  );
+  const signedMap = await signPathMap(PHOTO_BUCKET, allPaths);
+
   const rows = (data ?? []).map(c => ({
     ...c,
+    car_photo_urls: ((c.car_photo_urls as string[] | null) ?? [])
+      .map(v => toStoragePath(PHOTO_BUCKET, v))
+      .map(p => (p ? signedMap.get(p) : undefined))
+      .filter((u): u is string => !!u),
     garage_number: (c.garages as unknown as { number: string }).number,
     monthly_fee:   (c.garages as unknown as { monthly_fee: number }).monthly_fee,
     garages:       undefined,
@@ -54,9 +71,8 @@ export async function POST(req: NextRequest) {
   const contract_start    = t(body.contract_start,    10);
   const contract_end      = t(body.contract_end,      10);
   const notes             = t(body.notes,             MAX.notes);
-  const car_photo_urls    = Array.isArray(body.car_photo_urls)
-    ? body.car_photo_urls.map((u: unknown) => t(u, 500)).filter(Boolean)
-    : [];
+  // URL・パスどちらで来ても自orgのパスに正規化して保存（他orgのファイル参照を防ぐ）
+  const car_photo_urls    = sanitizeOrgPhotoPaths(PHOTO_BUCKET, body.car_photo_urls, orgId, MAX_PHOTOS);
 
   if (!garage_id || !name || !contract_start)
     return NextResponse.json({ error: '区画・氏名・契約開始日は必須です' }, { status: 400 });

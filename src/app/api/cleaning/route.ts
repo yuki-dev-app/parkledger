@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { NO_CACHE_HEADERS } from '@/lib/no-cache';
+import { toStoragePath, sanitizeOrgPhotoPaths, signPathMap } from '@/lib/storage-paths';
+
+const PHOTO_BUCKET = 'cleaning-photos';
+const MAX_PHOTOS   = 5;
 
 export async function GET() {
   const { supabase, user } = await requireAuth();
@@ -11,7 +15,24 @@ export async function GET() {
     .select('*')
     .order('cleaned_date', { ascending: false });
 
-  return NextResponse.json(data ?? [], { headers: NO_CACHE_HEADERS });
+  // 写真は非公開バケット保存のため、表示用の署名URLに変換して返す
+  // （全レコード分のパスをまとめて1回のAPI呼び出しで署名する）
+  const allPaths = (data ?? []).flatMap(log =>
+    ((log.photo_urls as string[] | null) ?? [])
+      .map(v => toStoragePath(PHOTO_BUCKET, v))
+      .filter((p): p is string => p !== null)
+  );
+  const signedMap = await signPathMap(PHOTO_BUCKET, allPaths);
+
+  const rows = (data ?? []).map(log => ({
+    ...log,
+    photo_urls: ((log.photo_urls as string[] | null) ?? [])
+      .map(v => toStoragePath(PHOTO_BUCKET, v))
+      .map(p => (p ? signedMap.get(p) : undefined))
+      .filter((u): u is string => !!u),
+  }));
+
+  return NextResponse.json(rows, { headers: NO_CACHE_HEADERS });
 }
 
 export async function POST(req: NextRequest) {
@@ -23,9 +44,8 @@ export async function POST(req: NextRequest) {
   const cleaned_date = typeof body.cleaned_date === 'string' ? body.cleaned_date.trim() : '';
   const person       = typeof body.person === 'string' ? body.person.trim().slice(0, 50) : '';
   const notes        = typeof body.notes  === 'string' ? body.notes.trim().slice(0, 1000) : '';
-  const photo_urls   = Array.isArray(body.photo_urls)
-    ? body.photo_urls.filter((u: unknown) => typeof u === 'string').slice(0, 5)
-    : [];
+  // URL・パスどちらで来ても自orgのパスに正規化して保存（他orgのファイル参照を防ぐ）
+  const photo_urls   = sanitizeOrgPhotoPaths(PHOTO_BUCKET, body.photo_urls, orgId, MAX_PHOTOS);
 
   if (!cleaned_date || !person)
     return NextResponse.json({ error: '日付と担当者は必須です' }, { status: 400 });

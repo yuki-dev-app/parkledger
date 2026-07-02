@@ -31,7 +31,9 @@ export async function PUT(req: NextRequest) {
   if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
 
   const { login_id } = await req.json().catch(() => ({}));
-  const id = typeof login_id === 'string' ? login_id.trim() : '';
+  // 小文字に統一して保存する（ログイン時も小文字で照合されるため。
+  // 大文字のまま保存すると照合できずログイン不能になる）
+  const id = typeof login_id === 'string' ? login_id.trim().toLowerCase() : '';
 
   // 空文字 → IDを削除
   if (!id) {
@@ -40,14 +42,14 @@ export async function PUT(req: NextRequest) {
   }
 
   // 使用可能な文字のみ（英数字・ハイフン・アンダースコア、3〜30文字）
-  if (!/^[a-zA-Z0-9_\-]{3,30}$/.test(id)) {
+  if (!/^[a-z0-9_\-]{3,30}$/.test(id)) {
     return NextResponse.json({
       error: '3〜30文字の半角英数字・ハイフン(-)・アンダースコア(_)のみ使えます',
     }, { status: 400 });
   }
 
   // 予測可能・予約済みIDを拒否
-  if (RESERVED_IDS.has(id.toLowerCase())) {
+  if (RESERVED_IDS.has(id)) {
     return NextResponse.json({ error: 'このIDは使用できません。別のIDを選んでください' }, { status: 400 });
   }
 

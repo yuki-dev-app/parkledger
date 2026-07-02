@@ -4,8 +4,7 @@
  * メールアドレスをクライアントに一切返さずにログイン処理を完結させる。
  * login_id → email の変換をサーバー内部でのみ行い、
  * セッションCookieをセットしてOK/エラーのみ返す。
- *
- * これにより resolve-login-id がメールを返す設計上の漏洩を解消する。
+ * （旧 resolve-login-id エンドポイントはID存在確認に悪用できるため廃止済み）
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';

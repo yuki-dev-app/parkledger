@@ -30,6 +30,9 @@ export async function POST(req: NextRequest) {
   if (password.length < 8) {
     return NextResponse.json({ error: 'パスワードは8文字以上にしてください' }, { status: 400 });
   }
+  if (password.length > 128) {
+    return NextResponse.json({ error: 'パスワードは128文字以下にしてください' }, { status: 400 });
+  }
 
   // email_confirm: false でメール確認を必須にする（スパム・偽登録防止）
   // Supabase Dashboard → Authentication → Settings → "Confirm email" を ON にすること。

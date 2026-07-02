@@ -22,12 +22,16 @@ const HEIC_BRANDS = ['heic', 'heix', 'hevc', 'hevx', 'mif1', 'msf1'];
 export async function validateImageMagicBytes(file: File): Promise<string | null> {
   const ab = await file.arrayBuffer();
 
-  // HEIC/HEIF はブランドボックスで判定
+  // HEIC/HEIF は ftyp ボックスのブランドで判定
+  // 構造: [0-3]=ボックスサイズ, [4-7]="ftyp", [8-11]=メジャーブランド
   if (file.type.toLowerCase().includes('heic') || file.type.toLowerCase().includes('heif')) {
     if (ab.byteLength < 12) return null;
-    const view = new DataView(ab);
-    const brand = [4, 5, 6, 7].map(i => String.fromCharCode(view.getUint8(i))).join('').toLowerCase();
-    return HEIC_BRANDS.some(b => brand.startsWith(b)) ? 'jpg' : null;
+    const view  = new DataView(ab);
+    const ascii = (start: number) =>
+      [0, 1, 2, 3].map(i => String.fromCharCode(view.getUint8(start + i))).join('').toLowerCase();
+    if (ascii(4) !== 'ftyp') return null;
+    const brand = ascii(8);
+    return HEIC_BRANDS.some(b => brand.startsWith(b)) ? 'heic' : null;
   }
 
   if (ab.byteLength < 16) return null;

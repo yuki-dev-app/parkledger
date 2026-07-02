@@ -34,6 +34,22 @@ export async function proxy(request: NextRequest) {
 
   // APIルートは全てここで早期リターン（ページリダイレクトロジックに入らせない）
   if (path.startsWith('/api/')) {
+    // CSRF対策: 状態変更リクエスト（POST/PUT/DELETE等）は Origin を検証する。
+    // SameSite Cookie による防御に加えた二重防御。
+    // Origin ヘッダーが無いリクエスト（非ブラウザクライアント等）は
+    // Cookie も付かないため許可してよい。
+    const method = request.method;
+    if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+      const origin = request.headers.get('origin');
+      if (origin) {
+        let originHost: string | null = null;
+        try { originHost = new URL(origin).host; } catch { /* 不正なOriginはnullのまま */ }
+        if (originHost !== request.nextUrl.host) {
+          return NextResponse.json({ error: '不正なリクエスト元です' }, { status: 403 });
+        }
+      }
+    }
+
     // 認証不要な公開APIは Cookie チェックをスキップ
     const PUBLIC_API_PREFIXES = ['/api/auth/', '/api/register'];
     if (PUBLIC_API_PREFIXES.some(p => path.startsWith(p))) {

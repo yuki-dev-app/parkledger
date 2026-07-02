@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireOwner } from '@/lib/supabase/server';
+import { sanitizeOrgPhotoPaths } from '@/lib/storage-paths';
 
 const t = (v: unknown, max: number) => (typeof v === 'string' ? v.trim() : '').slice(0, max);
 
+const PHOTO_BUCKET = 'contractor-photos';
+const MAX_PHOTOS   = 10;
+
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { supabase, user } = await requireAuth();
-  if (!user) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  const { supabase, user, orgId } = await requireAuth();
+  if (!user)  return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+  if (!orgId) return NextResponse.json({ error: '初期設定が完了していません。いったんログアウトして再度ログインしてください。' }, { status: 403 });
   const perm = await requireOwner();
   if (!perm.ok) return perm.response;
 
@@ -63,11 +68,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     notes:             t(body.notes, 1000),
   };
   if (garageChanged) updates.garage_id = newGarageId;
-  // 車の写真URL配列（空配列で全削除、未指定は変更しない）
+  // 車の写真配列（空配列で全削除、未指定は変更しない）
+  // URL・パスどちらで来ても自orgのパスに正規化して保存（他orgのファイル参照を防ぐ）
   if ('car_photo_urls' in body) {
-    updates.car_photo_urls = Array.isArray(body.car_photo_urls)
-      ? body.car_photo_urls.map((u: unknown) => t(u, 500)).filter(Boolean)
-      : null;
+    updates.car_photo_urls = sanitizeOrgPhotoPaths(PHOTO_BUCKET, body.car_photo_urls, orgId, MAX_PHOTOS);
   }
 
   const { data, error } = await supabase

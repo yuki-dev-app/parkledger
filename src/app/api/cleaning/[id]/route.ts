@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { toStoragePath, sanitizeOrgPhotoPaths } from '@/lib/storage-paths';
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const BUCKET  = 'cleaning-photos';
+const DATE_RE    = /^\d{4}-\d{2}-\d{2}$/;
+const BUCKET     = 'cleaning-photos';
+const MAX_PHOTOS = 5;
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { supabase, user, orgId } = await requireAuth();
@@ -14,9 +16,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const cleaned_date = typeof body.cleaned_date === 'string' ? body.cleaned_date : '';
   const person       = (typeof body.person === 'string' ? body.person.trim() : '').slice(0, 100);
   const notes        = (typeof body.notes  === 'string' ? body.notes.trim()  : '').slice(0, 1000);
-  const photo_urls   = Array.isArray(body.photo_urls)
-    ? body.photo_urls.filter((u: unknown) => typeof u === 'string').slice(0, 5)
-    : [];
+  // URL・パスどちらで来ても自orgのパスに正規化して保存（他orgのファイル参照を防ぐ）
+  const photo_urls   = sanitizeOrgPhotoPaths(BUCKET, body.photo_urls, orgId, MAX_PHOTOS);
 
   if (!DATE_RE.test(cleaned_date) || !person) {
     return NextResponse.json({ error: '日付と担当者は必須です' }, { status: 400 });
@@ -68,14 +69,11 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { error } = await supabase.from('cleaning_logs').delete().eq('id', Number(id));
   if (error) return NextResponse.json({ error: '削除に失敗しました' }, { status: 500 });
 
-  // Storage の写真を非同期で削除
+  // Storage の写真を非同期で削除（旧URL形式・パス形式の両方に対応）
   const urls: string[] = log?.photo_urls ?? [];
   if (urls.length > 0) {
     const paths = urls
-      .map((url: string) => {
-        const m = url.match(/cleaning-photos\/(.+)$/);
-        return m ? m[1] : null;
-      })
+      .map((url: string) => toStoragePath(BUCKET, url))
       .filter((p): p is string => p !== null)
       .filter(p => p.startsWith(`${orgId}/`));
 

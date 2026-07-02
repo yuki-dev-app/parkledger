@@ -3,12 +3,16 @@
  *
  * Supabase Storage の `cleaning-photos` バケットに写真を保存する。
  * 事前にSupabaseダッシュボードで以下の設定が必要:
- *   Storage → New Bucket → 名前: cleaning-photos → Public: ON
+ *   Storage → New Bucket → 名前: cleaning-photos → Public: OFF（非公開）
+ *
+ * バケットは非公開。表示には有効期限付きの署名URLを使う
+ * （公開URLだとログインなしで誰でも閲覧できてしまうため）。
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { validateImageMagicBytes, isAllowedMimeType } from '@/lib/validate-image';
+import { toStoragePath, SIGNED_URL_EXPIRES } from '@/lib/storage-paths';
 
 const BUCKET   = 'cleaning-photos';
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -53,10 +57,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'アップロードに失敗しました。時間をおいて再度お試しください' }, { status: 500 });
   }
 
-  // Public URL を返す（バケットが Public の場合）
-  const { data: { publicUrl } } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(data.path);
+  // プレビュー表示用の署名URL（DBにはパスが保存される）
+  const { data: signed } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .createSignedUrl(data.path, SIGNED_URL_EXPIRES);
 
-  return NextResponse.json({ url: publicUrl, path: data.path });
+  return NextResponse.json({ url: signed?.signedUrl ?? '', path: data.path });
 }
 
 export async function DELETE(req: NextRequest) {
@@ -64,15 +70,17 @@ export async function DELETE(req: NextRequest) {
   if (!user || !orgId) return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
 
   const { path } = await req.json().catch(() => ({}));
-  if (!path || typeof path !== 'string') {
+  // URL形式で送られてきてもパスに正規化して受け付ける
+  const normalized = toStoragePath(BUCKET, path);
+  if (!normalized) {
     return NextResponse.json({ error: 'パスが不正です' }, { status: 400 });
   }
 
   // 自分のorgのファイルのみ削除可能
-  if (!path.startsWith(`${orgId}/`)) {
+  if (!normalized.startsWith(`${orgId}/`)) {
     return NextResponse.json({ error: '権限がありません' }, { status: 403 });
   }
 
-  await supabaseAdmin.storage.from(BUCKET).remove([path]);
+  await supabaseAdmin.storage.from(BUCKET).remove([normalized]);
   return NextResponse.json({ ok: true });
 }
